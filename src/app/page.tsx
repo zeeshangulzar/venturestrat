@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { SignedIn, SignedOut } from '@clerk/nextjs';
+import { SignedIn, SignedOut, SignInButton } from '@clerk/nextjs';
 import Link from 'next/link';
 
 export default function Home() {
@@ -11,7 +11,7 @@ export default function Home() {
             Welcome to the Broker Directory!
           </h1>
           <p className="text-gray-600 mb-6">
-            You are signed in. 🎉 Explore our list of amazing brokers.
+            You are signed in. Explore our list of amazing brokers.
           </p>
           <Link
             href="/brokers"
@@ -28,12 +28,11 @@ export default function Home() {
           <p className="text-gray-600 mb-6">
             Please sign in to access the broker directory.
           </p>
-          <Link
-            href="/sign-in"
-            className="inline-block px-6 py-3 bg-blue-600 text-white font-semibold rounded hover:bg-blue-700 transition"
-          >
-            Sign In
-          </Link>
+          <SignInButton>
+            <button className="inline-block px-6 py-3 bg-blue-600 text-white font-semibold rounded hover:bg-blue-700 transition">
+              Sign In
+            </button>
+          </SignInButton>
         </SignedOut>
       </div>
     </div>
