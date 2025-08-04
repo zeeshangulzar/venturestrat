@@ -9,6 +9,7 @@ import {
 } from '@clerk/nextjs'
 import { Geist, Geist_Mono } from 'next/font/google'
 import './globals.css'
+import Link from 'next/link';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -36,18 +37,15 @@ export default function RootLayout({
         <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
           <header className="flex justify-between items-center p-4 gap-4 h-16 border-b bg-white">
             <div>
-              <a href="/" className="text-lg font-bold text-gray-800">
+              <Link href="/" className="text-lg font-bold text-gray-800">
                 Broker Directory
-              </a>
+              </Link>
             </div>
             <div className="flex gap-4 items-center">
               <SignedIn>
-                <a
-                  href="/brokers"
-                  className="text-sm font-medium text-gray-600 hover:text-blue-600 transition"
-                >
+                <Link href="/brokers" className="text-sm font-medium text-gray-600 hover:text-blue-600 transition">
                   View Brokers
-                </a>
+                </Link>
                 <UserButton />
               </SignedIn>
 

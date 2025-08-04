@@ -24,8 +24,10 @@ export default function BrokersPage() {
 
   useEffect(() => {
     const fetchBrokers = async () => {
+      console.log('Fetching brokers...');  // Add this log
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/brokers`);
       const data = await res.json();
+      console.log(data); 
       setBrokers(data);
       setLoading(false);
     };
