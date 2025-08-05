@@ -44,6 +44,7 @@ export default function InvestorsPage() {
   const countryOptions = ['USA', 'Canada', 'UK', 'Germany'];
   const stateOptions = ['California', 'New York', 'Texas', 'Florida'];
   const cityOptions = ['San Francisco', 'New York', 'London', 'Berlin'];
+  const investmentOptions = ['Seed', 'Series A', 'Series B', 'Growth'];
 
   // Fetch data from backend using dynamic URL
   const fetchInvestors = async () => {
@@ -61,9 +62,6 @@ export default function InvestorsPage() {
     fetchInvestors();
   }, [currentPage, searchQuery, filters, itemsPerPage]); // Re-fetch when itemsPerPage changes
 
-  if (loading) {
-    return <p className="p-4 text-gray-500">Loading investors...</p>;
-  }
 
   return (
     <div className="max-w-7xl mx-auto p-4">
@@ -100,7 +98,7 @@ export default function InvestorsPage() {
           />
           <Filter
             label="Investment Stage"
-            options={['Seed', 'Series A', 'Series B']}
+            options={investmentOptions}
             value={filters.investmentStage}
             onChange={(value) => setFilters({ ...filters, investmentStage: value })}
           />
