@@ -13,8 +13,7 @@ type Broker = {
   investment_stage: string;
   previous_investments: string[];
   social_links: {
-    linkedin?: string;
-    twitter?: string;
+    [key: string]: string;
   };
 };
 
@@ -24,10 +23,8 @@ export default function BrokersPage() {
 
   useEffect(() => {
     const fetchBrokers = async () => {
-      console.log('Fetching brokers...');  // Add this log
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/brokers`);
       const data = await res.json();
-      console.log(data); 
       setBrokers(data);
       setLoading(false);
     };
@@ -39,9 +36,16 @@ export default function BrokersPage() {
     return <p className="p-4 text-gray-500">Loading brokers...</p>;
   }
 
+  const humanizeSocialKey = (key: string): string => {
+    return key
+      .split('_')
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
+
   return (
     <div className="max-w-7xl mx-auto p-4">
-      <h1 className="text-4xl font-bold mb-10 text-purple-700">Brokers Directory</h1>
+      <h1 className="text-4xl font-bold mb-10 text-purple-700">Investors Directory</h1>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
         {brokers.map((broker) => (
           <div
@@ -80,26 +84,17 @@ export default function BrokersPage() {
             </div>
 
             <div className="flex gap-4 mt-4">
-              {broker.social_links?.linkedin && (
+              {Object.entries(broker.social_links).map(([key, url]) => (
                 <a
-                  href={broker.social_links.linkedin}
+                  key={key}
+                  href={url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-indigo-600 hover:text-indigo-800 hover:underline text-sm"
+                  className="text-sm text-blue-600 hover:text-blue-800 hover:underline"
                 >
-                  LinkedIn
+                  {humanizeSocialKey(key)}
                 </a>
-              )}
-              {broker.social_links?.twitter && (
-                <a
-                  href={broker.social_links.twitter}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sky-500 hover:text-sky-700 hover:underline text-sm"
-                >
-                  Twitter
-                </a>
-              )}
+              ))}
             </div>
           </div>
         ))}
