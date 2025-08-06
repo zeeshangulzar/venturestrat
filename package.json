@@ -10,9 +10,12 @@
   },
   "dependencies": {
     "@clerk/nextjs": "^6.28.1",
+    "country-state-city": "^3.2.1",
     "next": "15.4.5",
     "react": "19.1.0",
-    "react-dom": "19.1.0"
+    "react-dom": "19.1.0",
+    "react-select": "^5.10.2",
+    "world-countries-capitals": "^3.4.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

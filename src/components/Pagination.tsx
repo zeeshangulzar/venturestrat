@@ -21,7 +21,7 @@ const Pagination: React.FC<PaginationProps> = ({ currentPage, setCurrentPage, it
 
   return (
     <div className="flex items-center gap-4">
-      <button
+      {/* <button
         onClick={handlePrev}
         disabled={currentPage === 1}
         className="p-2 bg-blue-600 text-white rounded"
@@ -38,7 +38,7 @@ const Pagination: React.FC<PaginationProps> = ({ currentPage, setCurrentPage, it
         className="p-2 bg-blue-600 text-white rounded"
       >
         Next
-      </button>
+      </button> */}
 
       <select
         value={itemsPerPage}
