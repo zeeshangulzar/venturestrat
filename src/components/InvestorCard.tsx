@@ -3,7 +3,6 @@
 import React, { useEffect, useState } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { getApiUrl } from '@lib/api';
-import Image from 'next/image'; // Import next/image
 
 type SocialLinks = {
   [key: string]: string;
@@ -157,13 +156,6 @@ const InvestorCard: React.FC<{ investor: Investor }> = ({ investor }) => {
 
   return (
     <div className="bg-gradient-to-br from-violet-50 to-white border border-purple-100 rounded-xl shadow-md hover:shadow-lg transition-all p-6 mb-6 flex flex-row items-start">
-      <Image
-        src={investor.avatar || "/avatar.jpeg"}
-        alt={investor.name}
-        width={80}
-        height={80}
-        className="rounded-full border-2 border-purple-300 object-cover shadow mr-6 flex-shrink-0"
-      />
       <div className="flex flex-col flex-1 min-w-0">
         <div className="mb-4">
           <h2 className="text-xl font-semibold text-purple-800">{investor.name}</h2>
