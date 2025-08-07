@@ -6,9 +6,11 @@ type PaginationProps = {
   setCurrentPage: React.Dispatch<React.SetStateAction<number>>;
   itemsPerPage: number;
   setItemsPerPage: React.Dispatch<React.SetStateAction<number>>;
+  totalPages: number;
+  totalItems: number;
 };
 
-const Pagination: React.FC<PaginationProps> = ({ currentPage, setCurrentPage, itemsPerPage, setItemsPerPage }) => {
+const Pagination: React.FC<PaginationProps> = ({ currentPage, setCurrentPage, itemsPerPage, setItemsPerPage, totalPages, totalItems }) => {
   const handleNext = () => {
     setCurrentPage((prevPage) => prevPage + 1);
   };
@@ -30,11 +32,12 @@ const Pagination: React.FC<PaginationProps> = ({ currentPage, setCurrentPage, it
       </button>
 
       <span>
-        Page {currentPage}
+        Page {currentPage} of {totalPages} ({totalItems} items)
       </span>
 
       <button
         onClick={handleNext}
+        disabled={currentPage === totalPages}
         className="p-2 bg-blue-600 text-white rounded"
       >
         Next

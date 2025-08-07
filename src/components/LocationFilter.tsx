@@ -35,29 +35,44 @@ const LocationFilter: React.FC<Props> = ({ filters, setFilters }) => {
         const newStates = State.getStatesOfCountry(selectedCountry.isoCode);
         setStates(newStates);
       }
-      setFilters({ ...filters, state: '', city: '' }); // Reset state and city on country change
+
+      // Reset state and city when country changes
+      setFilters({ ...filters, state: '', city: '' });
       setCities([]);
     } else {
       setStates([]);
       setCities([]);
-      setFilters({ ...filters, state: '', city: '' }); // Reset filters when no country selected
+      setFilters({ ...filters, state: '', city: '' });
     }
   }, [filters.country, countries]);
 
   // Update cities based on selected state and country
   useEffect(() => {
-    if (filters.country && filters.state) {
+    if (filters.state && filters.country) {
+      // Find the country object that matches the country name
+      const selectedCountry = countries.find((country) => country.name === filters.country);
+      // Find the state object that matches the state name
       const selectedState = states.find((state) => state.name === filters.state);
-      if (selectedState) {
-        const newCities = City.getCitiesOfState(filters.country, selectedState.isoCode);
+
+      if (selectedCountry && selectedState) {
+        // Use country ISO code and state ISO code for getting cities
+        const newCities = City.getCitiesOfState(selectedCountry.isoCode, selectedState.isoCode);
         setCities(newCities);
+        console.log('Cities loaded:', newCities.length, 'for', filters.state, filters.country);
+      } else {
+        setCities([]);
+        console.log('Country or state not found');
       }
+
+      // Reset city when state changes
       setFilters({ ...filters, city: '' });
     } else {
       setCities([]);
-      setFilters({ ...filters, city: '' });
+      if (filters.city) {
+        setFilters({ ...filters, city: '' });
+      }
     }
-  }, [filters.state, filters.country, states]);
+  }, [filters.state, filters.country, states, countries]);
 
   const countryOptions = countries.map((country) => ({
     label: country.name,
@@ -133,6 +148,9 @@ const LocationFilter: React.FC<Props> = ({ filters, setFilters }) => {
           placeholder="Select City"
           isDisabled={!filters.state}
         />
+        {filters.state && cities.length === 0 && (
+          <p className="text-xs text-gray-500 mt-1">No cities found for this state</p>
+        )}
       </div>
     </div>
   );
