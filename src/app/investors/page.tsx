@@ -17,7 +17,12 @@ type Filters = {
   pastInvestment: string[]; // Added pastInvestment to the filters
 };
 
-// Updated Investor type to match Prisma structure
+type Pipeline = {
+  id: string;
+  title: string;
+  status: string;
+};
+
 type Investor = {
   id: string;
   name: string;
@@ -26,7 +31,7 @@ type Investor = {
   phone?: string;
   title?: string;
   social_links?: { [key: string]: string };
-  pipelines?: any[];
+  pipelines?: Pipeline[]; // specify the type of each pipeline here
   address?: {
     id: string;
     city: string;

@@ -3,6 +3,17 @@
 import React, { useEffect, useState } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { getApiUrl } from '@lib/api';
+import Image from 'next/image'; // Import next/image
+
+type SocialLinks = {
+  [key: string]: string;
+};
+
+type Pipeline = {
+  id: string;
+  title: string;
+  status: string;
+};
 
 type Investor = {
   id: string;
@@ -11,8 +22,8 @@ type Investor = {
   website?: string;
   phone?: string;
   title?: string;
-  social_links?: { [key: string]: string };
-  pipelines?: any[];
+  social_links?: SocialLinks;
+  pipelines?: Pipeline[];
   address?: {
     id: string;
     city: string;
@@ -58,16 +69,16 @@ const InvestorCard: React.FC<{ investor: Investor }> = ({ investor }) => {
   const { user } = useUser();
   const [shortlisted, setShortlisted] = useState(false);
   const [loading, setLoading] = useState(false);
-  
+
   useEffect(() => {
     const fetchShortlist = async () => {
       if (!user?.id) return;
 
       try {
         const res = await fetch(getApiUrl(`/api/shortlists/${user.id}`));
-        const data = await res.json();
+        const data: { investor: { id: string } }[] = await res.json(); // Type data correctly
 
-        const isShortlisted = data.some((entry: any) => entry.investor.id === investor.id);
+        const isShortlisted = data.some((entry) => entry.investor.id === investor.id);
         setShortlisted(isShortlisted);
       } catch (error) {
         console.error('Error fetching shortlists:', error);
@@ -146,10 +157,12 @@ const InvestorCard: React.FC<{ investor: Investor }> = ({ investor }) => {
 
   return (
     <div className="bg-gradient-to-br from-violet-50 to-white border border-purple-100 rounded-xl shadow-md hover:shadow-lg transition-all p-6 mb-6 flex flex-row items-start">
-      <img
+      <Image
         src={investor.avatar || "/avatar.jpeg"}
         alt={investor.name}
-        className="w-20 h-20 rounded-full border-2 border-purple-300 object-cover shadow mr-6 flex-shrink-0"
+        width={80}
+        height={80}
+        className="rounded-full border-2 border-purple-300 object-cover shadow mr-6 flex-shrink-0"
       />
       <div className="flex flex-col flex-1 min-w-0">
         <div className="mb-4">

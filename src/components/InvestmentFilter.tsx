@@ -123,7 +123,7 @@ const clearFilterState = (type: string) => {
           onChange={(selected) => {
             setInvestmentFilters({
               ...investmentFilters,
-              investmentStage: selected ? selected.map((s: { value: string }) => s.value) : [],
+              investmentStage: Array.isArray(selected) ? selected.map((s: { value: string }) => s.value) : [],
             });
           }}
           onInputChange={(search) => handleSearch(search, 'investmentStages')}
@@ -143,7 +143,7 @@ const clearFilterState = (type: string) => {
           onChange={(selected) => {
             setInvestmentFilters({
               ...investmentFilters,
-              investmentFocus: selected ? selected.map((s: { value: string }) => s.value) : [],
+              investmentFocus: Array.isArray(selected) ? selected.map((s: { value: string }) => s.value) : [],
             });
           }}
           onInputChange={(search) => handleSearch(search, 'investmentFocuses')}
@@ -163,7 +163,7 @@ const clearFilterState = (type: string) => {
           onChange={(selected) => {
             setInvestmentFilters({
               ...investmentFilters,
-              investmentType: selected ? selected.map((s: { value: string }) => s.value) : [],
+              investmentType: Array.isArray(selected) ? selected.map((s: { value: string }) => s.value) : [],
             });
           }}
           onInputChange={(search) => handleSearch(search, 'investmentTypes')}
@@ -183,7 +183,7 @@ const clearFilterState = (type: string) => {
           onChange={(selected) => {
             setInvestmentFilters({
               ...investmentFilters,
-              pastInvestment: selected ? selected.map((s: { value: string }) => s.value) : [],
+              pastInvestment: Array.isArray(selected) ? selected.map((s: { value: string }) => s.value) : [],
             });
           }}
           onInputChange={(search) => handleSearch(search, 'pastInvestments')}

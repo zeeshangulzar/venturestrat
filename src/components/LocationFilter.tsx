@@ -4,6 +4,12 @@ import React, { useEffect, useState } from 'react';
 import { Country, State, City } from 'country-state-city';
 import ClientSelect from './ClientSelect';
 
+// Define the type for the select options
+type SelectOption = {
+  label: string;
+  value: string;
+};
+
 type Props = {
   filters: {
     country: string;
@@ -26,7 +32,6 @@ const LocationFilter: React.FC<Props> = ({ filters, setFilters }) => {
   // Update states based on selected country name
   useEffect(() => {
     if (filters.country) {
-      // Find the country object that matches the country name
       const selectedCountry = countries.find(
         (country) => country.name === filters.country
       );
@@ -36,7 +41,6 @@ const LocationFilter: React.FC<Props> = ({ filters, setFilters }) => {
         setStates(newStates);
       }
 
-      // Reset state and city when country changes
       setFilters({ ...filters, state: '', city: '' });
       setCities([]);
     } else {
@@ -49,22 +53,16 @@ const LocationFilter: React.FC<Props> = ({ filters, setFilters }) => {
   // Update cities based on selected state and country
   useEffect(() => {
     if (filters.state && filters.country) {
-      // Find the country object that matches the country name
       const selectedCountry = countries.find((country) => country.name === filters.country);
-      // Find the state object that matches the state name
       const selectedState = states.find((state) => state.name === filters.state);
 
       if (selectedCountry && selectedState) {
-        // Use country ISO code and state ISO code for getting cities
         const newCities = City.getCitiesOfState(selectedCountry.isoCode, selectedState.isoCode);
         setCities(newCities);
-        console.log('Cities loaded:', newCities.length, 'for', filters.state, filters.country);
       } else {
         setCities([]);
-        console.log('Country or state not found');
       }
 
-      // Reset city when state changes
       setFilters({ ...filters, city: '' });
     } else {
       setCities([]);
@@ -89,6 +87,18 @@ const LocationFilter: React.FC<Props> = ({ filters, setFilters }) => {
     value: city.name,
   }));
 
+  const handleSelectChange = (
+    selected: SelectOption | null, 
+    type: 'country' | 'state' | 'city'
+  ) => {
+    setFilters({
+      ...filters,
+      [type]: selected ? selected.value : '',
+      ...(type === 'country' && { state: '', city: '' }), // Reset state and city if country changes
+      ...(type === 'state' && { city: '' }), // Reset city if state changes
+    });
+  };
+
   return (
     <div className="flex flex-col sm:flex-row gap-4">
       {/* Country */}
@@ -97,14 +107,7 @@ const LocationFilter: React.FC<Props> = ({ filters, setFilters }) => {
         <ClientSelect
           options={countryOptions}
           value={filters.country ? { label: filters.country, value: filters.country } : null}
-          onChange={(selected) => {
-            setFilters({
-              ...filters,
-              country: selected ? selected.value : '',
-              state: '',
-              city: '',
-            });
-          }}
+          onChange={(selected) => handleSelectChange(selected as SelectOption | null, 'country')} // Type assertion here
           className="mt-2"
           classNamePrefix="react-select"
           placeholder="Select Country"
@@ -117,13 +120,7 @@ const LocationFilter: React.FC<Props> = ({ filters, setFilters }) => {
         <ClientSelect
           options={stateOptions}
           value={filters.state ? { label: filters.state, value: filters.state } : null}
-          onChange={(selected) => {
-            setFilters({
-              ...filters,
-              state: selected ? selected.value : '',
-              city: '',
-            });
-          }}
+          onChange={(selected) => handleSelectChange(selected as SelectOption | null, 'state')} // Type assertion here
           className="mt-2"
           classNamePrefix="react-select"
           placeholder="Select State"
@@ -137,12 +134,7 @@ const LocationFilter: React.FC<Props> = ({ filters, setFilters }) => {
         <ClientSelect
           options={cityOptions}
           value={filters.city ? { label: filters.city, value: filters.city } : null}
-          onChange={(selected) => {
-            setFilters({
-              ...filters,
-              city: selected ? selected.value : '',
-            });
-          }}
+          onChange={(selected) => handleSelectChange(selected as SelectOption | null, 'city')}
           className="mt-2"
           classNamePrefix="react-select"
           placeholder="Select City"
