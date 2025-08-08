@@ -6,7 +6,7 @@ export default function Home() {
   return (
     <div className="flex min-h-screen bg-gray-50">
 
-      <div className="flex-1 p-8 bg-white">
+      <div className="flex-1 bg-white">
         <SignedIn>
           <h1 className="text-3xl font-bold text-gray-800 mb-4">
             Welcome to the Investor Directory!

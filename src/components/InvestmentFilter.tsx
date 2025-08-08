@@ -112,9 +112,9 @@ const clearFilterState = (type: string) => {
   const pastInvestmentOptions: FilterOption[] = pastInvestment;
 
   return (
-    <div className="flex flex-wrap gap-6 mb-10">
+    <div className="flex flex-wrap gap-6">
       {/* Investment Stage Filter */}
-      <div className="mb-4 w-64">
+      <div className="w-64">
         <label className="block text-sm font-medium text-gray-700">Investment Stage</label>
         <ClientSelect
           isMulti
@@ -134,7 +134,7 @@ const clearFilterState = (type: string) => {
       </div>
 
       {/* Investment Focus Filter */}
-      <div className="mb-4 w-64">
+      <div className="w-64">
         <label className="block text-sm font-medium text-gray-700">Investment Focus</label>
         <ClientSelect
           isMulti
@@ -154,7 +154,7 @@ const clearFilterState = (type: string) => {
       </div>
 
       {/* Investment Type Filter */}
-      <div className="mb-4 w-64">
+      <div className="w-64">
         <label className="block text-sm font-medium text-gray-700">Investment Type</label>
         <ClientSelect
           isMulti
@@ -174,7 +174,7 @@ const clearFilterState = (type: string) => {
       </div>
 
       {/* Past Investment Filter */}
-      <div className="mb-4 w-64">
+      <div className="w-64">
         <label className="block text-sm font-medium text-gray-700">Past Investment</label>
         <ClientSelect
           isMulti
