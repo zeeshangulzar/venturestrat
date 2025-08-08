@@ -3,12 +3,6 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useClerk } from '@clerk/nextjs';
-import {
-  FolderIcon,
-  QuestionMarkCircleIcon,
-  ArrowRightOnRectangleIcon,
-  CogIcon,
-} from '@heroicons/react/24/outline';
 
 // Import custom icons
 import HomeIcon from './icons/HomeIcon';

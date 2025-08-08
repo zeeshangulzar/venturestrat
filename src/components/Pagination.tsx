@@ -1,6 +1,10 @@
-// components/Pagination.tsx
 import React from 'react';
-import ClientSelect from './ClientSelect';
+import Select, { ActionMeta, SingleValue } from 'react-select';
+
+type OptionType = {
+  value: number;
+  label: string;
+};
 
 type PaginationProps = {
   currentPage: number;
@@ -11,23 +15,30 @@ type PaginationProps = {
   totalItems: number;
 };
 
-const Pagination: React.FC<PaginationProps> = ({ currentPage, setCurrentPage, itemsPerPage, setItemsPerPage, totalPages, totalItems }) => {
-  const handleNext = () => {
-    setCurrentPage((prevPage) => prevPage + 1);
-  };
-
-  const handlePrev = () => {
-    if (currentPage > 1) {
-      setCurrentPage((prevPage) => prevPage - 1);
-    }
-  };
-
+const Pagination: React.FC<PaginationProps> = ({
+  currentPage,
+  setCurrentPage,
+  itemsPerPage,
+  setItemsPerPage,
+  totalPages,
+  totalItems,
+}) => {
   // Options for the items per page dropdown
-  const itemsPerPageOptions = [
+  const itemsPerPageOptions: OptionType[] = [
     { value: 20, label: '20 Per Page' },
     { value: 50, label: '50 Per Page' },
     { value: 100, label: '100 Per Page' },
   ];
+
+  // Handle select change with proper typing
+  const handleItemsPerPageChange = (
+    selected: SingleValue<OptionType>,
+    actionMeta: ActionMeta<OptionType>
+  ) => {
+    if (selected && selected.value) {
+      setItemsPerPage(selected.value);
+    }
+  };
 
   return (
     <div className="w-full bg-white border-t border-b border-[#EDEEEF] px-6 py-4">
@@ -53,15 +64,11 @@ const Pagination: React.FC<PaginationProps> = ({ currentPage, setCurrentPage, it
 
           {/* Per Page Dropdown */}
           <div className="w-32">
-            <ClientSelect
+            <Select<OptionType>
               isMulti={false}
               options={itemsPerPageOptions}
               value={itemsPerPageOptions.find(option => option.value === itemsPerPage)}
-              onChange={(selected: any) => {
-                if (selected && !Array.isArray(selected) && selected.value) {
-                  setItemsPerPage(selected.value);
-                }
-              }}
+              onChange={handleItemsPerPageChange}
               classNamePrefix="react-select"
               placeholder="Select..."
               isSearchable={false}
