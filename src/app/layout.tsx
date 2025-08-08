@@ -1,13 +1,12 @@
-// src/app/layout.tsx
 import Link from 'next/link';
 import Sidebar from '@components/Sidebar';
 import { ClerkProvider, SignedIn, SignedOut, UserButton, SignInButton } from '@clerk/nextjs';
-import { Geist, Geist_Mono } from 'next/font/google';
+import { Manrope, Geist_Mono } from 'next/font/google';
 
 import './globals.css';
 
-const geistSans = Geist({
-  variable: '--font-geist-sans',
+const manrope = Manrope({
+  variable: '--font-manrope',
   subsets: ['latin'],
 });
 
@@ -25,16 +24,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <ClerkProvider>
       <html lang="en">
-        <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <body className={`${manrope.variable} ${geistMono.variable} antialiased`}>
           <div className="flex min-h-screen bg-gray-50">
             {/* Sidebar */}
             <SignedIn>
-              <Sidebar /> {/* Sidebar is part of the layout */}
+              <div className="hidden lg:block">
+                <Sidebar /> {/* Sidebar is part of the layout */}
+              </div>
             </SignedIn>
 
             {/* Main Content Area */}
-            <div className="flex-1 p-8 bg-white">
-              <header className="flex justify-between items-center p-4 gap-4 h-16 border-b bg-white">
+            <div className="flex-1 bg-white">
+              <header className="flex justify-between items-center p-4 gap-4 h-16 border-b border-[#EDEEEF]">
                 <div>
                   <Link href="/" className="text-lg font-bold text-gray-800">
                     Investor Directory
