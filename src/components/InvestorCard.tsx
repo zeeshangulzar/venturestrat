@@ -2,17 +2,21 @@
 
 import React, { useEffect, useState } from 'react';
 import { useUser } from '@clerk/nextjs';
+import { useRouter } from 'next/navigation';
 import { getApiUrl } from '@lib/api';
+import InvestorHeader from '@components/InvestorCardHeader';
 
-type SocialLinks = {
-  [key: string]: string;
-};
+import {
+  PhoneIcon,
+  GlobeAltIcon,
+  EnvelopeIcon,
+  MapPinIcon,
+  CheckBadgeIcon,
+} from '@heroicons/react/24/outline';
 
-type Pipeline = {
-  id: string;
-  title: string;
-  status: string;
-};
+type SocialLinks = { [key: string]: string };
+
+type Pipeline = { id: string; title: string; status: string };
 
 type Investor = {
   id: string;
@@ -23,233 +27,200 @@ type Investor = {
   title?: string;
   social_links?: SocialLinks;
   pipelines?: Pipeline[];
-  address?: {
-    id: string;
-    city: string;
-    state: string;
-    country: string;
-  };
-  company?: {
-    id: string;
-    title: string;
-  };
-  emails: Array<{
-    id: string;
-    email: string;
-    status: string;
-  }>;
-  investorTypes: Array<{
-    investorType: {
-      id: string;
-      title: string;
-    };
-  }>;
-  stages: Array<{
-    stage: {
-      id: string;
-      title: string;
-    };
-  }>;
-  markets: Array<{
-    market: {
-      id: string;
-      title: string;
-    };
-  }>;
-  pastInvestments: Array<{
-    pastInvestment: {
-      id: string;
-      title: string;
-    };
-  }>;
+  address?: { id: string; city: string; state: string; country: string };
+  company?: { id: string; title: string };
+  emails: Array<{ id: string; email: string; status: string }>;
+  investorTypes: Array<{ investorType: { id: string; title: string } }>;
+  stages: Array<{ stage: { id: string; title: string } }>;
+  markets: Array<{ market: { id: string; title: string } }>;
+  pastInvestments: Array<{ pastInvestment: { id: string; title: string } }>;
 };
 
 const InvestorCard: React.FC<{ investor: Investor }> = ({ investor }) => {
   const { user } = useUser();
+  const router = useRouter();
   const [shortlisted, setShortlisted] = useState(false);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const fetchShortlist = async () => {
       if (!user?.id) return;
-
       try {
         const res = await fetch(getApiUrl(`/api/shortlists/${user.id}`));
-        const data: { investor: { id: string } }[] = await res.json(); // Type data correctly
-
+        const data: { investor: { id: string } }[] = await res.json();
         const isShortlisted = data.some((entry) => entry.investor.id === investor.id);
         setShortlisted(isShortlisted);
       } catch (error) {
         console.error('Error fetching shortlists:', error);
       }
     };
-
     fetchShortlist();
   }, [user, investor.id]);
 
-  const handleShortlist = async () => {
+  const handleCardClick = () => {
+    router.push(`/investors/${investor.id}`);
+  };
+
+  const handleShortlist = async (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card click when clicking the button
     if (!user?.id || !user.emailAddresses[0]?.emailAddress) return;
-
     setLoading(true);
-
     try {
       const res = await fetch(getApiUrl('/api/shortlist'), {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId: user.id,
           email: user.emailAddresses[0].emailAddress,
           investorId: investor.id,
         }),
       });
-
-      if (!res.ok) {
-        const error = await res.json();
-        console.error('Shortlist error:', error.message || 'Unknown error');
-      } else {
-        setShortlisted(true);
-      }
-    } catch (error) {
-      console.error('Error shortlisting investor:', error);
+      if (res.ok) setShortlisted(true);
+      else console.error('Shortlist error:', (await res.json()).message || 'Unknown error');
+    } catch (e) {
+      console.error('Error shortlisting investor:', e);
     }
-
     setLoading(false);
   };
 
-  // Helper functions to extract data from nested structures
+  // helpers
   const getInvestmentStages = () => {
-    if (!investor.stages || investor.stages.length === 0) return 'Not available';
-    return investor.stages.map(item => item.stage.title).join(', ');
+    if (!investor.stages?.length) return 'Not available';
+    const stages = investor.stages.map((s) => s.stage.title);
+    const displayStages = stages.slice(0, 1);
+    return displayStages.join(', ');
   };
 
-  const getInvestmentFocus = () => {
-    if (!investor.markets || investor.markets.length === 0) return 'Not available';
-    return investor.markets.map(item => item.market.title).join(', ');
-  };
+  const getInvestorTypes = () =>
+    investor.investorTypes?.length
+      ? investor.investorTypes.map((i) => i.investorType.title).join(', ')
+      : 'Not available';
 
-  const getInvestorTypes = () => {
-    if (!investor.investorTypes || investor.investorTypes.length === 0) return 'Not available';
-    return investor.investorTypes.map(item => item.investorType.title).join(', ');
-  };
-
-  const getPastInvestments = () => {
-    if (!investor.pastInvestments || investor.pastInvestments.length === 0) return 'No previous investments available';
-    return investor.pastInvestments.map(item => item.pastInvestment.title).join(', ');
-  };
-
-  const getPrimaryEmail = () => {
-    if (!investor.emails || investor.emails.length === 0) return 'No email available';
-    return investor.emails[0].email;
-  };
+  const getPrimaryEmail = () =>
+    investor.emails?.length ? investor.emails[0].email : 'No email available';
 
   const getLocation = () => {
     if (!investor.address) return 'Location not available';
     const { city, state, country } = investor.address;
-    return `${city}, ${state}, ${country}`;
+    return [city, state, country].filter(Boolean).join(', ');
   };
 
-  const getCompanyName = () => {
-    return investor.company?.title || 'Company not specified';
+  const domainFromUrl = (url?: string) => {
+    if (!url) return '';
+    try {
+      const u = new URL(url);
+      return u.hostname.replace(/^www\./, '');
+    } catch {
+      return url;
+    }
   };
+
+  const verified = investor.emails?.some(email => email.status === 'VALID') ?? false;
+
+  // Get investor type chips (limit to 3 for clean display)
+  const investorTypeChips = investor.investorTypes?.slice(0, 3).map((i) => i.investorType.title) ?? [];
 
   return (
-    <div className="bg-gradient-to-br from-violet-50 to-white border border-purple-100 rounded-xl shadow-md hover:shadow-lg transition-all p-6 mb-6 flex flex-row items-start">
-      <div className="flex flex-col flex-1 min-w-0">
-        <div className="mb-4">
-          <h2 className="text-xl font-semibold text-purple-800">{investor.name}</h2>
-          {investor.title && (
-            <p className="text-sm text-purple-600 font-medium">{investor.title}</p>
-          )}
-          <p className="text-sm text-gray-600">{getLocation()}</p>
-          <p className="text-sm text-gray-600">{getCompanyName()}</p>
-        </div>
+    <div 
+      className="group w-full rounded-xl border border-slate-200 bg-white shadow-sm transition-all duration-200 hover:shadow-md hover:border-slate-300 cursor-pointer"
+      onClick={handleCardClick}
+    >
+      <div className="flex flex-col gap-4 p-4 lg:flex-row lg:items-center lg:justify-between lg:p-6">
+        {/* Column 1: Identity */}
+        <div className="flex min-w-0 flex-1 items-start gap-4">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2 mb-1">
+              <InvestorHeader
+                name={investor.name}
+                verified={verified}
+                social_links={investor.social_links}
+              />
+            </div>
 
-        <div className="space-y-2 text-sm text-gray-700 mb-4">
-          {investor.phone && (
-            <p><span className="font-medium text-purple-700">Phone:</span> {investor.phone}</p>
-          )}
-          <p>
-            <span className="font-medium text-purple-700">Email:</span>{' '}
-            <a href={`mailto:${getPrimaryEmail()}`} className="text-blue-600 hover:underline">
-              {getPrimaryEmail()}
-            </a>
-          </p>
-        </div>
+            {investor.title && (
+              <p className="text-sm font-normal text-slate-600 leading-6 mb-3 font-manrope">{investor.title}</p>
+            )}
 
-        {/* Investment Information */}
-        <div className="space-y-2 text-sm text-gray-700 mb-4">
-          <p>
-            <span className="font-medium text-purple-700">Investment Stage:</span>{' '}
-            <span className="text-gray-600">{getInvestmentStages()}</span>
-          </p>
-          <p>
-            <span className="font-medium text-purple-700">Investment Focus:</span>{' '}
-            <span className="text-gray-600">{getInvestmentFocus()}</span>
-          </p>
-          <p>
-            <span className="font-medium text-purple-700">Investor Type:</span>{' '}
-            <span className="text-gray-600">{getInvestorTypes()}</span>
-          </p>
-        </div>
-
-        {/* Previous Investments */}
-        <div className="text-sm text-gray-700 mb-4">
-          <p>
-            <span className="font-medium text-purple-700">Previous Investments:</span>{' '}
-            <span className="text-gray-600">{getPastInvestments()}</span>
-          </p>
-        </div>
-
-        {/* Social Links */}
-        {investor.social_links && Object.keys(investor.social_links).length > 0 && (
-          <div className="flex flex-wrap gap-4 mb-4">
-            <span className="text-sm font-medium text-purple-700">Social Links:</span>
-            {Object.entries(investor.social_links).map(([key, url]) => (
-              <a
-                key={key}
-                href={url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-blue-600 hover:text-blue-800 hover:underline"
-              >
-                {key.charAt(0).toUpperCase() + key.slice(1)}
-              </a>
-            ))}
+            <div className="flex flex-wrap gap-2">
+              {investorTypeChips.map((type) => (
+                <span
+                  key={type}
+                  className="inline-flex items-center justify-center px-2.5 py-1.5 rounded-full bg-blue-50 text-xs font-medium text-slate-600 leading-4 font-manrope"
+                >
+                  {type}
+                </span>
+              ))}
+            </div>
           </div>
-        )}
+        </div>
 
-        {/* Website Link */}
-        {investor.website && (
-          <div className="mb-4">
+        {/* Column divider (hidden on mobile) */}
+        <div className="hidden lg:block w-px h-16 bg-slate-200 mx-6" />
+
+        {/* Column 2: Contact */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-slate-800 lg:max-w-md">
+          {investor.phone && (
+            <div className="flex items-center gap-2">
+              <PhoneIcon className="h-5 w-5 text-slate-500 flex-shrink-0" />
+              <span className="text-sm font-normal text-slate-800 truncate font-manrope">{investor.phone}</span>
+            </div>
+          )}
+
+          <div className="flex items-center gap-2">
+            <MapPinIcon className="h-5 w-5 text-slate-500 flex-shrink-0" />
+            <span className="text-sm font-normal text-slate-800 truncate font-manrope">{getLocation()}</span>
+          </div>
+
+          {investor.website && (
             <a
               href={investor.website}
               target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm text-blue-600 hover:text-blue-800 hover:underline"
+              rel="noreferrer"
+              className="flex items-center gap-2 hover:underline group-hover:text-blue-600 transition-colors"
+              onClick={(e) => e.stopPropagation()}
             >
-              Visit Website →
+              <GlobeAltIcon className="h-5 w-5 text-slate-500 flex-shrink-0" />
+              <span className="text-sm font-normal text-slate-800 truncate font-manrope">{domainFromUrl(investor.website)}</span>
             </a>
-          </div>
-        )}
+          )}
 
-        {/* Shortlist Button */}
-        {user && (
-          <div className="mt-auto pt-4">
+          <a 
+            href={`mailto:${getPrimaryEmail()}`} 
+            className="flex items-center gap-2 hover:underline group-hover:text-blue-600 transition-colors"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <EnvelopeIcon className="h-5 w-5 text-slate-500 flex-shrink-0" />
+            <span className="text-sm font-normal text-slate-800 truncate font-manrope">{getPrimaryEmail()}</span>
+          </a>
+        </div>
+
+        {/* Column divider (hidden on mobile) */}
+        <div className="hidden lg:block w-px h-16 bg-slate-200 mx-6" />
+
+        {/* Column 3: Stage + Button */}
+        <div className="flex flex-col items-start gap-3 lg:w-auto lg:items-end">
+          <div className="w-full lg:w-auto">
+            <p className="text-sm font-semibold text-slate-900 mb-1 font-manrope">Investment Stage</p>
+            <div className="inline-flex rounded-full px-3 py-1 text-sm font-medium text-slate-700 font-manrope">
+              {getInvestmentStages()}
+            </div>
+          </div>
+
+          {user && (
             <button
               disabled={shortlisted || loading}
               onClick={handleShortlist}
-              className={`px-4 py-2 rounded-md text-white transition-all duration-200 text-sm font-medium ${
+              className={`inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-medium text-white transition-all duration-200 ${
                 shortlisted
-                  ? 'bg-green-500 cursor-not-allowed'
-                  : 'bg-purple-600 hover:bg-purple-700 active:bg-purple-800'
-              }`}
+                  ? 'bg-emerald-600 hover:bg-emerald-700'
+                  : 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800'
+              } disabled:opacity-50 disabled:cursor-not-allowed`}
+              title={shortlisted ? 'Already targeted' : 'Add to target list'}
             >
-              {shortlisted ? '✓ Shortlisted' : loading ? 'Shortlisting...' : 'Add to Shortlist'}
+              {shortlisted ? 'Targeted ✓' : loading ? 'Adding…' : 'Target +'}
             </button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );
