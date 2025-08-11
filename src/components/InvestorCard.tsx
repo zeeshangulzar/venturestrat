@@ -5,14 +5,14 @@ import { useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import { getApiUrl } from '@lib/api';
 import InvestorHeader from '@components/InvestorCardHeader';
+import MapPinIcon from './icons/mapPinIcon';
 
 import {
   PhoneIcon,
   GlobeAltIcon,
   EnvelopeIcon,
-  MapPinIcon,
-  CheckBadgeIcon,
 } from '@heroicons/react/24/outline';
+import EmailIcon from './icons/emailIcon';
 
 type SocialLinks = { [key: string]: string };
 
@@ -27,7 +27,12 @@ type Investor = {
   title?: string;
   social_links?: SocialLinks;
   pipelines?: Pipeline[];
-  address?: { id: string; city: string; state: string; country: string };
+  address?: {
+    id: string;
+    city: string;
+    state: string;
+    country: string;
+  };
   company?: { id: string; title: string };
   emails: Array<{ id: string; email: string; status: string }>;
   investorTypes: Array<{ investorType: { id: string; title: string } }>;
@@ -122,14 +127,14 @@ const InvestorCard: React.FC<{ investor: Investor }> = ({ investor }) => {
 
   return (
     <div 
-      className="group w-full rounded-xl border border-slate-200 bg-white shadow-sm transition-all duration-200 hover:shadow-md hover:border-slate-300 cursor-pointer"
+      className="group w-full rounded-[14px] border border-[#EDEEEF] bg-white shadow-sm transition-all duration-200 hover:shadow-md cursor-pointer"
       onClick={handleCardClick}
     >
-      <div className="flex flex-col gap-4 p-4 lg:flex-row lg:items-center lg:justify-between lg:p-6">
+      <div className="flex flex-col gap-6 lg:flex-row">
         {/* Column 1: Identity */}
-        <div className="flex min-w-0 flex-1 items-start gap-4">
+        <div className="flex min-w-0 flex-1 items-start gap-4 max-w-[400px] pt-4 pb-6 px-4">
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2 mb-1">
+            <div className="flex items-center gap-2">
               <InvestorHeader
                 name={investor.name}
                 verified={verified}
@@ -145,7 +150,7 @@ const InvestorCard: React.FC<{ investor: Investor }> = ({ investor }) => {
               {investorTypeChips.map((type) => (
                 <span
                   key={type}
-                  className="inline-flex items-center justify-center px-2.5 py-1.5 rounded-full bg-blue-50 text-xs font-medium text-slate-600 leading-4 font-manrope"
+                  className="inline-flex items-center justify-center px-[10px] py-[5.5px] gap-[10px] rounded-[40px] bg-[var(--Primary-P20,#F6F9FE)] text-[var(--Dark-D500,#525A68)] font-manrope text-[12px] font-medium leading-normal tracking-[-0.24px]"
                 >
                   {type}
                 </span>
@@ -155,20 +160,24 @@ const InvestorCard: React.FC<{ investor: Investor }> = ({ investor }) => {
         </div>
 
         {/* Column divider (hidden on mobile) */}
-        <div className="hidden lg:block w-px h-16 bg-slate-200 mx-6" />
+        <div className="w-px flex-shrink-0 rounded-[14px] border border-[var(--Dark-D20,#F6F6F7)] bg-white h-[-webkit-fill-available]" />
 
         {/* Column 2: Contact */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-slate-800 lg:max-w-md">
+        <div className="flex flex-col lg:flex-row flex-wrap gap-3 lg:max-w-md pt-4 pb-6 px-4 h-[fit-content]">
           {investor.phone && (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 w-full lg:w-[200px] overflow-hidden">
               <PhoneIcon className="h-5 w-5 text-slate-500 flex-shrink-0" />
-              <span className="text-sm font-normal text-slate-800 truncate font-manrope">{investor.phone}</span>
+              <span className="truncate text-[var(--Dark,#1E293B)] font-manrope text-[14px] font-normal leading-normal tracking-[-0.28px]">
+                {investor.phone}
+              </span>
             </div>
           )}
 
-          <div className="flex items-center gap-2">
-            <MapPinIcon className="h-5 w-5 text-slate-500 flex-shrink-0" />
-            <span className="text-sm font-normal text-slate-800 truncate font-manrope">{getLocation()}</span>
+          <div className="flex items-center gap-2 w-full lg:w-[200px] overflow-hidden">
+            <MapPinIcon className="map-icon flex-shrink-0" />
+            <span className="truncate text-[var(--Dark,#1E293B)] font-manrope text-[14px] font-normal leading-normal tracking-[-0.28px]">
+              {getLocation()}
+            </span>
           </div>
 
           {investor.website && (
@@ -176,50 +185,56 @@ const InvestorCard: React.FC<{ investor: Investor }> = ({ investor }) => {
               href={investor.website}
               target="_blank"
               rel="noreferrer"
-              className="flex items-center gap-2 hover:underline group-hover:text-blue-600 transition-colors"
+              className="flex items-center gap-2 hover:underline group-hover:text-blue-600 transition-colors w-full lg:w-[200px] overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
               <GlobeAltIcon className="h-5 w-5 text-slate-500 flex-shrink-0" />
-              <span className="text-sm font-normal text-slate-800 truncate font-manrope">{domainFromUrl(investor.website)}</span>
+              <span className="truncate text-[var(--Dark,#1E293B)] font-manrope text-[14px] font-normal leading-normal tracking-[-0.28px]">
+                {domainFromUrl(investor.website)}
+              </span>
             </a>
           )}
 
-          <a 
-            href={`mailto:${getPrimaryEmail()}`} 
-            className="flex items-center gap-2 hover:underline group-hover:text-blue-600 transition-colors"
+          <a
+            href={`mailto:${getPrimaryEmail()}`}
+            className="flex items-center gap-2 hover:underline group-hover:text-blue-600 transition-colors w-full lg:w-[200px] overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            <EnvelopeIcon className="h-5 w-5 text-slate-500 flex-shrink-0" />
-            <span className="text-sm font-normal text-slate-800 truncate font-manrope">{getPrimaryEmail()}</span>
+            <EmailIcon className="flex-shrink-0" />
+            <span className="truncate text-[var(--Dark,#1E293B)] font-manrope text-[14px] font-normal leading-normal tracking-[-0.28px]">
+              {getPrimaryEmail()}
+            </span>
           </a>
-        </div>
-
+        </div> 
         {/* Column divider (hidden on mobile) */}
-        <div className="hidden lg:block w-px h-16 bg-slate-200 mx-6" />
+        <div className="w-px flex-shrink-0 rounded-[14px] border border-[var(--Dark-D20,#F6F6F7)] bg-white h-[-webkit-fill-available]" />
 
         {/* Column 3: Stage + Button */}
-        <div className="flex flex-col items-start gap-3 lg:w-auto lg:items-end">
-          <div className="w-full lg:w-auto">
-            <p className="text-sm font-semibold text-slate-900 mb-1 font-manrope">Investment Stage</p>
-            <div className="inline-flex rounded-full px-3 py-1 text-sm font-medium text-slate-700 font-manrope">
-              {getInvestmentStages()}
+        <div className="flex lg:flex-1 flex-col lg:flex-row items-start justify-between gap-4 lg:gap-6 px-4 pt-4 pb-6">
+          <div className="flex items-start gap-3">
+            <div className="w-full lg:w-auto">
+              <p className="text-[var(--Dark,#1E293B)] font-manrope text-[14px] font-semibold leading-normal tracking-[-0.28px] mb-1 font-manrope">Investment Stage</p>
+              <div className="inline-flex rounded-full py-1 text-[var(--Dark-D500,#525A68)] font-manrope text-[14px] font-normal leading-[20px] tracking-[-0.28px]">
+                {getInvestmentStages()}
+              </div>
             </div>
           </div>
-
-          {user && (
-            <button
-              disabled={shortlisted || loading}
-              onClick={handleShortlist}
-              className={`inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-medium text-white transition-all duration-200 ${
-                shortlisted
-                  ? 'bg-emerald-600 hover:bg-emerald-700'
-                  : 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800'
-              } disabled:opacity-50 disabled:cursor-not-allowed`}
-              title={shortlisted ? 'Already targeted' : 'Add to target list'}
-            >
-              {shortlisted ? 'Targeted ✓' : loading ? 'Adding…' : 'Target +'}
-            </button>
-          )}
+          <div className="flex items-start">
+            {user && (
+              <button
+                disabled={shortlisted || loading}
+                onClick={handleShortlist}
+                className={`inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-medium text-white transition-all duration-200 ${
+                  shortlisted
+                    ? 'bg-emerald-600 hover:bg-emerald-700'
+                    : 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800'
+                } disabled:opacity-50 disabled:cursor-not-allowed`}
+                title={shortlisted ? 'Already targeted' : 'Add to target list'}
+              >
+                {shortlisted ? 'Targeted ✓' : loading ? 'Adding…' : 'Target +'}
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>

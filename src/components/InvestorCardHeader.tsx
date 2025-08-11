@@ -1,4 +1,5 @@
 import { CheckBadgeIcon } from '@heroicons/react/24/outline';
+import VerifiedBadgeIcon from './icons/verifiedBadgeIcon';
 
 const SOCIAL_ORDER = ['twitter', 'linkedin', 'facebook'] as const;
 
@@ -51,6 +52,13 @@ function SocialIcon({ type }: { type: (typeof SOCIAL_ORDER)[number] }) {
   }
 }
 
+// Custom Verified Badge Component
+function VerifiedBadge() {
+  return (
+    <VerifiedBadgeIcon/>
+  );
+}
+
 type InvestorCardHeaderProps = {
   name: string;
   verified?: boolean;
@@ -62,12 +70,7 @@ export default function InvestorHeader({ name, verified, social_links }: Investo
     <div className="flex items-center gap-2">
       <h2 className="truncate text-base font-semibold text-slate-900 font-manrope">{name}</h2>
 
-      {verified && (
-        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-200">
-          <CheckBadgeIcon className="h-4 w-4" />
-          Verified
-        </span>
-      )}
+      {verified && <VerifiedBadge />}
 
       {social_links && (
         <div className="ml-2 flex items-center gap-3">

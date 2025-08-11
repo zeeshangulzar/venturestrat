@@ -4,8 +4,7 @@ import { useState, useEffect } from 'react';
 import { getApiUrl } from '@lib/api';
 import InvestorCard from '@components/InvestorCard';
 import Pagination from '@components/Pagination';
-import LocationFilter from '@components/LocationFilter';
-import InvestmentFilter from '@components/InvestmentFilter';
+import InvestorFilter from '@components/InvestorFilter';
 
 type Filters = {
   country: string;
@@ -89,7 +88,6 @@ export default function InvestorsPage() {
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(20);
-  const [searchQuery, setSearchQuery] = useState('');
   const [pagination, setPagination] = useState({
     currentPage: 1,
     totalPages: 1,
@@ -104,8 +102,11 @@ export default function InvestorsPage() {
     investmentStage: [],
     investmentFocus: [],
     investmentType: [],
-    pastInvestment: [], // Ensure pastInvestment is included
+    pastInvestment: [],
   });
+
+  // Separate search query state
+  const [searchQuery, setSearchQuery] = useState('');
 
   const fetchInvestors = async () => {
     setLoading(true);
@@ -137,11 +138,12 @@ export default function InvestorsPage() {
 
   useEffect(() => {
     fetchInvestors();
-  }, [currentPage, searchQuery, filters, itemsPerPage]);
+  }, [currentPage, filters, itemsPerPage, searchQuery]);
 
   return (
     <div className="mx-auto">
-      <div className="flex justify-between items-center mb-6">
+      {/* Pagination Header */}
+      <div className="flex justify-between items-center">
         <Pagination
           currentPage={currentPage}
           setCurrentPage={setCurrentPage}
@@ -152,20 +154,37 @@ export default function InvestorsPage() {
         />
       </div>
 
-      {/* Filter Section */}
-      <div className="flex flex-wrap gap-6">
-        <LocationFilter
-          filters={{ country: filters.country, state: filters.state, city: filters.city }}
-          setFilters={(location) => setFilters({ ...filters, ...location })}
+      {/* Search Input */}
+      {/* <div className="mb-6">
+        <input
+          type="text"
+          placeholder="Search investors..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         />
-        <InvestmentFilter
-          investmentFilters={{
+      </div> */}
+
+
+
+      {/* Investment Filters */}
+      <div>
+        <InvestorFilter
+          filters={{
+            country: filters.country,
+            state: filters.state,
+            city: filters.city,
             investmentStage: filters.investmentStage,
             investmentFocus: filters.investmentFocus,
             investmentType: filters.investmentType,
-            pastInvestment: filters.pastInvestment, // Pass pastInvestment filter
+            pastInvestment: filters.pastInvestment,
           }}
-          setInvestmentFilters={(value) => setFilters({ ...filters, ...value })}
+          setFilters={(newFilters) => 
+            setFilters(prev => ({
+              ...prev,
+              ...newFilters
+            }))
+          }
         />
       </div>
 
@@ -177,7 +196,7 @@ export default function InvestorsPage() {
       )}
 
       {/* Investor Cards */}
-      <div className="flex flex-col p-8 gap-8 bg-[#f5f6fb] rounded-lg">
+      <div className="flex flex-col p-8 gap-8 bg-[#f5f6fb]">
         {loading ? (
           <p>Loading investors...</p>
         ) : error ? (
