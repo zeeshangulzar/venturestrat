@@ -8,12 +8,6 @@ export default function Home() {
 
       <div className="flex-1 bg-white">
         <SignedIn>
-          <h1 className="text-3xl font-bold text-gray-800 mb-4">
-            Welcome to the Investor Directory!
-          </h1>
-          <p className="text-gray-600 mb-6">
-            Explore our list of amazing investors.
-          </p>
           <InvestorsPage />
         </SignedIn>
 

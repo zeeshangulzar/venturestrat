@@ -45,25 +45,25 @@ const Pagination: React.FC<PaginationProps> = ({
       <div className="flex items-center justify-between">
         {/* Left side - Fundraising title */}
         <div className="flex items-center">
-          <h2 className="text-lg font-bold text-gray-900">Fundraising</h2>
+          <h2 className="text-[18px] font-bold text-gray-900 font-bold">Fundraising</h2>
         </div>
 
         {/* Right side - Controls */}
         <div className="flex items-center gap-4">
           {/* Select All */}
-          <div className="flex items-center gap-2 border border-[#EDEEEF] rounded-lg px-3 py-2">
+          {/* <div className="flex items-center gap-2 border border-[#EDEEEF] rounded-lg px-3 py-2">
             <input
               type="checkbox"
               className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
             />
-            <span className="text-sm text-gray-700">Select All</span>
-          </div>
+            <span className="text-[14px] font-manrope font-medium text-gray-700">Select All</span>
+          </div> */}
 
           {/* Profiles Label */}
           <span className="text-sm text-gray-500">Profiles:</span>
 
           {/* Per Page Dropdown */}
-          <div className="w-32">
+          <div className="w-34">
             <Select<OptionType>
               isMulti={false}
               options={itemsPerPageOptions}
@@ -108,24 +108,24 @@ const Pagination: React.FC<PaginationProps> = ({
           </div>
 
           {/* View Label */}
-          <span className="text-sm text-gray-500">View:</span>
+          {/* <span className="text-sm text-gray-500">View:</span> */}
 
           {/* View Mode Selector */}
-          <div className="flex bg-gray-100 rounded-lg p-1">
+          {/* <div className="flex bg-gray-100 rounded-lg p-1"> */}
             {/* Grid View Icon */}
-            <button className="p-2 rounded-md hover:bg-gray-200 transition-colors">
+            {/* <button className="p-2 rounded-md hover:bg-gray-200 transition-colors">
               <svg className="w-5 h-5 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
               </svg>
-            </button>
+            </button> */}
             
             {/* List View Icon (Active) */}
-            <button className="p-2 rounded-md bg-white shadow-sm transition-colors">
+            {/* <button className="p-2 rounded-md bg-white shadow-sm transition-colors">
               <svg className="w-5 h-5 text-gray-700" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
               </svg>
-            </button>
-          </div>
+            </button> */}
+          {/* </div> */}
         </div>
       </div>
     </div>
