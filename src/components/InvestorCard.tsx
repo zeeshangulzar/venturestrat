@@ -127,7 +127,7 @@ const InvestorCard: React.FC<{ investor: Investor }> = ({ investor }) => {
 
   return (
     <div 
-      className="group w-full rounded-[14px] border border-[#EDEEEF] bg-white shadow-sm transition-all duration-200 hover:shadow-md cursor-pointer"
+      className="group w-full rounded-[14px] border border-[#EDEEEF] bg-white shadow-sm transition-all duration-200 hover:shadow-md cursor-pointer min-h-[103px]"
       onClick={handleCardClick}
     >
       <div className="flex flex-col gap-6 lg:flex-row">
@@ -143,7 +143,12 @@ const InvestorCard: React.FC<{ investor: Investor }> = ({ investor }) => {
             </div>
 
             {investor.title && (
-              <p className="text-sm font-normal text-slate-600 leading-6 mb-3 font-manrope">{investor.title}</p>
+              <p
+                className=" text-[var(--Dark-D200,#787F89)] leading-[24px] font-manrope text-[14px] font-normal tracking-[-0.28px] mb-[10px]
+                "
+              >
+                {investor.title}
+              </p>
             )}
 
             <div className="flex flex-wrap gap-2">
@@ -166,7 +171,7 @@ const InvestorCard: React.FC<{ investor: Investor }> = ({ investor }) => {
         <div className="flex flex-col lg:flex-row flex-wrap gap-3 lg:max-w-md pt-4 pb-6 px-4 h-[fit-content]">
           {investor.phone && (
             <div className="flex items-center gap-2 w-full lg:w-[200px] overflow-hidden">
-              <PhoneIcon className="h-5 w-5 text-slate-500 flex-shrink-0" />
+              <PhoneIcon className="h-5 w-5 flex-shrink-0" />
               <span className="truncate text-[var(--Dark,#1E293B)] font-manrope text-[14px] font-normal leading-normal tracking-[-0.28px]">
                 {investor.phone}
               </span>
@@ -188,7 +193,7 @@ const InvestorCard: React.FC<{ investor: Investor }> = ({ investor }) => {
               className="flex items-center gap-2 hover:underline group-hover:text-blue-600 transition-colors w-full lg:w-[200px] overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
-              <GlobeAltIcon className="h-5 w-5 text-slate-500 flex-shrink-0" />
+              <GlobeAltIcon className="h-5 w-5 flex-shrink-0" />
               <span className="truncate text-[var(--Dark,#1E293B)] font-manrope text-[14px] font-normal leading-normal tracking-[-0.28px]">
                 {domainFromUrl(investor.website)}
               </span>

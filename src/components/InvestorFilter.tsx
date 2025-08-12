@@ -57,15 +57,22 @@ function isOption(x: unknown): x is FilterOption {
 
 export default function InvestorFilter({ filters, setFilters }: Props) {
   /** Location state */
-  const countries = Country.getAllCountries(); // no unused setter warning
+  const countries = Country.getAllCountries();
   const [states, setStates] = useState(State.getStatesOfCountry(''));
   const [cities, setCities] = useState(City.getCitiesOfState('', ''));
 
-  /** Investment state */
+  /** Investment state - original options */
+  const [originalInvestmentStages, setOriginalInvestmentStages] = useState<FilterOption[]>([]);
+  const [originalInvestmentFocuses, setOriginalInvestmentFocuses] = useState<FilterOption[]>([]);
+  const [originalInvestmentTypes, setOriginalInvestmentTypes] = useState<FilterOption[]>([]);
+  const [originalPastInvestments, setOriginalPastInvestments] = useState<FilterOption[]>([]);
+
+  /** Investment state - current options (filtered or original) */
   const [investmentStages, setInvestmentStages] = useState<FilterOption[]>([]);
   const [investmentFocuses, setInvestmentFocuses] = useState<FilterOption[]>([]);
   const [investmentTypes, setInvestmentTypes] = useState<FilterOption[]>([]);
   const [pastInvestments, setPastInvestments] = useState<FilterOption[]>([]);
+  
   const [loading, setLoading] = useState(false);
 
   // Abort controller for cleanup
@@ -83,10 +90,22 @@ export default function InvestorFilter({ filters, setFilters }: Props) {
       try {
         const res = await fetch(getApiUrl('/api/investment-filters'));
         const data = await res.json();
-        setInvestmentStages(data.stages.map((v: string) => ({ label: v, value: v })));
-        setInvestmentFocuses(data.investmentFocuses.map((v: string) => ({ label: v, value: v })));
-        setInvestmentTypes(data.investmentTypes.map((v: string) => ({ label: v, value: v })));
-        setPastInvestments(data.pastInvestments.map((v: string) => ({ label: v, value: v })));
+        
+        const stages = data.stages.map((v: string) => ({ label: v, value: v }));
+        const focuses = data.investmentFocuses.map((v: string) => ({ label: v, value: v }));
+        const types = data.investmentTypes.map((v: string) => ({ label: v, value: v }));
+        const investments = data.pastInvestments.map((v: string) => ({ label: v, value: v }));
+        
+        // Set both original and current options
+        setOriginalInvestmentStages(stages);
+        setOriginalInvestmentFocuses(focuses);
+        setOriginalInvestmentTypes(types);
+        setOriginalPastInvestments(investments);
+        
+        setInvestmentStages(stages);
+        setInvestmentFocuses(focuses);
+        setInvestmentTypes(types);
+        setPastInvestments(investments);
       } catch (err) {
         console.error('Error fetching investment filters:', err);
       }
@@ -130,6 +149,8 @@ export default function InvestorFilter({ filters, setFilters }: Props) {
   /** Investment search */
   const handleSearch = debounce(async (search: string, type: string) => {
     if (typeof search !== 'string' || !search.trim()) {
+      // When search is empty, restore original options
+      restoreOriginalOptions(type);
       return;
     }
 
@@ -170,6 +191,14 @@ export default function InvestorFilter({ filters, setFilters }: Props) {
     }
   }, 500);
 
+  // Restore original options when search is cleared or dropdown is opened
+  const restoreOriginalOptions = (type: string) => {
+    if (type === 'pastInvestments') setPastInvestments(originalPastInvestments);
+    else if (type === 'investmentStages') setInvestmentStages(originalInvestmentStages);
+    else if (type === 'investmentFocuses') setInvestmentFocuses(originalInvestmentFocuses);
+    else if (type === 'investmentTypes') setInvestmentTypes(originalInvestmentTypes);
+  };
+
   // Safe input change handler
   const handleInputChange = (inputValue: string, type: string) => {
     if (typeof inputValue === 'string') {
@@ -177,11 +206,14 @@ export default function InvestorFilter({ filters, setFilters }: Props) {
     }
   };
 
-  const clearFilterState = (type: string) => {
-    if (type === 'pastInvestments') setPastInvestments([]);
-    else if (type === 'investmentStages') setInvestmentStages([]);
-    else if (type === 'investmentFocuses') setInvestmentFocuses([]);
-    else if (type === 'investmentTypes') setInvestmentTypes([]);
+  // Handle dropdown open - restore original options
+  const handleMenuOpen = (type: string) => {
+    restoreOriginalOptions(type);
+  };
+
+  // Handle dropdown close - also restore original options to ensure consistency
+  const handleMenuClose = (type: string) => {
+    restoreOriginalOptions(type);
   };
 
   /** Location options */
@@ -213,6 +245,8 @@ export default function InvestorFilter({ filters, setFilters }: Props) {
             </div>
           }
           onInputChange={(s) => handleInputChange(s, 'investmentTypes')}
+          onMenuOpen={() => handleMenuOpen('investmentTypes')}
+          onMenuClose={() => handleMenuClose('investmentTypes')}
           styles={{
             control: (provided) => ({
               ...provided,
@@ -249,6 +283,8 @@ export default function InvestorFilter({ filters, setFilters }: Props) {
             </div>
           }
           onInputChange={(s) => handleInputChange(s, 'investmentFocuses')}
+          onMenuOpen={() => handleMenuOpen('investmentFocuses')}
+          onMenuClose={() => handleMenuClose('investmentFocuses')}
           styles={{
             control: (provided) => ({
               ...provided,
@@ -392,6 +428,8 @@ export default function InvestorFilter({ filters, setFilters }: Props) {
             </div>
           }
           onInputChange={(s) => handleInputChange(s, 'investmentStages')}
+          onMenuOpen={() => handleMenuOpen('investmentStages')}
+          onMenuClose={() => handleMenuClose('investmentStages')}
           styles={{
             control: (provided) => ({
               ...provided,
@@ -428,6 +466,8 @@ export default function InvestorFilter({ filters, setFilters }: Props) {
             })
           }
           onInputChange={(s) => handleInputChange(s, 'pastInvestments')}
+          onMenuOpen={() => handleMenuOpen('pastInvestments')}
+          onMenuClose={() => handleMenuClose('pastInvestments')}
           styles={{
             control: (provided) => ({
               ...provided,

@@ -68,7 +68,19 @@ type InvestorCardHeaderProps = {
 export default function InvestorHeader({ name, verified, social_links }: InvestorCardHeaderProps) {
   return (
     <div className="flex items-center gap-2">
-      <h2 className="truncate text-base font-semibold text-slate-900 font-manrope">{name}</h2>
+      <h2
+        className="
+          truncate
+          text-[var(--Dark,#1E293B)]
+          text-[16px]
+          font-semibold
+          leading-[24px]
+          tracking-[-0.32px]
+          font-manrope
+          "
+      >
+        {name}
+      </h2>
 
       {verified && <VerifiedBadge />}
 
