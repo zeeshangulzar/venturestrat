@@ -106,8 +106,8 @@ const InvestorCard: React.FC<{ investor: Investor }> = ({ investor }) => {
 
   const getLocation = () => {
     if (!investor.address) return 'Location not available';
-    const { city, state, country } = investor.address;
-    return [city, state, country].filter(Boolean).join(', ');
+    const { state, country } = investor.address;
+    return [ state, country].filter(Boolean).join(', ');
   };
 
   const domainFromUrl = (url?: string) => {
@@ -190,7 +190,7 @@ const InvestorCard: React.FC<{ investor: Investor }> = ({ investor }) => {
               href={investor.website}
               target="_blank"
               rel="noreferrer"
-              className="flex items-center gap-2 hover:underline group-hover:text-blue-600 transition-colors w-full lg:w-[200px] overflow-hidden"
+              className="flex items-center gap-2 hover:underlinetransition-colors w-full lg:w-[200px] overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
               <GlobeAltIcon className="h-5 w-5 flex-shrink-0" />

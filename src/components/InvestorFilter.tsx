@@ -7,6 +7,7 @@ import { Country, State, City } from 'country-state-city';
 import ClientSelect from './ClientSelect';
 import React from 'react';
 
+// Import your existing icons
 import InvestorTypeIcon from './icons/investorTypeIcon';
 import InvestorFocusIcon from './icons/investorFocusIcon';
 import InvestorStageIcon from './icons/investorStageIcon';
@@ -14,6 +15,9 @@ import PastInvestmentIcon from './icons/pastInvestmentIcon';
 import MapPinIcon from './icons/mapPinIcon';
 import CountryIcon from './icons/countryIcon';
 import StateIcon from './icons/stateIcon';
+
+// Import the new SearchableDropdown component
+import SearchableDropdown from './SearchableDropdown'; // Adjust path as needed
 
 type FilterOption = { label: string; value: string };
 
@@ -46,6 +50,7 @@ function isOptionArray(x: unknown): x is readonly FilterOption[] {
     )
   );
 }
+
 function isOption(x: unknown): x is FilterOption {
   return (
     !!x &&
@@ -199,23 +204,6 @@ export default function InvestorFilter({ filters, setFilters }: Props) {
     else if (type === 'investmentTypes') setInvestmentTypes(originalInvestmentTypes);
   };
 
-  // Safe input change handler
-  const handleInputChange = (inputValue: string, type: string) => {
-    if (typeof inputValue === 'string') {
-      handleSearch(inputValue, type);
-    }
-  };
-
-  // Handle dropdown open - restore original options
-  const handleMenuOpen = (type: string) => {
-    restoreOriginalOptions(type);
-  };
-
-  // Handle dropdown close - also restore original options to ensure consistency
-  const handleMenuClose = (type: string) => {
-    restoreOriginalOptions(type);
-  };
-
   /** Location options */
   const countryOptions = countries.map((c) => ({ label: c.name, value: c.name }));
   const stateOptions = states.map((s) => ({ label: s.name, value: s.name }));
@@ -225,263 +213,162 @@ export default function InvestorFilter({ filters, setFilters }: Props) {
     <div className="investor-filters flex flex-wrap gap-[11px] bg-white items-center border-b border-[#EDEEEF] py-[24px] px-5">
       <span className="font-manrope font-semibold text-base">Filters:</span>
 
-      {/* Investor Type */}
+      {/* Investor Type - Using SearchableDropdown */}
       <div className="flex-shrink-0 min-w-fit">
-        <ClientSelect
+        <SearchableDropdown
           isMulti
           options={investmentTypes}
-          components={{ IndicatorSeparator: () => null }}
-          value={filters.investmentType.map((v) => ({ label: v, value: v }))}
-          onChange={(sel) =>
-            setFilters({
-              ...filters,
-              investmentType: isOptionArray(sel) ? sel.map((o) => o.value) : [],
-            })
-          }
+          value={filters.investmentType}
+          onChange={(value) => setFilters({
+            ...filters,
+            investmentType: Array.isArray(value) ? value : []
+          })}
           placeholder={
             <div className="flex items-center text-[14px] font-manrope font-medium whitespace-nowrap">
               <InvestorTypeIcon />
               <span className="ml-2">Investor Type</span>
             </div>
           }
-          onInputChange={(s) => handleInputChange(s, 'investmentTypes')}
-          onMenuOpen={() => handleMenuOpen('investmentTypes')}
-          onMenuClose={() => handleMenuClose('investmentTypes')}
-          styles={{
-            control: (provided) => ({
-              ...provided,
-              minWidth: '150px',
-              width: 'auto',
-              border: '1px solid #EDEEEF',
-              borderRadius: '10px',
-            }),
-            container: (provided) => ({
-              ...provided,
-              minWidth: 'fit-content',
-            }),
-          }}
+          onSearch={handleSearch}
+          searchType="investmentTypes"
         />
       </div>
 
-      {/* Investment Focus */}
+      {/* Investment Focus - Using SearchableDropdown */}
       <div className="flex-shrink-0 min-w-fit">
-        <ClientSelect
+        <SearchableDropdown
           isMulti
           options={investmentFocuses}
-          value={filters.investmentFocus.map((v) => ({ label: v, value: v }))}
-          onChange={(sel) =>
-            setFilters({
-              ...filters,
-              investmentFocus: isOptionArray(sel) ? sel.map((o) => o.value) : [],
-            })
-          }
-          components={{ IndicatorSeparator: () => null }}
+          value={filters.investmentFocus}
+          onChange={(value) => setFilters({
+            ...filters,
+            investmentFocus: Array.isArray(value) ? value : []
+          })}
           placeholder={
             <div className="flex items-center text-[14px] font-manrope font-medium whitespace-nowrap">
               <InvestorFocusIcon />
               <span>Investment Focus</span>
             </div>
           }
-          onInputChange={(s) => handleInputChange(s, 'investmentFocuses')}
-          onMenuOpen={() => handleMenuOpen('investmentFocuses')}
-          onMenuClose={() => handleMenuClose('investmentFocuses')}
-          styles={{
-            control: (provided) => ({
-              ...provided,
-              minWidth: '150px',
-              width: 'auto',
-              border: '1px solid #EDEEEF',
-              borderRadius: '10px',
-            }),
-            container: (provided) => ({
-              ...provided,
-              minWidth: 'fit-content',
-            }),
-          }}
+          onSearch={handleSearch}
+          searchType="investmentFocuses"
         />
       </div>
 
-      {/* Country */}
+      {/* Country - Single select with search */}
       <div className="flex-shrink-0 min-w-fit">
-        <ClientSelect
-          options={countryOptions}
-          value={filters.country ? { label: filters.country, value: filters.country } : null}
+        <SearchableDropdown
+          isMulti={false}
+          // options={countryOptions}
+          options={[{ label: 'Select', value: '__ALL__' }, ...countryOptions]}
+          value={filters.country}
+          onChange={(val) => {
+            const v = Array.isArray(val) ? '' : val;
+            if (v === '__ALL__' || !v) {
+              setFilters({ ...filters, country: '', state: '', city: '' });
+            } else {
+              setFilters({ ...filters, country: v, state: '', city: '' });
+            }
+          }}
           placeholder={
             <div className="flex items-center text-[14px] font-manrope font-medium whitespace-nowrap">
               <CountryIcon />
-              <span className="">Country</span>
+              <span className="ml-2">Country</span>
             </div>
           }
-          components={{ IndicatorSeparator: () => null }}
-          onChange={(sel) =>
-            setFilters({
-              ...filters,
-              country: isOption(sel) ? sel.value : '',
-              state: '',
-              city: '',
-            })
-          }
-          styles={{
-            control: (provided) => ({
-              ...provided,
-              minWidth: 'fit-content',
-              width: 'auto',
-              border: '1px solid #EDEEEF',
-              borderRadius: '10px',
-              paddingRight: 0,
-            }),
-            container: (provided) => ({
-              ...provided,
-              minWidth: 'fit-content',
-            }),
-          }}
+          enableSearch={true}
         />
       </div>
 
-      {/* City */}
+      {/* State - Single select with search */}
       <div className="flex-shrink-0 min-w-fit">
-        <ClientSelect
-          options={cityOptions}
-          value={filters.city ? { label: filters.city, value: filters.city } : null}
-          onChange={(sel) =>
-            setFilters({
-              ...filters,
-              city: isOption(sel) ? sel.value : '',
-            })
-          }
-          components={{ IndicatorSeparator: () => null }}
-          placeholder={
-            <div className="flex items-center text-[14px] font-manrope font-medium whitespace-nowrap">
-              <MapPinIcon />
-              <span className="ml-2">City</span>
-            </div>
-          }
-          isDisabled={!filters.state}
-          styles={{
-            control: (provided) => ({
-              ...provided,
-              minWidth: 'fit-content',
-              width: 'auto',
-              border: '1px solid #EDEEEF',
-              borderRadius: '10px',
-            }),
-            container: (provided) => ({
-              ...provided,
-              minWidth: 'fit-content',
-            }),
+        <SearchableDropdown
+          isMulti={false}
+          options={[{ label: 'Select', value: '__ALL__' }, ...stateOptions]}
+          value={filters.state}
+          onChange={(val) => {
+            const v = Array.isArray(val) ? '' : val;
+            if (v === '__ALL__' || !v) {
+              setFilters({ ...filters, state: '', city: '' });
+            } else {
+              setFilters({ ...filters, state: v, city: '' });
+            }
           }}
-        />
-      </div>
-
-      {/* State */}
-      <div className="flex-shrink-0 min-w-fit">
-        <ClientSelect
-          options={stateOptions}
-          value={filters.state ? { label: filters.state, value: filters.state } : null}
-          onChange={(sel) =>
-            setFilters({
-              ...filters,
-              state: isOption(sel) ? sel.value : '',
-              city: '',
-            })
-          }
-          components={{ IndicatorSeparator: () => null }}
           placeholder={
             <div className="flex items-center whitespace-nowrap text-[14px] font-manrope font-medium">
               <StateIcon />
               <span className="ml-2">State Name</span>
             </div>
           }
-          isDisabled={!filters.country}
-          styles={{
-            control: (provided) => ({
-              ...provided,
-              minWidth: 'fit-content',
-              width: 'auto',
-              border: '1px solid #EDEEEF',
-              borderRadius: '10px',
-            }),
-            container: (provided) => ({
-              ...provided,
-              minWidth: 'fit-content',
-            }),
-          }}
+          disabled={!filters.country}
+          enableSearch={true}
         />
       </div>
 
-      {/* Investment Stage */}
+      {/* City - Single select with search */}
       <div className="flex-shrink-0 min-w-fit">
-        <ClientSelect
+        <SearchableDropdown
+          isMulti={false}
+          options={[{ label: 'Select', value: '__ALL__' }, ...cityOptions]}
+          value={filters.city}
+          onChange={(val) => {
+            const v = Array.isArray(val) ? '' : val;
+            if (v === '__ALL__' || !v) {
+              setFilters({ ...filters, city: '' });
+            } else {
+              setFilters({ ...filters, city: v });
+            }
+          }}
+          placeholder={
+            <div className="flex items-center text-[14px] font-manrope font-medium whitespace-nowrap">
+              <MapPinIcon />
+              <span className="ml-2">City</span>
+            </div>
+          }
+          disabled={!filters.state}
+          enableSearch={true}
+        />
+      </div>
+
+      {/* Investment Stage - Using SearchableDropdown */}
+      <div className="flex-shrink-0 min-w-fit">
+        <SearchableDropdown
           isMulti
           options={investmentStages}
-          value={filters.investmentStage.map((v) => ({ label: v, value: v }))}
-          onChange={(sel) =>
-            setFilters({
-              ...filters,
-              investmentStage: isOptionArray(sel) ? sel.map((o) => o.value) : [],
-            })
-          }
-          components={{ IndicatorSeparator: () => null }}
+          value={filters.investmentStage}
+          onChange={(value) => setFilters({
+            ...filters,
+            investmentStage: Array.isArray(value) ? value : []
+          })}
           placeholder={
             <div className="flex items-center text-[14px] font-manrope font-medium whitespace-nowrap">
               <InvestorStageIcon />
               <span className="">Investment Stage</span>
             </div>
           }
-          onInputChange={(s) => handleInputChange(s, 'investmentStages')}
-          onMenuOpen={() => handleMenuOpen('investmentStages')}
-          onMenuClose={() => handleMenuClose('investmentStages')}
-          styles={{
-            control: (provided) => ({
-              ...provided,
-              minWidth: '120px',
-              width: 'auto',
-              border: '1px solid #EDEEEF',
-              borderRadius: '10px',
-            }),
-            container: (provided) => ({
-              ...provided,
-              minWidth: 'fit-content',
-            }),
-          }}
+          onSearch={handleSearch}
+          searchType="investmentStages"
         />
       </div>
 
-      {/* Past Investment */}
+      {/* Past Investment - Using SearchableDropdown */}
       <div className="flex-shrink-0 min-w-fit">
-        <ClientSelect
+        <SearchableDropdown
           isMulti
           options={pastInvestments}
-          value={filters.pastInvestment.map((v) => ({ label: v, value: v }))}
-          components={{ IndicatorSeparator: () => null }}
+          value={filters.pastInvestment}
+          onChange={(value) => setFilters({
+            ...filters,
+            pastInvestment: Array.isArray(value) ? value : []
+          })}
           placeholder={
             <div className="flex items-center text-[14px] font-manrope font-medium whitespace-nowrap">
               <PastInvestmentIcon />
               <span className="">Past Investment</span>
             </div>
           }
-          onChange={(sel) =>
-            setFilters({
-              ...filters,
-              pastInvestment: isOptionArray(sel) ? sel.map((o) => o.value) : [],
-            })
-          }
-          onInputChange={(s) => handleInputChange(s, 'pastInvestments')}
-          onMenuOpen={() => handleMenuOpen('pastInvestments')}
-          onMenuClose={() => handleMenuClose('pastInvestments')}
-          styles={{
-            control: (provided) => ({
-              ...provided,
-              minWidth: '120px',
-              width: 'auto',
-              border: '1px solid #EDEEEF',
-              borderRadius: '10px',
-            }),
-            container: (provided) => ({
-              ...provided,
-              minWidth: 'fit-content',
-            }),
-          }}
+          onSearch={handleSearch}
+          searchType="pastInvestments"
         />
       </div>
     </div>
