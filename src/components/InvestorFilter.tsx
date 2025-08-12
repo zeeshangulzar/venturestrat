@@ -222,7 +222,7 @@ export default function InvestorFilter({ filters, setFilters }: Props) {
   const cityOptions = cities.map((c) => ({ label: c.name, value: c.name }));
 
   return (
-    <div className="flex flex-wrap gap-6 bg-white items-center border-b border-[#EDEEEF] py-[24px] px-6">
+    <div className="investor-filters flex flex-wrap gap-[11px] bg-white items-center border-b border-[#EDEEEF] py-[24px] px-5">
       <span className="font-manrope font-semibold text-base">Filters:</span>
 
       {/* Investor Type */}
@@ -241,7 +241,7 @@ export default function InvestorFilter({ filters, setFilters }: Props) {
           placeholder={
             <div className="flex items-center text-[14px] font-manrope font-medium whitespace-nowrap">
               <InvestorTypeIcon />
-              <span className="ml-1">Investor Type</span>
+              <span className="ml-2">Investor Type</span>
             </div>
           }
           onInputChange={(s) => handleInputChange(s, 'investmentTypes')}
@@ -250,7 +250,7 @@ export default function InvestorFilter({ filters, setFilters }: Props) {
           styles={{
             control: (provided) => ({
               ...provided,
-              minWidth: 'fit-content',
+              minWidth: '150px',
               width: 'auto',
               border: '1px solid #EDEEEF',
               borderRadius: '10px',
@@ -288,7 +288,7 @@ export default function InvestorFilter({ filters, setFilters }: Props) {
           styles={{
             control: (provided) => ({
               ...provided,
-              minWidth: 'fit-content',
+              minWidth: '150px',
               width: 'auto',
               border: '1px solid #EDEEEF',
               borderRadius: '10px',
@@ -309,7 +309,7 @@ export default function InvestorFilter({ filters, setFilters }: Props) {
           placeholder={
             <div className="flex items-center text-[14px] font-manrope font-medium whitespace-nowrap">
               <CountryIcon />
-              <span className="ml-2">Country</span>
+              <span className="">Country</span>
             </div>
           }
           components={{ IndicatorSeparator: () => null }}
@@ -328,6 +328,7 @@ export default function InvestorFilter({ filters, setFilters }: Props) {
               width: 'auto',
               border: '1px solid #EDEEEF',
               borderRadius: '10px',
+              paddingRight: 0,
             }),
             container: (provided) => ({
               ...provided,
@@ -424,7 +425,7 @@ export default function InvestorFilter({ filters, setFilters }: Props) {
           placeholder={
             <div className="flex items-center text-[14px] font-manrope font-medium whitespace-nowrap">
               <InvestorStageIcon />
-              <span className="ml-2">Investment Stage</span>
+              <span className="">Investment Stage</span>
             </div>
           }
           onInputChange={(s) => handleInputChange(s, 'investmentStages')}
@@ -433,7 +434,7 @@ export default function InvestorFilter({ filters, setFilters }: Props) {
           styles={{
             control: (provided) => ({
               ...provided,
-              minWidth: 'fit-content',
+              minWidth: '120px',
               width: 'auto',
               border: '1px solid #EDEEEF',
               borderRadius: '10px',
@@ -456,7 +457,7 @@ export default function InvestorFilter({ filters, setFilters }: Props) {
           placeholder={
             <div className="flex items-center text-[14px] font-manrope font-medium whitespace-nowrap">
               <PastInvestmentIcon />
-              <span className="ml-2">Past Investment</span>
+              <span className="">Past Investment</span>
             </div>
           }
           onChange={(sel) =>
@@ -471,7 +472,7 @@ export default function InvestorFilter({ filters, setFilters }: Props) {
           styles={{
             control: (provided) => ({
               ...provided,
-              minWidth: 'fit-content',
+              minWidth: '120px',
               width: 'auto',
               border: '1px solid #EDEEEF',
               borderRadius: '10px',

@@ -32,3 +32,15 @@ body {
 .font-manrope {
   font-family: var(--font-manrope);
 }
+
+.investor-filters {
+  .css-hlgwow{
+    padding: unset ;
+    padding-left: 2px;
+  }
+
+  .css-1xc3v61-indicatorContainer{
+    padding: unset ;
+    padding-right: 8px ;
+  }
+}

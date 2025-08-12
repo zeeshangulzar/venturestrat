@@ -41,7 +41,7 @@ const Pagination: React.FC<PaginationProps> = ({
   };
 
   return (
-    <div className="w-full bg-white border-t border-b border-[#EDEEEF] px-6 py-4">
+    <div className="w-full bg-white border-t border-b border-[#EDEEEF] px-5 py-4">
       <div className="flex items-center justify-between">
         {/* Left side - Fundraising title */}
         <div className="flex items-center">
@@ -69,6 +69,7 @@ const Pagination: React.FC<PaginationProps> = ({
               options={itemsPerPageOptions}
               value={itemsPerPageOptions.find(option => option.value === itemsPerPage)}
               onChange={handleItemsPerPageChange}
+              components={{ IndicatorSeparator: () => null }}
               classNamePrefix="react-select"
               placeholder="Select..."
               isSearchable={false}
@@ -103,6 +104,7 @@ const Pagination: React.FC<PaginationProps> = ({
                   borderRadius: '0.5rem',
                   boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
                 }),
+                
               }}
             />
           </div>
