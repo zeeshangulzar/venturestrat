@@ -63,7 +63,7 @@ const Pagination: React.FC<PaginationProps> = ({
           <span className="text-sm text-gray-500">Profiles:</span>
 
           {/* Per Page Dropdown */}
-          <div className="w-34">
+          <div className="mn-w-[125px]">
             <Select<OptionType>
               isMulti={false}
               options={itemsPerPageOptions}
@@ -80,6 +80,7 @@ const Pagination: React.FC<PaginationProps> = ({
                   borderRadius: '0.5rem',
                   minHeight: '40px',
                   boxShadow: 'none',
+                  width: 'fit-content',
                   '&:hover': {
                     borderColor: '#9ca3af',
                   },
