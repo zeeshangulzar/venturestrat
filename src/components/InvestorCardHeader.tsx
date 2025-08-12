@@ -4,7 +4,7 @@ import VerifiedBadgeIcon from './icons/verifiedBadgeIcon';
 const SOCIAL_ORDER = ['twitter', 'linkedin', 'facebook'] as const;
 
 function SocialIcon({ type }: { type: (typeof SOCIAL_ORDER)[number] }) {
-  const base = 'h-6 w-6';
+  const base = 'h-5 w-5 sm:h-6 sm:w-6';
   switch (type) {
     case 'twitter':
       return (
@@ -67,25 +67,26 @@ type InvestorCardHeaderProps = {
 
 export default function InvestorHeader({ name, verified, social_links }: InvestorCardHeaderProps) {
   return (
-    <div className="flex items-center gap-2">
-      <h2
-        className="
-          truncate
-          text-[var(--Dark,#1E293B)]
-          text-[16px]
-          font-semibold
-          leading-[24px]
-          tracking-[-0.32px]
-          font-manrope
-          "
-      >
-        {name}
-      </h2>
-
-      {verified && <VerifiedBadge />}
+    <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2 gap-1 w-full">
+      <div className="flex items-center gap-1 sm:gap-2">
+        <h2
+          className="
+            truncate
+            text-[var(--Dark,#1E293B)]
+            text-[14px] sm:text-[16px]
+            font-semibold
+            leading-[20px] sm:leading-[24px]
+            tracking-[-0.28px] sm:tracking-[-0.32px]
+            font-manrope
+            "
+        >
+          {name}
+        </h2>
+        {verified && <VerifiedBadge />}
+      </div>
 
       {social_links && (
-        <div className="ml-2 flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-1 sm:mt-0">
           {SOCIAL_ORDER.map((platform) => {
             const href = social_links[platform];
             if (!href) return null;

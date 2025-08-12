@@ -16,7 +16,7 @@ const Dropdown: React.FC<DropdownProps> = ({ children, isOpen, target, onClose, 
       {isOpen && (
         <>
           {/* Menu */}
-          <div className={`absolute z-50 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg min-w-[250px] max-h-[300px] overflow-hidden ${className}`}>
+          <div className={`absolute z-50 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg min-w-[250px] overflow-hidden ${className}`}>
             {children}
           </div>
           {/* Blanket to close dropdown when clicking outside */}
@@ -74,8 +74,6 @@ const Checkbox = ({ checked }: { checked: boolean }) => (
   </div>
 );
 
-
-
 // Searchable Dropdown Component
 interface SearchableDropdownProps {
   options: { label: string; value: string }[];
@@ -87,7 +85,8 @@ interface SearchableDropdownProps {
   searchType?: string;
   className?: string;
   disabled?: boolean;
-  enableSearch?: boolean; // New prop to enable/disable search functionality
+  enableSearch?: boolean;
+  showApplyButton?: boolean;
 }
 
 const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
@@ -100,12 +99,19 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
   searchType = '',
   className = '',
   disabled = false,
-  enableSearch = true // Default to true for backward compatibility
+  enableSearch = true,
+  showApplyButton = false // Default to false for backward compatibility
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredOptions, setFilteredOptions] = useState(options);
+  const [tempValue, setTempValue] = useState<string | string[]>(value); // Temporary value for apply button mode
   const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Update temp value when actual value changes
+  useEffect(() => {
+    setTempValue(value);
+  }, [value]);
 
   // Update filtered options when options change
   useEffect(() => {
@@ -136,29 +142,62 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
 
   // Handle option selection
   const handleOptionSelect = (selectedOption: { label: string; value: string }) => {
-    if (isMulti) {
-      const currentValues = Array.isArray(value) ? value : [];
-      const isSelected = currentValues.includes(selectedOption.value);
-      
-      if (isSelected) {
-        // Remove from selection
-        const newValues = currentValues.filter(v => v !== selectedOption.value);
-        onChange(newValues);
+    if (showApplyButton) {
+      // In apply button mode, update temp value instead of actual value
+      if (isMulti) {
+        const currentValues = Array.isArray(tempValue) ? tempValue : [];
+        const isSelected = currentValues.includes(selectedOption.value);
+        
+        if (isSelected) {
+          const newValues = currentValues.filter(v => v !== selectedOption.value);
+          setTempValue(newValues);
+        } else {
+          setTempValue([...currentValues, selectedOption.value]);
+        }
       } else {
-        // Add to selection
-        onChange([...currentValues, selectedOption.value]);
+        setTempValue(selectedOption.value);
       }
     } else {
-      onChange(selectedOption.value);
-      setIsOpen(false);
-      setSearchTerm('');
+      if (isMulti) {
+        const currentValues = Array.isArray(value) ? value : [];
+        const isSelected = currentValues.includes(selectedOption.value);
+        
+        if (isSelected) {
+          // Remove from selection
+          const newValues = currentValues.filter(v => v !== selectedOption.value);
+          onChange(newValues);
+        } else {
+          // Add to selection
+          onChange([...currentValues, selectedOption.value]);
+        }
+      } else {
+        onChange(selectedOption.value);
+        setIsOpen(false);
+        setSearchTerm('');
+      }
     }
+  };
+
+  // Handle apply button click
+  const handleApply = () => {
+    onChange(tempValue);
+    setIsOpen(false);
+    setSearchTerm('');
+  };
+
+  // Handle cancel button click
+  const handleCancel = () => {
+    setTempValue(value); // Reset temp value to actual value
+    setIsOpen(false);
+    setSearchTerm('');
   };
 
   // Open dropdown and focus search input
   const handleOpen = () => {
     if (disabled) return;
     setIsOpen(true);
+    setSearchTerm('');
+    if (onSearch && searchType) onSearch('', searchType); // ⟵ restore originals in parent
     setTimeout(() => {
       searchInputRef.current?.focus();
     }, 100);
@@ -166,40 +205,46 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
 
   // Close dropdown and clear search
   const handleClose = () => {
+    if (showApplyButton) {
+      setTempValue(value); // reset temp selection if user didn’t apply
+    }
     setIsOpen(false);
     setSearchTerm('');
+    if (onSearch && searchType) onSearch('', searchType); // ⟵ important
   };
 
   // Get display value
   const getDisplayValue = () => {
+    const displayValue = showApplyButton ? tempValue : value; // ⟵ was wrong before
+
     if (isMulti) {
-      const selectedValues = Array.isArray(value) ? value : [];
+      const selectedValues = Array.isArray(displayValue) ? displayValue : [];
       if (selectedValues.length === 0) return placeholder;
       if (selectedValues.length === 1) {
         const option = options.find(opt => opt.value === selectedValues[0]);
         return option ? (
           <div className="flex items-center text-[14px] font-manrope font-medium whitespace-nowrap">
-            {typeof placeholder === 'object' && React.isValidElement(placeholder) ? 
-              React.cloneElement(placeholder as React.ReactElement) : placeholder}
+            {typeof placeholder === 'object' && React.isValidElement(placeholder)
+              ? React.cloneElement(placeholder as React.ReactElement, {}, option.label)
+              : option.label}
           </div>
         ) : placeholder;
       }
       return (
         <div className="flex items-center text-[14px] font-manrope font-medium whitespace-nowrap">
-          {typeof placeholder === 'object' && React.isValidElement(placeholder) ? 
-            React.cloneElement(placeholder as React.ReactElement, {}, 
-              `${selectedValues.length} selected`) : 
-            `${selectedValues.length} selected`}
+          {typeof placeholder === 'object' && React.isValidElement(placeholder)
+            ? React.cloneElement(placeholder as React.ReactElement, {}, `${selectedValues.length} selected`)
+            : `${selectedValues.length} selected`}
         </div>
       );
     } else {
-      const selectedOption = options.find(opt => opt.value === value);
+      const selectedOption = options.find(opt => opt.value === displayValue);
       if (selectedOption) {
         return (
           <div className="flex items-center text-[14px] font-manrope font-medium whitespace-nowrap">
-            {typeof placeholder === 'object' && React.isValidElement(placeholder) ? 
-              React.cloneElement(placeholder as React.ReactElement, {}, selectedOption.label) : 
-              selectedOption.label}
+            {typeof placeholder === 'object' && React.isValidElement(placeholder)
+              ? React.cloneElement(placeholder as React.ReactElement, {}, selectedOption.label)
+              : selectedOption.label}
           </div>
         );
       }
@@ -209,11 +254,29 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
 
   // Check if option is selected
   const isOptionSelected = (optionValue: string) => {
+    const checkValue = showApplyButton ? tempValue : value;
+    
     if (isMulti) {
-      const currentValues = Array.isArray(value) ? value : [];
+      const currentValues = Array.isArray(checkValue) ? checkValue : [];
       return currentValues.includes(optionValue);
     }
-    return value === optionValue;
+    return checkValue === optionValue;
+  };
+
+  // Check if there are changes to apply
+  const hasChanges = () => {
+    if (!showApplyButton) return false;
+    
+    if (isMulti) {
+      const currentValues = Array.isArray(value) ? value : [];
+      const tempValues = Array.isArray(tempValue) ? tempValue : [];
+      
+      if (currentValues.length !== tempValues.length) return true;
+      return currentValues.some(v => !tempValues.includes(v)) || 
+             tempValues.some(v => !currentValues.includes(v));
+    } else {
+      return value !== tempValue;
+    }
   };
 
   return (
@@ -226,7 +289,7 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
           onClick={handleOpen}
           disabled={disabled}
           className={`
-            flex items-center justify-between w-auto px-2 py-1 
+            flex items-center justify-between w-auto px-3 py-2 
             border border-[#EDEEEF] rounded-[10px] bg-white text-sm font-medium
             hover:border-gray-300 focus:outline-none focus:border-blue-500
             ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
@@ -285,6 +348,25 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
             ))
           )}
         </div>
+
+        {/* Apply/Cancel Buttons - Only show if showApplyButton is true */}
+        {showApplyButton && (
+          <div className="flex gap-2 mt-3 pt-2 border-t border-gray-200">
+            <button
+              onClick={handleApply}
+              disabled={!hasChanges()}
+              className={`
+                w-[236px] h-[30px] flex-shrink-0 text-sm text-white rounded-[10px] transition-colors
+                ${hasChanges()
+                  ? 'bg-[#2563EB] hover:bg-blue-700'
+                  : 'bg-gray-400 cursor-not-allowed'
+                }
+              `}
+            >
+              Apply
+            </button>
+          </div>
+        )}
       </div>
     </Dropdown>
   );

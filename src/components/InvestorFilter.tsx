@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import debounce from 'lodash.debounce';
 import { getApiUrl } from '@lib/api';
 import { Country, State, City } from 'country-state-city';
-import ClientSelect from './ClientSelect';
 import React from 'react';
 
 // Import your existing icons
@@ -16,7 +15,7 @@ import MapPinIcon from './icons/mapPinIcon';
 import CountryIcon from './icons/countryIcon';
 import StateIcon from './icons/stateIcon';
 
-// Import the new SearchableDropdown component
+// Import the updated SearchableDropdown component
 import SearchableDropdown from './SearchableDropdown'; // Adjust path as needed
 
 type FilterOption = { label: string; value: string };
@@ -35,30 +34,6 @@ type Props = {
   filters: InvestorFilters;
   setFilters: (filters: InvestorFilters) => void;
 };
-
-function isOptionArray(x: unknown): x is readonly FilterOption[] {
-  return (
-    Array.isArray(x) &&
-    x.every(
-      (o) =>
-        o &&
-        typeof o === 'object' &&
-        'label' in o &&
-        'value' in o &&
-        typeof (o as { label: unknown }).label === 'string' &&
-        typeof (o as { value: unknown }).value === 'string'
-    )
-  );
-}
-
-function isOption(x: unknown): x is FilterOption {
-  return (
-    !!x &&
-    typeof x === 'object' &&
-    'value' in x &&
-    typeof (x as { value: unknown }).value === 'string'
-  );
-}
 
 export default function InvestorFilter({ filters, setFilters }: Props) {
   /** Location state */
@@ -213,7 +188,7 @@ export default function InvestorFilter({ filters, setFilters }: Props) {
     <div className="investor-filters flex flex-wrap gap-[11px] bg-white items-center border-b border-[#EDEEEF] py-[24px] px-5">
       <span className="font-manrope font-semibold text-base">Filters:</span>
 
-      {/* Investor Type - Using SearchableDropdown */}
+      {/* Investor Type - Using SearchableDropdown with Apply Button */}
       <div className="flex-shrink-0 min-w-fit">
         <SearchableDropdown
           isMulti
@@ -226,15 +201,16 @@ export default function InvestorFilter({ filters, setFilters }: Props) {
           placeholder={
             <div className="flex items-center text-[14px] font-manrope font-medium whitespace-nowrap">
               <InvestorTypeIcon />
-              <span className="ml-2">Investor Type</span>
+              <span className="">Investor Type</span>
             </div>
           }
           onSearch={handleSearch}
           searchType="investmentTypes"
+          showApplyButton={true} // Enable apply button for multi-select
         />
       </div>
 
-      {/* Investment Focus - Using SearchableDropdown */}
+      {/* Investment Focus - Using SearchableDropdown with Apply Button */}
       <div className="flex-shrink-0 min-w-fit">
         <SearchableDropdown
           isMulti
@@ -252,14 +228,14 @@ export default function InvestorFilter({ filters, setFilters }: Props) {
           }
           onSearch={handleSearch}
           searchType="investmentFocuses"
+          showApplyButton={true} // Enable apply button for multi-select
         />
       </div>
 
-      {/* Country - Single select with search */}
+      {/* Country - Single select with immediate change (no apply button needed) */}
       <div className="flex-shrink-0 min-w-fit">
         <SearchableDropdown
           isMulti={false}
-          // options={countryOptions}
           options={[{ label: 'Select', value: '__ALL__' }, ...countryOptions]}
           value={filters.country}
           onChange={(val) => {
@@ -273,14 +249,15 @@ export default function InvestorFilter({ filters, setFilters }: Props) {
           placeholder={
             <div className="flex items-center text-[14px] font-manrope font-medium whitespace-nowrap">
               <CountryIcon />
-              <span className="ml-2">Country</span>
+              <span className="">Country</span>
             </div>
           }
           enableSearch={true}
+          showApplyButton={false} // No apply button for single select
         />
       </div>
 
-      {/* State - Single select with search */}
+      {/* State - Single select with immediate change (no apply button needed) */}
       <div className="flex-shrink-0 min-w-fit">
         <SearchableDropdown
           isMulti={false}
@@ -297,15 +274,16 @@ export default function InvestorFilter({ filters, setFilters }: Props) {
           placeholder={
             <div className="flex items-center whitespace-nowrap text-[14px] font-manrope font-medium">
               <StateIcon />
-              <span className="ml-2">State Name</span>
+              <span className="">State Name</span>
             </div>
           }
           disabled={!filters.country}
           enableSearch={true}
+          showApplyButton={false} // No apply button for single select
         />
       </div>
 
-      {/* City - Single select with search */}
+      {/* City - Single select with immediate change (no apply button needed) */}
       <div className="flex-shrink-0 min-w-fit">
         <SearchableDropdown
           isMulti={false}
@@ -322,15 +300,16 @@ export default function InvestorFilter({ filters, setFilters }: Props) {
           placeholder={
             <div className="flex items-center text-[14px] font-manrope font-medium whitespace-nowrap">
               <MapPinIcon />
-              <span className="ml-2">City</span>
+              <span className="">City</span>
             </div>
           }
           disabled={!filters.state}
           enableSearch={true}
+          showApplyButton={false} // No apply button for single select
         />
       </div>
 
-      {/* Investment Stage - Using SearchableDropdown */}
+      {/* Investment Stage - Using SearchableDropdown with Apply Button */}
       <div className="flex-shrink-0 min-w-fit">
         <SearchableDropdown
           isMulti
@@ -348,10 +327,11 @@ export default function InvestorFilter({ filters, setFilters }: Props) {
           }
           onSearch={handleSearch}
           searchType="investmentStages"
+          showApplyButton={true} // Enable apply button for multi-select
         />
       </div>
 
-      {/* Past Investment - Using SearchableDropdown */}
+      {/* Past Investment - Using SearchableDropdown with Apply Button */}
       <div className="flex-shrink-0 min-w-fit">
         <SearchableDropdown
           isMulti
@@ -369,6 +349,7 @@ export default function InvestorFilter({ filters, setFilters }: Props) {
           }
           onSearch={handleSearch}
           searchType="pastInvestments"
+          showApplyButton={true} // Enable apply button for multi-select
         />
       </div>
     </div>
