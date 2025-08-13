@@ -126,11 +126,34 @@ export default function InvestorFilter({ filters, setFilters }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters.state]);
 
+  // Helper function to merge selected values with search results
+  const mergeSelectedWithOptions = (
+    searchResults: FilterOption[], 
+    selectedValues: string[], 
+    originalOptions: FilterOption[]
+  ): FilterOption[] => {
+    // Create a set of values that are already in search results
+    const existingValues = new Set(searchResults.map(option => option.value));
+    
+    // Find selected options that are not in search results
+    const missingSelectedOptions = selectedValues
+      .filter(value => !existingValues.has(value))
+      .map(value => {
+        // Try to find the option in original options first
+        const originalOption = originalOptions.find(opt => opt.value === value);
+        return originalOption || { label: value, value: value };
+      });
+
+    // Combine missing selected options with search results
+    // Put selected options at the top for better UX
+    return [...missingSelectedOptions, ...searchResults];
+  };
+
   /** Investment search */
   const handleSearch = debounce(async (search: string, type: string) => {
     if (typeof search !== 'string' || !search.trim()) {
-      // When search is empty, restore original options
-      restoreOriginalOptions(type);
+      // When search is empty, restore original options but include selected values
+      restoreOriginalOptionsWithSelected(type);
       return;
     }
 
@@ -146,20 +169,23 @@ export default function InvestorFilter({ filters, setFilters }: Props) {
 
       if (res.ok) {
         const data = await res.json();
+        
         if (type === 'pastInvestments') {
-          setPastInvestments(
-            (data.pastInvestments ?? []).map((v: string) => ({ label: v, value: v }))
-          );
+          const searchResults = (data.pastInvestments ?? []).map((v: string) => ({ label: v, value: v }));
+          const mergedOptions = mergeSelectedWithOptions(searchResults, filters.pastInvestment, originalPastInvestments);
+          setPastInvestments(mergedOptions);
         } else if (type === 'investmentStages') {
-          setInvestmentStages((data.stages ?? []).map((v: string) => ({ label: v, value: v })));
+          const searchResults = (data.stages ?? []).map((v: string) => ({ label: v, value: v }));
+          const mergedOptions = mergeSelectedWithOptions(searchResults, filters.investmentStage, originalInvestmentStages);
+          setInvestmentStages(mergedOptions);
         } else if (type === 'investmentFocuses') {
-          setInvestmentFocuses(
-            (data.investmentFocuses ?? []).map((v: string) => ({ label: v, value: v }))
-          );
+          const searchResults = (data.investmentFocuses ?? []).map((v: string) => ({ label: v, value: v }));
+          const mergedOptions = mergeSelectedWithOptions(searchResults, filters.investmentFocus, originalInvestmentFocuses);
+          setInvestmentFocuses(mergedOptions);
         } else if (type === 'investmentTypes') {
-          setInvestmentTypes(
-            (data.investmentTypes ?? []).map((v: string) => ({ label: v, value: v }))
-          );
+          const searchResults = (data.investmentTypes ?? []).map((v: string) => ({ label: v, value: v }));
+          const mergedOptions = mergeSelectedWithOptions(searchResults, filters.investmentType, originalInvestmentTypes);
+          setInvestmentTypes(mergedOptions);
         }
       }
     } catch (err) {
@@ -177,6 +203,23 @@ export default function InvestorFilter({ filters, setFilters }: Props) {
     else if (type === 'investmentStages') setInvestmentStages(originalInvestmentStages);
     else if (type === 'investmentFocuses') setInvestmentFocuses(originalInvestmentFocuses);
     else if (type === 'investmentTypes') setInvestmentTypes(originalInvestmentTypes);
+  };
+
+  // New function to restore original options while ensuring selected values are visible
+  const restoreOriginalOptionsWithSelected = (type: string) => {
+    if (type === 'pastInvestments') {
+      const mergedOptions = mergeSelectedWithOptions(originalPastInvestments, filters.pastInvestment, originalPastInvestments);
+      setPastInvestments(mergedOptions);
+    } else if (type === 'investmentStages') {
+      const mergedOptions = mergeSelectedWithOptions(originalInvestmentStages, filters.investmentStage, originalInvestmentStages);
+      setInvestmentStages(mergedOptions);
+    } else if (type === 'investmentFocuses') {
+      const mergedOptions = mergeSelectedWithOptions(originalInvestmentFocuses, filters.investmentFocus, originalInvestmentFocuses);
+      setInvestmentFocuses(mergedOptions);
+    } else if (type === 'investmentTypes') {
+      const mergedOptions = mergeSelectedWithOptions(originalInvestmentTypes, filters.investmentType, originalInvestmentTypes);
+      setInvestmentTypes(mergedOptions);
+    }
   };
 
   /** Location options */
@@ -207,6 +250,7 @@ export default function InvestorFilter({ filters, setFilters }: Props) {
           onSearch={handleSearch}
           searchType="investmentTypes"
           showApplyButton={true} // Enable apply button for multi-select
+          onOpen={() => restoreOriginalOptionsWithSelected('investmentTypes')}
         />
       </div>
 
@@ -229,6 +273,7 @@ export default function InvestorFilter({ filters, setFilters }: Props) {
           onSearch={handleSearch}
           searchType="investmentFocuses"
           showApplyButton={true} // Enable apply button for multi-select
+          onOpen={() => restoreOriginalOptionsWithSelected('investmentFocuses')}
         />
       </div>
 
@@ -328,6 +373,7 @@ export default function InvestorFilter({ filters, setFilters }: Props) {
           onSearch={handleSearch}
           searchType="investmentStages"
           showApplyButton={true} // Enable apply button for multi-select
+          onOpen={() => restoreOriginalOptionsWithSelected('investmentStages')}
         />
       </div>
 
@@ -350,6 +396,7 @@ export default function InvestorFilter({ filters, setFilters }: Props) {
           onSearch={handleSearch}
           searchType="pastInvestments"
           showApplyButton={true} // Enable apply button for multi-select
+          onOpen={() => restoreOriginalOptionsWithSelected('pastInvestments')}
         />
       </div>
     </div>

@@ -87,6 +87,7 @@ interface SearchableDropdownProps {
   disabled?: boolean;
   enableSearch?: boolean;
   showApplyButton?: boolean;
+  onOpen?: () => void; // New prop for handling dropdown open
 }
 
 const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
@@ -100,7 +101,8 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
   className = '',
   disabled = false,
   enableSearch = true,
-  showApplyButton = false // Default to false for backward compatibility
+  showApplyButton = false, // Default to false for backward compatibility
+  onOpen // New onOpen callback
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -195,9 +197,15 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
   // Open dropdown and focus search input
   const handleOpen = () => {
     if (disabled) return;
+    
+    // Call the onOpen callback if provided
+    if (onOpen) {
+      onOpen();
+    }
+    
     setIsOpen(true);
     setSearchTerm('');
-    if (onSearch && searchType) onSearch('', searchType); // ⟵ restore originals in parent
+    if (onSearch && searchType) onSearch('', searchType); // restore originals in parent
     setTimeout(() => {
       searchInputRef.current?.focus();
     }, 100);
@@ -206,16 +214,16 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
   // Close dropdown and clear search
   const handleClose = () => {
     if (showApplyButton) {
-      setTempValue(value); // reset temp selection if user didn’t apply
+      setTempValue(value); // reset temp selection if user didn't apply
     }
     setIsOpen(false);
     setSearchTerm('');
-    if (onSearch && searchType) onSearch('', searchType); // ⟵ important
+    if (onSearch && searchType) onSearch('', searchType); // important
   };
 
   // Get display value
   const getDisplayValue = () => {
-    const displayValue = showApplyButton ? tempValue : value; // ⟵ was wrong before
+    const displayValue = showApplyButton ? tempValue : value;
 
     if (isMulti) {
       const selectedValues = Array.isArray(displayValue) ? displayValue : [];

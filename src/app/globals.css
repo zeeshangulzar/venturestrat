@@ -32,3 +32,14 @@ body {
 .font-manrope {
   font-family: var(--font-manrope);
 }
+
+.pagination{
+  .css-hlgwow {
+    padding: unset;
+    padding-left: 5px;
+  }
+  .css-1xc3v61-indicatorContainer{
+    padding: unset;
+    padding-right: 5px;
+  }
+}
