@@ -5,6 +5,7 @@ import { getApiUrl } from '@lib/api';
 import InvestorCard from '@components/InvestorCard';
 import Pagination from '@components/Pagination';
 import InvestorFilter from '@components/InvestorFilter';
+import PaginationNumbers from '@components/PaginationNumbers';
 
 type Filters = {
   country: string;
@@ -230,6 +231,16 @@ export default function InvestorsPage() {
             </p>
           </div>
         )}
+      </div>
+      {/* Footer pager */}
+      <div className="border-t border-[#EDEEEF] bg-white">
+        <PaginationNumbers
+          currentPage={currentPage}
+          totalPages={pagination.totalPages}
+          onPageChange={setCurrentPage}
+          maxButtons={7}     // tweak if you want fewer/more buttons
+          showEdges={true}   // show 1 and last with ellipses
+        />
       </div>
     </div>
   );

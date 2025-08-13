@@ -41,7 +41,7 @@ const Pagination: React.FC<PaginationProps> = ({
   };
 
   return (
-    <div className="pagination w-full bg-white border-t border-b border-[#EDEEEF] px-5 py-4">
+    <div className="w-full bg-white border-t border-b border-[#EDEEEF] px-5 py-4">
       <div className="flex items-center justify-between">
         {/* Left side - Fundraising title */}
         <div className="flex items-center">
