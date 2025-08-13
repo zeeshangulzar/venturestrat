@@ -292,7 +292,7 @@ const InvestorCard: React.FC<{ investor: Investor; appliedFilters?: Filters }> =
 
           <a
             href={`mailto:${getPrimaryEmail()}`}
-            className="flex items-center gap-2 hover:underline group-hover:text-blue-600 transition-colors w-full sm:w-1/2 lg:w-[200px] overflow-hidden"
+            className="flex items-center gap-2 hover:underline group-hover:text-[var(--Dark,#1E293B)] transition-colors w-full sm:w-1/2 lg:w-[200px] overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             <EmailIcon className="h-5 w-5 flex-shrink-0" />
