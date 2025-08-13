@@ -75,7 +75,7 @@ export default function InvestorShowPage() {
   return (
     <div className="mx-auto max-w-6xl p-6">
       <div className="mb-4">
-        <Link href="/investors" className="text-sm text-slate-600 hover:underline">
+        <Link href="/" className="text-sm text-slate-600 hover:underline">
           ← Back to investors
         </Link>
       </div>
