@@ -131,7 +131,7 @@ const InvestorCard: React.FC<{ investor: Investor }> = ({ investor }) => {
       onClick={handleCardClick}
     >
       {/* Stack on mobile/tablet; row on large screens */}
-      <div className="flex flex-col lg:flex-row gap-4 lg:gap-0">
+      <div className="flex flex-col flex-row-1150 gap-4 lg:gap-0">
         {/* Column 1: Identity */}
         <div className="flex min-w-0 flex-1 items-start gap-4 lg:max-w-[400px] pt-4 pb-2 lg:pb-6 px-4">
           <div className="min-w-0 flex-1">
