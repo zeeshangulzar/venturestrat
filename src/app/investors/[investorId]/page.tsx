@@ -234,29 +234,23 @@ export default function InvestorShowPage() {
             <section className="rounded-lg border border-slate-200 bg-white p-4">
               <h3 className="mb-4 text-sm font-semibold text-slate-900">Past Investments</h3>
               {pastInvestments.length > 0 ? (
-                <div className="space-y-3">
-                  {pastInvestments.map((investment, index) => (
-                    <div 
-                      key={investment} 
-                      className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3 hover:bg-slate-100 transition-colors"
+                <div className="flex flex-wrap gap-2">
+                  {pastInvestments.map((investment) => (
+                    <span
+                      key={investment}
+                      className="rounded-full bg-purple-100 px-3 py-1 text-sm font-medium text-purple-700"
                     >
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-blue-600">
-                        <span className="text-sm font-semibold">{index + 1}</span>
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-slate-900">{investment}</p>
-                        <p className="text-xs text-slate-500">Past Investment</p>
-                      </div>
-                    </div>
+                      {investment}
+                    </span>
                   ))}
                 </div>
               ) : (
-                <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-center">
+                <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-center">
                   <p className="text-sm text-slate-500">No past investments listed</p>
                 </div>
               )}
             </section>
-
+            
             {/* Pipelines */}
             {pipelines.length > 0 && (
               <section className="rounded-lg border border-slate-200 bg-white p-4">
