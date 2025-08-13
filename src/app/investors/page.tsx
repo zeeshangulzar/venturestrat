@@ -140,6 +140,19 @@ export default function InvestorsPage() {
     fetchInvestors();
   }, [currentPage, filters, itemsPerPage, searchQuery]);
 
+  // Helper function to check if any filters are active
+  const hasActiveFilters = () => {
+    return (
+      filters.investmentStage.length > 0 ||
+      filters.investmentFocus.length > 0 ||
+      filters.investmentType.length > 0 ||
+      filters.pastInvestment.length > 0 ||
+      filters.country !== '' ||
+      filters.state !== '' ||
+      filters.city !== ''
+    );
+  };
+
   return (
     <div className="mx-auto">
       {/* Pagination Header */}
@@ -203,7 +216,11 @@ export default function InvestorsPage() {
           <p className="text-red-600">Failed to load investors. Please try again.</p>
         ) : investors.length > 0 ? (
           investors.map((investor) => (
-            <InvestorCard key={investor.id} investor={investor} />
+            <InvestorCard 
+              key={investor.id} 
+              investor={investor}
+              appliedFilters={hasActiveFilters() ? filters : undefined}
+            />
           ))
         ) : (
           <div>

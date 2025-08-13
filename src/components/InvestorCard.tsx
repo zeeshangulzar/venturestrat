@@ -41,7 +41,21 @@ type Investor = {
   pastInvestments: Array<{ pastInvestment: { id: string; title: string } }>;
 };
 
-const InvestorCard: React.FC<{ investor: Investor }> = ({ investor }) => {
+// Add filters prop type
+type Filters = {
+  country: string;
+  state: string;
+  city: string;
+  investmentStage: string[];
+  investmentFocus: string[];
+  investmentType: string[];
+  pastInvestment: string[];
+};
+
+const InvestorCard: React.FC<{ investor: Investor; appliedFilters?: Filters }> = ({ 
+  investor, 
+  appliedFilters 
+}) => {
   const { user } = useUser();
   const router = useRouter();
   const [shortlisted, setShortlisted] = useState(false);
@@ -91,15 +105,64 @@ const InvestorCard: React.FC<{ investor: Investor }> = ({ investor }) => {
   // helpers
   const getInvestmentStages = () => {
     if (!investor.stages?.length) return 'Not available';
-    const stages = investor.stages.map((s) => s.stage.title);
-    const displayStages = stages.slice(0, 1);
+    
+    const allStages = investor.stages.map((s) => s.stage.title);
+    
+    // If there are applied stage filters, prioritize showing those
+    if (appliedFilters?.investmentStage?.length) {
+      const filteredStages = allStages.filter(stage => 
+        appliedFilters.investmentStage.includes(stage)
+      );
+      
+      if (filteredStages.length > 0) {
+        const displayStages = filteredStages.slice(0, 2);
+        const remainingSpace = 2 - displayStages.length;
+        
+        if (remainingSpace > 0) {
+          const otherStages = allStages.filter(stage => 
+            !appliedFilters.investmentStage.includes(stage)
+          ).slice(0, remainingSpace);
+          displayStages.push(...otherStages);
+        }
+        
+        return displayStages.join(', ');
+      }
+    }
+    
+    // Default behavior: show first 2 stages
+    const displayStages = allStages.slice(0, 2);
     return displayStages.join(', ');
   };
 
-  const getInvestorTypes = () =>
-    investor.investorTypes?.length
-      ? investor.investorTypes.map((i) => i.investorType.title).join(', ')
-      : 'Not available';
+  const getInvestorTypes = () => {
+    if (!investor.investorTypes?.length) return 'Not available';
+    
+    const allTypes = investor.investorTypes.map((i) => i.investorType.title);
+    
+    // If there are applied type filters, prioritize showing those
+    if (appliedFilters?.investmentType?.length) {
+      const filteredTypes = allTypes.filter(type => 
+        appliedFilters.investmentType.includes(type)
+      );
+      
+      if (filteredTypes.length > 0) {
+        const displayTypes = filteredTypes.slice(0, 3);
+        const remainingSpace = 3 - displayTypes.length;
+        
+        if (remainingSpace > 0) {
+          const otherTypes = allTypes.filter(type => 
+            !appliedFilters.investmentType.includes(type)
+          ).slice(0, remainingSpace);
+          displayTypes.push(...otherTypes);
+        }
+        
+        return displayTypes.join(', ');
+      }
+    }
+    
+    // Default behavior: show first 3 types
+    return allTypes.slice(0, 3).join(', ');
+  };
 
   const getPrimaryEmail = () =>
     investor.emails?.length ? investor.emails[0].email : 'No email available';
@@ -122,8 +185,36 @@ const InvestorCard: React.FC<{ investor: Investor }> = ({ investor }) => {
 
   const verified = investor.emails?.some(email => email.status === 'VALID') ?? false;
 
-  // Get investor type chips (limit to 3 for clean display)
-  const investorTypeChips = investor.investorTypes?.slice(0, 3).map((i) => i.investorType.title) ?? [];
+  // Get investor type chips with filter priority
+  const getInvestorTypeChips = () => {
+    if (!investor.investorTypes?.length) return [];
+    
+    const allTypes = investor.investorTypes.map((i) => i.investorType.title);
+    
+    if (appliedFilters?.investmentType?.length) {
+      const filteredTypes = allTypes.filter(type => 
+        appliedFilters.investmentType.includes(type)
+      );
+      
+      if (filteredTypes.length > 0) {
+        const displayTypes = filteredTypes.slice(0, 3);
+        const remainingSpace = 3 - displayTypes.length;
+        
+        if (remainingSpace > 0) {
+          const otherTypes = allTypes.filter(type => 
+            !appliedFilters.investmentType.includes(type)
+          ).slice(0, remainingSpace);
+          displayTypes.push(...otherTypes);
+        }
+        
+        return displayTypes;
+      }
+    }
+    
+    return allTypes.slice(0, 3);
+  };
+
+  const investorTypeChips = getInvestorTypeChips();
 
   return (
     <div
@@ -153,7 +244,7 @@ const InvestorCard: React.FC<{ investor: Investor }> = ({ investor }) => {
               {investorTypeChips.map((type) => (
                 <span
                   key={type}
-                  className="inline-flex items-center justify-center px-[10px] py-[5.5px] gap-[10px] rounded-[40px] bg-[var(--Primary-P20,#F6F9FE)] text-[var(--Dark-D500,#525A68)] font-manrope text-[11px] sm:text-[12px] font-medium leading-normal tracking-[-0.22px] sm:tracking-[-0.24px]"
+                  className="inline-flex items-center justify-center px-[10px] py-[5.5px] gap-[10px] rounded-[40px] text-[var(--Dark-D500,#525A68)] font-manrope text-[11px] sm:text-[12px] font-medium leading-normal tracking-[-0.22px] sm:tracking-[-0.24px] bg-[var(--Primary-P20,#F6F9FE)]"
                 >
                   {type}
                 </span>
@@ -222,9 +313,12 @@ const InvestorCard: React.FC<{ investor: Investor }> = ({ investor }) => {
               <p className="text-[var(--Dark,#1E293B)] font-manrope text-[13px] sm:text-[14px] font-semibold leading-normal tracking-[-0.26px] sm:tracking-[-0.28px] mb-1">
                 Investment Stage
               </p>
-              <div className="inline-flex rounded-full py-1 text-[var(--Dark-D500,#525A68)] font-manrope text-[13px] sm:text-[14px] font-normal leading-[20px] tracking-[-0.26px] sm:tracking-[-0.28px]">
+              <div
+                className={`inline-flex rounded-full py-1 font-manrope text-[13px] sm:text-[14px] font-normal leading-[20px] tracking-[-0.26px] sm:tracking-[-0.28px] text-[var(--Dark-D500,#525A68)]`}
+              >
                 {getInvestmentStages()}
               </div>
+
             </div>
           </div>
 
