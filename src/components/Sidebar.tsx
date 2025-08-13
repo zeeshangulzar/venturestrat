@@ -18,6 +18,9 @@ import SettingsIcon from './icons/SettingsIcon';
 import LogoutIcon from './icons/LogoutIcon';
 import LogoIcon from './icons/logoIcon';
 import RIcon from './icons/rtystIcon';
+import UsersIcon from './icons/UsersIcon';
+// import { checkRole } from '@utils/roles'
+const isAdmin = true
 
 // Sidebar component
 const Sidebar = () => {
@@ -101,23 +104,36 @@ const Sidebar = () => {
           MAIN MENU
         </div>
         <div className="space-y-4 mt-6">
-                     <div className={getActiveWrapperClass('/')}>
+          {isAdmin && (
+            <div className={getActiveWrapperClass('/admin')}>
+              <Link
+                href="/admin"
+                className={`ml-2.5 mr-2.5 block text-lg py-2 rounded-lg transition-colors ${getLinkClass('/admin')}`}
+              >
+                <div className="flex items-center">
+                  <UsersIcon className="h-6 w-6 mr-2" />
+                  <span className="font-medium text-[14px]">Users</span>
+                </div>
+              </Link>
+            </div>
+          )}
+          <div className={getActiveWrapperClass('/')}>
              <Link href="/" className={`ml-2.5 mr-2.5 block text-lg py-2 rounded-lg transition-colors ${getLinkClass('/')}`}>
                <div className="flex items-center">
                  <HomeIcon className="h-6 w-6 mr-2" />
                  <span className='font-medium text-[14px]'>Home</span>
                </div>
              </Link>
-           </div>
+          </div>
 
-            <div className={getActiveWrapperClass('/task-manager')}>
-             <div className={`ml-2.5 mr-2.5 block text-lg py-2 rounded-lg transition-colors cursor-pointer ${getLinkClass('/task-manager')}`}>
-               <div className="flex items-center">
-                 <TaskManagerIcon className="h-6 w-6 mr-2" />
-                 <span className='font-medium text-[14px]'>Task Manager</span>
-               </div>
-             </div>
-           </div>
+          <div className={getActiveWrapperClass('/task-manager')}>
+            <div className={`ml-2.5 mr-2.5 block text-lg py-2 rounded-lg transition-colors cursor-pointer ${getLinkClass('/task-manager')}`}>
+              <div className="flex items-center">
+                <TaskManagerIcon className="h-6 w-6 mr-2" />
+                <span className='font-medium text-[14px]'>Task Manager</span>
+              </div>
+            </div>
+          </div>
 
            <div className={getActiveWrapperClass('/legal')}>
              <div className={`ml-2.5 mr-2.5 block text-lg py-2 rounded-lg transition-colors cursor-pointer ${getLinkClass('/legal')}`}>
