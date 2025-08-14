@@ -101,8 +101,8 @@ const Sidebar = () => {
           MAIN MENU
         </div>
         <div className="space-y-4 mt-6">
-                     <div className={getActiveWrapperClass('/')}>
-             <Link href="/" className={`ml-2.5 mr-2.5 block text-lg py-2 rounded-lg transition-colors ${getLinkClass('/')}`}>
+                     <div className={getActiveWrapperClass('/') || getActiveWrapperClass('/investors')}>
+             <Link href="/" className={`ml-2.5 mr-2.5 block text-lg py-2 rounded-lg transition-colors ${getLinkClass('/') || getLinkClass('/investors')}`}>
                <div className="flex items-center">
                  <HomeIcon className="h-6 w-6 mr-2" />
                  <span className='font-medium text-[14px]'>Home</span>

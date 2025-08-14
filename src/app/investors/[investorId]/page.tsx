@@ -34,6 +34,37 @@ export default function InvestorShowPage() {
 
   const [investor, setInvestor] = useState<Investor | null>(null);
   const [loading, setLoading] = useState(true);
+  const [backUrl, setBackUrl] = useState('/investors');
+
+  useEffect(() => {
+    // Get filters and page from URL parameters for back navigation
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlFilters = urlParams.get('filters');
+      const urlPage = urlParams.get('page');
+      
+      console.log('Detail page - URL parameters:', { urlFilters, urlPage });
+      
+      if (urlFilters || urlPage) {
+        // Create back URL with filters and page
+        let url = '/investors';
+        const params = new URLSearchParams();
+        
+        if (urlFilters) {
+          params.set('filters', urlFilters);
+        }
+        if (urlPage && urlPage !== '1') {
+          params.set('page', urlPage);
+        }
+        
+        if (params.toString()) {
+          url += `?${params.toString()}`;
+        }
+        setBackUrl(url);
+        console.log('Created back URL:', url);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     if (!investorId) return;
@@ -75,7 +106,7 @@ export default function InvestorShowPage() {
   return (
     <div className="mx-auto max-w-6xl p-6">
       <div className="mb-4">
-        <Link href="/" className="text-sm text-slate-600 hover:underline">
+        <Link href={backUrl} className="text-sm text-slate-600 hover:underline">
           ← Back to investors
         </Link>
       </div>

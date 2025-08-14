@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { getApiUrl } from '@lib/api';
 import InvestorCard from '@components/InvestorCard';
 import Pagination from '@components/Pagination';
@@ -96,18 +96,130 @@ export default function InvestorsPage() {
     itemsPerPage: 20,
   });
 
-  const [filters, setFilters] = useState<Filters>({
-    city: '',
-    state: '',
-    country: '',
-    investmentStage: [],
-    investmentFocus: [],
-    investmentType: [],
-    pastInvestment: [],
-  });
+  // Ref to track if filters have been restored
+  const filtersRestoredRef = useRef(false);
+
+  // Initialize filters - always start with defaults
+  const getInitialFilters = (): Filters => {
+    return {
+      city: '',
+      state: '',
+      country: '',
+      investmentStage: [],
+      investmentFocus: [],
+      investmentType: [],
+      pastInvestment: [],
+    };
+  };
+
+  const [filters, setFilters] = useState<Filters>(getInitialFilters);
 
   // Separate search query state
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Monitor filter changes for debugging
+  useEffect(() => {
+    console.log('Filters state changed:', filters);
+    console.log('Current URL:', window.location.href);
+  }, [filters]);
+
+  // Monitor currentPage changes for debugging
+  useEffect(() => {
+    console.log('Current page changed:', currentPage);
+  }, [currentPage]);
+
+  // Handle filter restoration when coming back from detail page
+  useEffect(() => {
+    // Use a small delay to ensure component is fully mounted
+    const timer = setTimeout(() => {
+      if (typeof window !== 'undefined' && !filtersRestoredRef.current) {
+        // Check if we have URL parameters (coming back from detail page)
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlFilters = urlParams.get('filters');
+        const urlPage = urlParams.get('page');
+        
+        console.log('Checking URL parameters:', { urlFilters, urlPage });
+        console.log('Current filters state:', filters);
+        console.log('Filters already restored:', filtersRestoredRef.current);
+        
+        if (urlFilters) {
+          try {
+            const restoredFilters = JSON.parse(decodeURIComponent(urlFilters));
+            console.log('Restoring filters:', restoredFilters);
+            setFilters(restoredFilters);
+            filtersRestoredRef.current = true;
+            
+            // Set the page if it exists
+            if (urlPage) {
+              const page = parseInt(urlPage);
+              if (!isNaN(page) && page > 0) {
+                console.log('Restoring page:', page);
+                setCurrentPage(page);
+              }
+            }
+            
+            // Clear the URL parameters after restoring
+            const newUrl = window.location.pathname;
+            window.history.replaceState({}, '', newUrl);
+            console.log('Cleared URL parameters');
+          } catch (e) {
+            console.warn('Failed to parse URL filters:', e);
+          }
+        } else {
+          console.log('No URL filters found, keeping default filters');
+          filtersRestoredRef.current = true; // Mark as processed even if no filters
+        }
+      }
+    }, 100); // Small delay to ensure component is ready
+
+    return () => clearTimeout(timer);
+  }, []); // Only run once when component mounts
+
+  // Handle page parameter changes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlPage = urlParams.get('page');
+      
+      if (urlPage) {
+        const page = parseInt(urlPage);
+        if (!isNaN(page) && page > 0 && page !== currentPage) {
+          setCurrentPage(page);
+        }
+      }
+    }
+  }, [currentPage]); // Run when currentPage changes
+
+  // Update filters when they change
+  const updateFilters = (newFilters: Partial<Filters>) => {
+    const updatedFilters = { ...filters, ...newFilters };
+    
+    // Only update if filters actually changed
+    if (JSON.stringify(updatedFilters) !== JSON.stringify(filters)) {
+      console.log('Updating filters from:', filters, 'to:', updatedFilters);
+      setFilters(updatedFilters);
+      
+      // Reset to first page when filters change
+      setCurrentPage(1);
+    } else {
+      console.log('Filters unchanged, skipping update');
+    }
+  };
+
+  // Update page in URL and state
+  const updatePage = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  // Wrapper for setCurrentPage that matches React.Dispatch type
+  const setCurrentPageWrapper = (value: React.SetStateAction<number>) => {
+    if (typeof value === 'function') {
+      const newPage = value(currentPage);
+      updatePage(newPage);
+    } else {
+      updatePage(value);
+    }
+  };
 
   const fetchInvestors = async () => {
     setLoading(true);
@@ -160,7 +272,7 @@ export default function InvestorsPage() {
       <div className="flex justify-between items-center">
         <Pagination
           currentPage={currentPage}
-          setCurrentPage={setCurrentPage}
+          setCurrentPage={setCurrentPageWrapper}
           itemsPerPage={itemsPerPage}
           setItemsPerPage={setItemsPerPage}
           totalPages={pagination.totalPages}
@@ -193,12 +305,7 @@ export default function InvestorsPage() {
             investmentType: filters.investmentType,
             pastInvestment: filters.pastInvestment,
           }}
-          setFilters={(newFilters) => 
-            setFilters(prev => ({
-              ...prev,
-              ...newFilters
-            }))
-          }
+          setFilters={updateFilters}
         />
       </div>
 
@@ -220,7 +327,7 @@ export default function InvestorsPage() {
             <InvestorCard 
               key={investor.id} 
               investor={investor}
-              appliedFilters={hasActiveFilters() ? filters : undefined}
+              appliedFilters={filters}
             />
           ))
         ) : (
@@ -237,7 +344,7 @@ export default function InvestorsPage() {
         <PaginationNumbers
           currentPage={currentPage}
           totalPages={pagination.totalPages}
-          onPageChange={setCurrentPage}
+          onPageChange={updatePage}
           maxButtons={7}     // tweak if you want fewer/more buttons
           showEdges={true}   // show 1 and last with ellipses
         />

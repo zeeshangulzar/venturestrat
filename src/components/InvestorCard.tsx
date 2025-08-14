@@ -77,7 +77,35 @@ const InvestorCard: React.FC<{ investor: Investor; appliedFilters?: Filters }> =
   }, [user, investor.id]);
 
   const handleCardClick = () => {
-    router.push(`/investors/${investor.id}`);
+    // Pass current filters and page as URL parameters for back navigation
+    const currentFilters = appliedFilters || {
+      country: '',
+      state: '',
+      city: '',
+      investmentStage: [],
+      investmentFocus: [],
+      investmentType: [],
+      pastInvestment: [],
+    };
+    
+    // Get current page from URL or default to 1
+    const currentUrl = new URL(window.location.href);
+    const pageParam = currentUrl.searchParams.get('page');
+    const currentPage = pageParam ? parseInt(pageParam) : 1;
+    
+    console.log('Navigating to detail page with filters:', currentFilters);
+    console.log('Current page:', currentPage);
+    
+    // Create URL with filters and page as parameters
+    const params = new URLSearchParams();
+    params.set('filters', encodeURIComponent(JSON.stringify(currentFilters)));
+    if (currentPage > 1) {
+      params.set('page', currentPage.toString());
+    }
+    
+    const detailUrl = `/investors/${investor.id}?${params.toString()}`;
+    console.log('Detail URL:', detailUrl);
+    router.push(detailUrl);
   };
 
   const handleShortlist = async (e: React.MouseEvent) => {

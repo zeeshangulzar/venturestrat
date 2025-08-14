@@ -92,6 +92,11 @@ export default function InvestorFilter({ filters, setFilters }: Props) {
     })();
   }, []);
 
+  // Sync external filters with internal state
+  useEffect(() => {
+    console.log('InvestorFilter: External filters changed:', filters);
+  }, [filters]);
+
   /** Handle location changes */
   useEffect(() => {
     if (filters.country) {
