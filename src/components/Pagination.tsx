@@ -45,7 +45,7 @@ const Pagination: React.FC<PaginationProps> = ({
       <div className="flex items-center justify-between">
         {/* Left side - Fundraising title */}
         <div className="flex items-center">
-          <h2 className="text-[18px] font-bold text-gray-900">Fundraising</h2>
+          <h2 className="text-[18px] font-bold text-gray-900">Investor Directory</h2>
         </div>
 
         {/* Right side - Controls */}
