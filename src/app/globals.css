@@ -38,3 +38,18 @@ body {
     flex-direction: row;
   }
 }
+
+/* Custom breakpoint for 1440x1024 and similar landscape orientations */
+@media (min-width: 1280px) and (max-height: 1024px) {
+  .xl\:flex-row {
+    flex-direction: row;
+  }
+  
+  .xl\:max-w-\[450px\] {
+    max-width: 400px;
+  }
+  
+  .xl\:gap-6 {
+    gap: 1rem;
+  }
+}

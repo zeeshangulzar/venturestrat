@@ -250,11 +250,11 @@ const InvestorCard: React.FC<{ investor: Investor; appliedFilters?: Filters }> =
       onClick={handleCardClick}
     >
       {/* Stack on mobile/tablet; row on large screens */}
-      <div className="flex flex-col flex-row-1150 gap-4 lg:gap-0">
+      <div className="flex flex-col xl:flex-row gap-4 xl:gap-6">
         {/* Column 1: Identity */}
-        <div className="flex min-w-0 flex-1 items-start gap-4 lg:max-w-[400px] pt-4 pb-2 lg:pb-6 px-4">
+        <div className="flex min-w-0 flex-1 items-start gap-4 xl:max-w-[450px] pt-4 pb-2 xl:pb-6 px-4">
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
+            <div className="flex items-start gap-2 mb-2">
               <InvestorHeader
                 name={investor.name}
                 verified={verified}
@@ -263,7 +263,7 @@ const InvestorCard: React.FC<{ investor: Investor; appliedFilters?: Filters }> =
             </div>
 
             {investor.title && (
-              <p className="text-[var(--Dark-D200,#787F89)] leading-[22px] sm:leading-[24px] font-manrope text-[13px] sm:text-[14px] font-normal tracking-[-0.26px] sm:tracking-[-0.28px] mb-2 sm:mb-[10px]">
+              <p className="text-[var(--Dark-D200,#787F89)] leading-[22px] sm:leading-[24px] font-manrope text-[13px] sm:text-[14px] font-normal tracking-[-0.26px] sm:tracking-[-0.28px] mb-2 sm:mb-[10px] break-words">
                 {investor.title}
               </p>
             )}
@@ -272,7 +272,7 @@ const InvestorCard: React.FC<{ investor: Investor; appliedFilters?: Filters }> =
               {investorTypeChips.map((type) => (
                 <span
                   key={type}
-                  className="inline-flex items-center justify-center px-[10px] py-[5.5px] gap-[10px] rounded-[40px] text-[var(--Dark-D500,#525A68)] font-manrope text-[11px] sm:text-[12px] font-medium leading-normal tracking-[-0.22px] sm:tracking-[-0.24px] bg-[var(--Primary-P20,#F6F9FE)]"
+                  className="inline-flex items-center justify-center px-[10px] py-[5.5px] gap-[10px] rounded-[40px] text-[var(--Dark-D500,#525A68)] font-manrope text-[11px] sm:text-[12px] font-medium leading-normal tracking-[-0.22px] sm:tracking-[-0.24px] bg-[var(--Primary-P20,#F6F9FE)] whitespace-nowrap"
                 >
                   {type}
                 </span>
@@ -281,14 +281,14 @@ const InvestorCard: React.FC<{ investor: Investor; appliedFilters?: Filters }> =
           </div>
         </div>
 
-        {/* Divider: horizontal on mobile/tablet, vertical only on lg+ */}
-        <div className="mx-4 h-px bg-[var(--Dark-D20,#F6F6F7)] lg:hidden" />
-        <div className="hidden lg:block w-px flex-shrink-0 rounded-[14px] border border-[var(--Dark-D20,#F6F6F7)] bg-white" />
+        {/* Divider: horizontal on mobile/tablet, vertical only on xl+ */}
+        <div className="mx-4 h-px bg-[var(--Dark-D20,#F6F6F7)] xl:hidden" />
+        <div className="hidden xl:block w-px flex-shrink-0 rounded-[14px] border border-[var(--Dark-D20,#F6F6F7)] bg-white" />
 
         {/* Column 2: Contact */}
-        <div className="flex flex-col lg:flex-row flex-wrap gap-3 lg:max-w-md pt-2 lg:pt-4 pb-2 lg:pb-6 px-4">
+        <div className="flex flex-col xl:flex-row flex-wrap gap-3 xl:max-w-md pt-2 xl:pt-4 pb-2 xl:pb-6 px-4">
           {investor.phone && (
-            <div className="flex items-center gap-2 w-full sm:w-1/2 lg:w-[200px] overflow-hidden">
+            <div className="flex items-center gap-2 w-full sm:w-1/2 xl:w-[200px] min-w-0">
               <PhoneIcon className="h-5 w-5 flex-shrink-0" />
               <span className="truncate text-[var(--Dark,#1E293B)] font-manrope text-[13px] sm:text-[14px] font-normal leading-normal tracking-[-0.26px] sm:tracking-[-0.28px]">
                 {investor.phone}
@@ -296,7 +296,7 @@ const InvestorCard: React.FC<{ investor: Investor; appliedFilters?: Filters }> =
             </div>
           )}
 
-          <div className="flex items-center gap-2 w-full sm:w-1/2 lg:w-[200px] overflow-hidden">
+          <div className="flex items-center gap-2 w-full sm:w-1/2 xl:w-[200px] min-w-0">
             <MapPinIcon className="h-5 w-5 flex-shrink-0" />
             <span className="truncate text-[var(--Dark,#1E293B)] font-manrope text-[13px] sm:text-[14px] font-normal leading-normal tracking-[-0.26px] sm:tracking-[-0.28px]">
               {getLocation()}
@@ -308,7 +308,7 @@ const InvestorCard: React.FC<{ investor: Investor; appliedFilters?: Filters }> =
               href={investor.website}
               target="_blank"
               rel="noreferrer"
-              className="flex items-center gap-2 hover:underline w-full sm:w-1/2 lg:w-[200px] overflow-hidden"
+              className="flex items-center gap-2 hover:underline w-full sm:w-1/2 xl:w-[200px] min-w-0"
               onClick={(e) => e.stopPropagation()}
             >
               <GlobeAltIcon className="h-5 w-5 flex-shrink-0" />
@@ -320,7 +320,7 @@ const InvestorCard: React.FC<{ investor: Investor; appliedFilters?: Filters }> =
 
           <a
             href={`mailto:${getPrimaryEmail()}`}
-            className="flex items-center gap-2 hover:underline group-hover:text-[var(--Dark,#1E293B)] transition-colors w-full sm:w-1/2 lg:w-[200px] overflow-hidden"
+            className="flex items-center gap-2 hover:underline group-hover:text-[var(--Dark,#1E293B)] transition-colors w-full sm:w-1/2 xl:w-[200px] min-w-0"
             onClick={(e) => e.stopPropagation()}
           >
             <EmailIcon className="h-5 w-5 flex-shrink-0" />
@@ -330,23 +330,22 @@ const InvestorCard: React.FC<{ investor: Investor; appliedFilters?: Filters }> =
           </a>
         </div>
 
-        {/* Divider: horizontal on mobile/tablet, vertical only on lg+ */}
-        <div className="mx-4 h-px bg-[var(--Dark-D20,#F6F6F7)] lg:hidden" />
-        <div className="hidden lg:block w-px flex-shrink-0 rounded-[14px] border border-[var(--Dark-D20,#F6F6F7)] bg-white" />
+        {/* Divider: horizontal on mobile/tablet, vertical only on xl+ */}
+        <div className="mx-4 h-px bg-[var(--Dark-D20,#F6F6F7)] xl:hidden" />
+        <div className="hidden xl:block w-px flex-shrink-0 rounded-[14px] border border-[var(--Dark-D20,#F6F6F7)] bg-white" />
 
         {/* Column 3: Stage + Button */}
-        <div className="flex lg:flex-1 flex-col lg:flex-row items-start lg:items-center justify-between gap-3 lg:gap-6 px-4 pt-2 lg:pt-4 pb-4 lg:pb-6">
-          <div className="flex items-start gap-3 w-full lg:w-auto">
-            <div className="w-full lg:w-auto">
+        <div className="flex xl:flex-1 flex-col xl:flex-row items-start xl:items-center justify-between gap-3 xl:gap-6 px-4 pt-2 xl:pt-4 pb-4 xl:pb-6">
+          <div className="flex items-start gap-3 w-full xl:w-auto min-w-0">
+            <div className="w-full xl:w-auto min-w-0">
               <p className="text-[var(--Dark,#1E293B)] font-manrope text-[13px] sm:text-[14px] font-semibold leading-normal tracking-[-0.26px] sm:tracking-[-0.28px] mb-1">
                 Investment Stage
               </p>
               <div
-                className={`inline-flex rounded-full py-1 font-manrope text-[13px] sm:text-[14px] font-normal leading-[20px] tracking-[-0.26px] sm:tracking-[-0.28px] text-[var(--Dark-D500,#525A68)]`}
+                className={`inline-flex rounded-full py-1 font-manrope text-[13px] sm:text-[14px] font-normal leading-[20px] tracking-[-0.26px] sm:tracking-[-0.28px] text-[var(--Dark-D500,#525A68)] break-words max-w-full`}
               >
                 {getInvestmentStages()}
               </div>
-
             </div>
           </div>
 
@@ -358,7 +357,7 @@ const InvestorCard: React.FC<{ investor: Investor; appliedFilters?: Filters }> =
                 shortlisted
                   ? 'bg-emerald-600 hover:bg-emerald-700'
                   : 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800'
-              } disabled:opacity-50 disabled:cursor-not-allowed`}
+              } disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0`}
               title={shortlisted ? 'Already targeted' : 'Add to target list'}
             >
               {shortlisted ? 'Targeted ✓' : loading ? 'Adding…' : 'Target +'}
