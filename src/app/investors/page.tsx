@@ -230,7 +230,12 @@ export default function InvestorsPage() {
         `/api/investors?page=${currentPage}&itemsPerPage=${itemsPerPage}&search=${searchQuery}&filters=${encodeURIComponent(JSON.stringify(filters))}`
       );
       
-      const res = await fetch(url);
+      const res = await fetch(url,{
+        method: 'GET',
+        headers: {
+          'ngrok-skip-browser-warning': 'true',
+        },
+      });
       
       if (!res.ok) {
         throw new Error(`HTTP error! status: ${res.status}`);

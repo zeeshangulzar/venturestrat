@@ -71,7 +71,12 @@ export default function InvestorShowPage() {
 
     const fetchInvestorDetails = async () => {
       try {
-        const res = await fetch(getApiUrl(`/api/investors/${investorId}`));
+        const res = await fetch(getApiUrl(`/api/investors/${investorId}`), {
+          method: 'GET',
+          headers: {
+            'ngrok-skip-browser-warning': 'true',
+          },
+        });
         if (!res.ok) {
           throw new Error(`HTTP error! status: ${res.status}`);
         }

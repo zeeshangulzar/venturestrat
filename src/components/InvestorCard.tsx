@@ -65,7 +65,12 @@ const InvestorCard: React.FC<{ investor: Investor; appliedFilters?: Filters }> =
     const fetchShortlist = async () => {
       if (!user?.id) return;
       try {
-        const res = await fetch(getApiUrl(`/api/shortlists/${user.id}`));
+        const res = await fetch(getApiUrl(`/api/shortlists/${user.id}`), {
+          method: 'GET',
+          headers: {
+            'ngrok-skip-browser-warning': 'true',
+          },
+        });
         const data: { investor: { id: string } }[] = await res.json();
         const isShortlisted = data.some((entry) => entry.investor.id === investor.id);
         setShortlisted(isShortlisted);
@@ -115,7 +120,10 @@ const InvestorCard: React.FC<{ investor: Investor; appliedFilters?: Filters }> =
     try {
       const res = await fetch(getApiUrl('/api/shortlist'), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning': 'true',
+         },
+        
         body: JSON.stringify({
           userId: user.id,
           email: user.emailAddresses[0].emailAddress,

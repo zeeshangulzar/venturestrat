@@ -72,7 +72,12 @@ export default function InvestorFilter({ filters, setFilters }: Props) {
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch(getApiUrl('/api/investment-filters'));
+        const res = await fetch(getApiUrl('/api/investment-filters'), {
+          method: 'GET',
+          headers: {
+            'ngrok-skip-browser-warning': 'true',
+          },
+        });
         const data = await res.json();
         
         const stages = data.stages.map((v: string) => ({ label: v, value: v }));
@@ -193,8 +198,14 @@ export default function InvestorFilter({ filters, setFilters }: Props) {
     setLoading(true);
     try {
       const res = await fetch(
-        getApiUrl(`/api/investment-filters?search=${encodeURIComponent(search)}&type=${type}`),
-        { signal: abortControllerRef.current.signal }
+        getApiUrl(`/api/investment-filters?search=${encodeURIComponent(search)}&type=${type}`
+      ),
+        { signal: abortControllerRef.current.signal,
+        method: 'GET',
+        headers: {
+          'ngrok-skip-browser-warning': 'true',
+        },
+      }
       );
 
       if (res.ok) {
