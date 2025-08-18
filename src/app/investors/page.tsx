@@ -346,7 +346,8 @@ export default function InvestorsPage() {
           totalPages={pagination.totalPages}
           onPageChange={updatePage}
           maxButtons={7}     // tweak if you want fewer/more buttons
-          showEdges={true}   // show 1 and last with ellipses
+          showEdges={true}
+          totalItems={pagination.totalItems}   // show 1 and last with ellipses
         />
       </div>
     </div>

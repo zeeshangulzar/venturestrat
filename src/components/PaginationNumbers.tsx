@@ -5,7 +5,8 @@ type PaginationNumbersProps = {
   totalPages: number;
   onPageChange: (page: number) => void;
   showEdges?: boolean; // show first/last always
-  maxButtons?: number; // how many number buttons to show (excluding Prev/Next)
+  maxButtons?: number;
+  totalItems?: number // how many number buttons to show (excluding Prev/Next)
 };
 
 function buildPageRange(current: number, total: number, maxButtons: number, showEdges: boolean) {
@@ -48,6 +49,7 @@ const PaginationNumbers: React.FC<PaginationNumbersProps> = ({
   onPageChange,
   showEdges = true,
   maxButtons = 7,
+  totalItems = 0, // optional prop for total items count
 }) => {
   if (totalPages <= 1) return null;
 
@@ -108,6 +110,11 @@ const PaginationNumbers: React.FC<PaginationNumbersProps> = ({
       >
         &gt;
       </button>
+
+      {/* Total Count */}
+      <span className="ml-3 text-sm text-slate-600">
+        Page {currentPage} of {totalPages} and total items are {totalItems} (--Test Code--)
+      </span>
     </div>
   );
 };
