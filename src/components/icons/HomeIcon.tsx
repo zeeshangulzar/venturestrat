@@ -9,7 +9,7 @@ const HomeIcon: React.FC<{ className?: string }> = ({ className = "mr-2" }) => {
       </g>
       <defs>
         <clipPath id="clip0_295_1206">
-          <rect width="20" height="20" fill="white"/>
+          <rect width="20" height="20" fill="currentColor"/>
         </clipPath>
       </defs>
     </svg>

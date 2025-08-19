@@ -104,11 +104,20 @@ const Sidebar = () => {
           MAIN MENU
         </div>
         <div className="space-y-4 mt-6">
+          <div className={getActiveWrapperClass('/')}>
+            <Link href="/" className={`ml-2.5 mr-2.5 block text-lg py-2 rounded-lg transition-colors ${getLinkClass('/')}`}>
+              <div className="flex items-center">
+                <HomeIcon className="h-6 w-6 mr-2" />
+                <span className='font-medium text-[14px]'>Home</span>
+              </div>
+            </Link>
+          </div>
+
           {isAdmin && (
-            <div className={getActiveWrapperClass('/admin')}>
+            <div className={getActiveWrapperClass('/admin/users')}>
               <Link
-                href="/admin"
-                className={`ml-2.5 mr-2.5 block text-lg py-2 rounded-lg transition-colors ${getLinkClass('/admin')}`}
+                href="/admin/users"
+                className={`ml-2.5 mr-2.5 block text-lg py-2 rounded-lg transition-colors ${getLinkClass('/admin/users')}`}
               >
                 <div className="flex items-center">
                   <UsersIcon className="h-6 w-6 mr-2" />
@@ -117,14 +126,6 @@ const Sidebar = () => {
               </Link>
             </div>
           )}
-          <div className={getActiveWrapperClass('/')}>
-             <Link href="/" className={`ml-2.5 mr-2.5 block text-lg py-2 rounded-lg transition-colors ${getLinkClass('/')}`}>
-               <div className="flex items-center">
-                 <HomeIcon className="h-6 w-6 mr-2" />
-                 <span className='font-medium text-[14px]'>Home</span>
-               </div>
-             </Link>
-          </div>
 
           <div className={getActiveWrapperClass('/task-manager')}>
             <div className={`ml-2.5 mr-2.5 block text-lg py-2 rounded-lg transition-colors cursor-pointer ${getLinkClass('/task-manager')}`}>

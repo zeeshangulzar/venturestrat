@@ -6,15 +6,14 @@ import Sidebar from '@components/Sidebar';
 
 export default function HeaderClient() {
   return (
-    <header className="flex justify-between items-center p-4 gap-4 h-16 border-b border-[#EDEEEF]">
+    <header className="flex justify-between items-center px-5 py-4 gap-4 h-16 border-b border-[#EDEEEF]">
       <Link href="/" className="text-lg font-bold text-gray-800">
-        Investor Directory
+        Fundraising
       </Link>
 
       <div className="flex gap-4 items-center">
         <SignedIn>
           <div className="flex gap-4 items-center">
-            <span className="text-gray-800">Welcome,</span>
             <UserButton />
           </div>
         </SignedIn>

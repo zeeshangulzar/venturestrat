@@ -19,11 +19,13 @@ type Investor = {
   title?: string;
   social_links?: SocialLinks;
   pipelines?: Pipeline[];
-  address?: { id: string; city: string; state: string; country: string };
-  company?: { id: string; title: string };
+  city: string; 
+  state: string; 
+  country: string;
+  companyName?: string;
   emails: Array<{ id: string; email: string; status: string }>;
-  investorTypes: Array<{ investorType: { id: string; title: string } }>;
-  stages: Array<{ stage: { id: string; title: string } }>;
+  investorTypes: string[];
+  stages: string[];
   markets: Array<{ market: { id: string; title: string } }>;
   pastInvestments: Array<{ pastInvestment: { id: string; title: string } }>;
 };
@@ -34,13 +36,49 @@ export default function InvestorShowPage() {
 
   const [investor, setInvestor] = useState<Investor | null>(null);
   const [loading, setLoading] = useState(true);
+  const [backUrl, setBackUrl] = useState('/');
+
+  useEffect(() => {
+    // Get filters and page from URL parameters for back navigation
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlFilters = urlParams.get('filters');
+      const urlPage = urlParams.get('page');
+      
+      console.log('Detail page - URL parameters:', { urlFilters, urlPage });
+      
+      if (urlFilters || urlPage) {
+        // Create back URL with filters and page
+        let url = '/';
+        const params = new URLSearchParams();
+        
+        if (urlFilters) {
+          params.set('filters', urlFilters);
+        }
+        if (urlPage && urlPage !== '1') {
+          params.set('page', urlPage);
+        }
+        
+        if (params.toString()) {
+          url += `?${params.toString()}`;
+        }
+        setBackUrl(url);
+        console.log('Created back URL:', url);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     if (!investorId) return;
 
     const fetchInvestorDetails = async () => {
       try {
-        const res = await fetch(getApiUrl(`/api/investors/${investorId}`));
+        const res = await fetch(getApiUrl(`/api/investors/${investorId}`), {
+          method: 'GET',
+          headers: {
+            'ngrok-skip-browser-warning': 'true',
+          },
+        });
         if (!res.ok) {
           throw new Error(`HTTP error! status: ${res.status}`);
         }
@@ -60,14 +98,14 @@ export default function InvestorShowPage() {
   if (!investor) return <p>Investor not found</p>;
 
   const verified = investor.emails?.some((e) => e.status === 'VALID') ?? false;
-  const location = investor.address
-    ? [investor.address.city, investor.address.state, investor.address.country]
+  const location = investor.country
+    ? [investor.city, investor.state, investor.country]
         .filter(Boolean)
         .join(', ')
     : '—';
 
-  const investorTypes = investor.investorTypes?.map((i) => i.investorType.title) ?? [];
-  const stages = investor.stages?.map((s) => s.stage.title) ?? [];
+  const investorTypes = investor.investorTypes?.map((i) => i) ?? [];
+  const stages = investor.stages?.map((s) => s) ?? [];
   const markets = investor.markets?.map((m) => m.market.title) ?? [];
   const pastInvestments = investor.pastInvestments?.map((p) => p.pastInvestment.title) ?? [];
   const pipelines = investor.pipelines ?? [];
@@ -75,7 +113,7 @@ export default function InvestorShowPage() {
   return (
     <div className="mx-auto max-w-6xl p-6">
       <div className="mb-4">
-        <Link href="/" className="text-sm text-slate-600 hover:underline">
+        <Link href={backUrl} className="text-sm text-slate-600 hover:underline">
           ← Back to investors
         </Link>
       </div>
@@ -131,7 +169,7 @@ export default function InvestorShowPage() {
                     )
                   }
                 />
-                <Row label="Company" value={investor.company?.title || '—'} />
+                <Row label="Company" value={investor.companyName || '—'} />
                 <Row label="Location" value={location} />
               </div>
             </section>

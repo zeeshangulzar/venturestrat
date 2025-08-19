@@ -58,6 +58,10 @@ export default function InvestorFilter({ filters, setFilters }: Props) {
   // Abort controller for cleanup
   const abortControllerRef = React.useRef<AbortController | null>(null);
 
+  // Normalize names for robust comparisons
+  const normalize = (value?: string) =>
+    (value ?? '').toLowerCase().trim();
+
   useEffect(() => {
     return () => {
       abortControllerRef.current?.abort();
@@ -68,7 +72,12 @@ export default function InvestorFilter({ filters, setFilters }: Props) {
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch(getApiUrl('/api/investment-filters'));
+        const res = await fetch(getApiUrl('/api/investment-filters'), {
+          method: 'GET',
+          headers: {
+            'ngrok-skip-browser-warning': 'true',
+          },
+        });
         const data = await res.json();
         
         const stages = data.stages.map((v: string) => ({ label: v, value: v }));
@@ -92,39 +101,65 @@ export default function InvestorFilter({ filters, setFilters }: Props) {
     })();
   }, []);
 
+  // Sync external filters with internal state
+  useEffect(() => {
+    console.log('InvestorFilter: External filters changed:', filters);
+  }, [filters]);
+
   /** Handle location changes */
   useEffect(() => {
     if (filters.country) {
-      const country = countries.find((c) => c.name === filters.country);
-      if (country) {
-        setStates(State.getStatesOfCountry(country.isoCode));
+      const selectedCountry = countries.find((c) => c.name === filters.country);
+      const nextStates = selectedCountry ? State.getStatesOfCountry(selectedCountry.isoCode) : [];
+      setStates(nextStates);
+
+      const isExistingStateValid = Boolean(
+        filters.state && nextStates.some((s) => normalize(s.name) === normalize(filters.state))
+      );
+
+      if (!isExistingStateValid) {
+        // Country changed or restored without a valid state; clear dependent fields
+        setFilters({ ...filters, state: '', city: '' });
+        setCities([]);
+      } else {
+        // When state remains valid, proactively populate cities to avoid empty dropdowns
+        const selectedState = nextStates.find((s) => normalize(s.name) === normalize(filters.state));
+        if (selectedCountry && selectedState) {
+          const nextCities = City.getCitiesOfState(selectedCountry.isoCode, selectedState.isoCode);
+          setCities(nextCities);
+        }
       }
-      setFilters({ ...filters, state: '', city: '' });
-      setCities([]);
+      // If state remains valid, do not clear state/city here; city handling occurs in the state effect
     } else {
       setStates([]);
       setCities([]);
-      setFilters({ ...filters, state: '', city: '' });
+      if (filters.state || filters.city) {
+        setFilters({ ...filters, state: '', city: '' });
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters.country]);
 
   useEffect(() => {
     if (filters.state && filters.country) {
-      const country = countries.find((c) => c.name === filters.country);
-      const state = states.find((s) => s.name === filters.state);
-      if (country && state) {
-        setCities(City.getCitiesOfState(country.isoCode, state.isoCode));
+      const selectedCountry = countries.find((c) => c.name === filters.country);
+      const statesForCountry = selectedCountry
+        ? State.getStatesOfCountry(selectedCountry.isoCode)
+        : [];
+      const selectedState = statesForCountry.find((s) => normalize(s.name) === normalize(filters.state));
+
+      if (selectedCountry && selectedState) {
+        const nextCities = City.getCitiesOfState(selectedCountry.isoCode, selectedState.isoCode);
+        setCities(nextCities);
+        // Do not auto-clear city; preserve existing selection and ensure it's visible in options
       } else {
         setCities([]);
       }
-      setFilters({ ...filters, city: '' });
     } else {
       setCities([]);
-      if (filters.city) setFilters({ ...filters, city: '' });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters.state]);
+  }, [filters.state, filters.country]);
 
   // Helper function to merge selected values with search results
   const mergeSelectedWithOptions = (
@@ -163,8 +198,14 @@ export default function InvestorFilter({ filters, setFilters }: Props) {
     setLoading(true);
     try {
       const res = await fetch(
-        getApiUrl(`/api/investment-filters?search=${encodeURIComponent(search)}&type=${type}`),
-        { signal: abortControllerRef.current.signal }
+        getApiUrl(`/api/investment-filters?search=${encodeURIComponent(search)}&type=${type}`
+      ),
+        { signal: abortControllerRef.current.signal,
+        method: 'GET',
+        headers: {
+          'ngrok-skip-browser-warning': 'true',
+        },
+      }
       );
 
       if (res.ok) {
@@ -224,8 +265,21 @@ export default function InvestorFilter({ filters, setFilters }: Props) {
 
   /** Location options */
   const countryOptions = countries.map((c) => ({ label: c.name, value: c.name }));
-  const stateOptions = states.map((s) => ({ label: s.name, value: s.name }));
-  const cityOptions = cities.map((c) => ({ label: c.name, value: c.name }));
+  const stateOptions = (() => {
+    const base = states.map((s) => ({ label: s.name, value: s.name }));
+    if (filters.state && !base.some((opt) => normalize(opt.value) === normalize(filters.state))) {
+      return [{ label: filters.state, value: filters.state }, ...base];
+    }
+    return base;
+  })();
+
+  const cityOptions = (() => {
+    const base = cities.map((c) => ({ label: c.name, value: c.name }));
+    if (filters.city && !base.some((opt) => normalize(opt.value) === normalize(filters.city))) {
+      return [{ label: filters.city, value: filters.city }, ...base];
+    }
+    return base;
+  })();
 
   return (
     <div className="investor-filters flex flex-wrap gap-[11px] bg-white items-center border-b border-[#EDEEEF] py-[24px] px-5">
