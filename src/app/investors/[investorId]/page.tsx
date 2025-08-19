@@ -19,11 +19,13 @@ type Investor = {
   title?: string;
   social_links?: SocialLinks;
   pipelines?: Pipeline[];
-  address?: { id: string; city: string; state: string; country: string };
-  company?: { id: string; title: string };
+  city: string; 
+  state: string; 
+  country: string;
+  companyName?: string;
   emails: Array<{ id: string; email: string; status: string }>;
-  investorTypes: Array<{ investorType: { id: string; title: string } }>;
-  stages: Array<{ stage: { id: string; title: string } }>;
+  investorTypes: string[];
+  stages: string[];
   markets: Array<{ market: { id: string; title: string } }>;
   pastInvestments: Array<{ pastInvestment: { id: string; title: string } }>;
 };
@@ -96,14 +98,14 @@ export default function InvestorShowPage() {
   if (!investor) return <p>Investor not found</p>;
 
   const verified = investor.emails?.some((e) => e.status === 'VALID') ?? false;
-  const location = investor.address
-    ? [investor.address.city, investor.address.state, investor.address.country]
+  const location = investor.country
+    ? [investor.city, investor.state, investor.country]
         .filter(Boolean)
         .join(', ')
     : '—';
 
-  const investorTypes = investor.investorTypes?.map((i) => i.investorType.title) ?? [];
-  const stages = investor.stages?.map((s) => s.stage.title) ?? [];
+  const investorTypes = investor.investorTypes?.map((i) => i) ?? [];
+  const stages = investor.stages?.map((s) => s) ?? [];
   const markets = investor.markets?.map((m) => m.market.title) ?? [];
   const pastInvestments = investor.pastInvestments?.map((p) => p.pastInvestment.title) ?? [];
   const pipelines = investor.pipelines ?? [];
@@ -167,7 +169,7 @@ export default function InvestorShowPage() {
                     )
                   }
                 />
-                <Row label="Company" value={investor.company?.title || '—'} />
+                <Row label="Company" value={investor.companyName || '—'} />
                 <Row label="Location" value={location} />
               </div>
             </section>

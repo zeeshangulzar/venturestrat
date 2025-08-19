@@ -14,10 +14,6 @@ import {
 } from '@heroicons/react/24/outline';
 import EmailIcon from './icons/emailIcon';
 
-type SocialLinks = { [key: string]: string };
-
-type Pipeline = { id: string; title: string; status: string };
-
 type Investor = {
   id: string;
   name: string;
@@ -25,18 +21,14 @@ type Investor = {
   website?: string;
   phone?: string;
   title?: string;
-  social_links?: SocialLinks;
-  pipelines?: Pipeline[];
-  address?: {
-    id: string;
-    city: string;
-    state: string;
-    country: string;
-  };
-  company?: { id: string; title: string };
+  social_links?: { [key: string]: string };
+  city: string;
+  state: string;
+  country: string;
+  companyName?:  string;
   emails: Array<{ id: string; email: string; status: string }>;
-  investorTypes: Array<{ investorType: { id: string; title: string } }>;
-  stages: Array<{ stage: { id: string; title: string } }>;
+  investorTypes: string[];
+  stages: string[];
   markets: Array<{ market: { id: string; title: string } }>;
   pastInvestments: Array<{ pastInvestment: { id: string; title: string } }>;
 };
@@ -142,7 +134,7 @@ const InvestorCard: React.FC<{ investor: Investor; appliedFilters?: Filters }> =
   const getInvestmentStages = () => {
     if (!investor.stages?.length) return 'Not available';
     
-    const allStages = investor.stages.map((s) => s.stage.title);
+    const allStages = investor.stages.map((s) => s);
     
     // If there are applied stage filters, prioritize showing those
     if (appliedFilters?.investmentStage?.length) {
@@ -170,43 +162,12 @@ const InvestorCard: React.FC<{ investor: Investor; appliedFilters?: Filters }> =
     return displayStages.join(', ');
   };
 
-  const getInvestorTypes = () => {
-    if (!investor.investorTypes?.length) return 'Not available';
-    
-    const allTypes = investor.investorTypes.map((i) => i.investorType.title);
-    
-    // If there are applied type filters, prioritize showing those
-    if (appliedFilters?.investmentType?.length) {
-      const filteredTypes = allTypes.filter(type => 
-        appliedFilters.investmentType.includes(type)
-      );
-      
-      if (filteredTypes.length > 0) {
-        const displayTypes = filteredTypes.slice(0, 3);
-        const remainingSpace = 3 - displayTypes.length;
-        
-        if (remainingSpace > 0) {
-          const otherTypes = allTypes.filter(type => 
-            !appliedFilters.investmentType.includes(type)
-          ).slice(0, remainingSpace);
-          displayTypes.push(...otherTypes);
-        }
-        
-        return displayTypes.join(', ');
-      }
-    }
-    
-    // Default behavior: show first 3 types
-    return allTypes.slice(0, 3).join(', ');
-  };
-
   const getPrimaryEmail = () =>
     investor.emails?.length ? investor.emails[0].email : 'No email available';
 
   const getLocation = () => {
-    if (!investor.address) return 'Location not available';
-    const { state, country } = investor.address;
-    return [ state, country].filter(Boolean).join(', ');
+    if (!investor.country) return 'Location not available';
+    return [ investor.state, investor.country].filter(Boolean).join(', ');
   };
 
   const domainFromUrl = (url?: string) => {
@@ -225,7 +186,7 @@ const InvestorCard: React.FC<{ investor: Investor; appliedFilters?: Filters }> =
   const getInvestorTypeChips = () => {
     if (!investor.investorTypes?.length) return [];
     
-    const allTypes = investor.investorTypes.map((i) => i.investorType.title);
+    const allTypes = investor.investorTypes.map((i) => i);
     
     if (appliedFilters?.investmentType?.length) {
       const filteredTypes = allTypes.filter(type => 
@@ -251,7 +212,7 @@ const InvestorCard: React.FC<{ investor: Investor; appliedFilters?: Filters }> =
   };
 
   const investorTypeChips = getInvestorTypeChips();
-
+  console.log('Investor ${invesotor.id}', investor);
   return (
     <div
       className="group w-full rounded-[14px] border border-[#EDEEEF] bg-white shadow-sm transition-all duration-200 hover:shadow-md cursor-pointer min-h-[103px]"
