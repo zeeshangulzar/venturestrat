@@ -36,7 +36,7 @@ export default function InvestorShowPage() {
 
   const [investor, setInvestor] = useState<Investor | null>(null);
   const [loading, setLoading] = useState(true);
-  const [backUrl, setBackUrl] = useState('/investors');
+  const [backUrl, setBackUrl] = useState('/');
 
   useEffect(() => {
     // Get filters and page from URL parameters for back navigation
@@ -49,7 +49,7 @@ export default function InvestorShowPage() {
       
       if (urlFilters || urlPage) {
         // Create back URL with filters and page
-        let url = '/investors';
+        let url = '/';
         const params = new URLSearchParams();
         
         if (urlFilters) {

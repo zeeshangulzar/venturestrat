@@ -212,7 +212,6 @@ const InvestorCard: React.FC<{ investor: Investor; appliedFilters?: Filters }> =
   };
 
   const investorTypeChips = getInvestorTypeChips();
-  console.log('Investor ${invesotor.id}', investor);
   return (
     <div
       className="group w-full rounded-[14px] border border-[#EDEEEF] bg-white shadow-sm transition-all duration-200 hover:shadow-md cursor-pointer min-h-[103px]"
