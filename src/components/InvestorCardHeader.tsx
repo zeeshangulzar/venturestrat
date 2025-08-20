@@ -1,5 +1,6 @@
 import { CheckBadgeIcon } from '@heroicons/react/24/outline';
 import VerifiedBadgeIcon from './icons/verifiedBadgeIcon';
+import { cleanDisplayName } from '@utils/text';
 
 const SOCIAL_ORDER = ['twitter', 'linkedin', 'facebook'] as const;
 
@@ -68,10 +69,10 @@ type InvestorCardHeaderProps = {
 export default function InvestorHeader({ name, verified, social_links }: InvestorCardHeaderProps) {
   return (
     <div className="flex flex-col sm:flex-row xl:items-start sm:gap-2 gap-1 w-full min-w-0">
-      <div className="flex items-start gap-1 sm:gap-2 min-w-0 flex-1">
+      <div className="flex gap-1 sm:gap-2 min-w-0 flex-1 flex-nowrap items-center">
         <h2
           className="
-            break-words
+            break-normal hyphens-none
             text-[var(--Dark,#1E293B)]
             text-[14px] sm:text-[16px]
             font-semibold
@@ -83,9 +84,13 @@ export default function InvestorHeader({ name, verified, social_links }: Investo
             pr-2
             "
         >
-          {name}
+          {cleanDisplayName(name)}
         </h2>
-        {verified && <VerifiedBadge />}
+        {verified && (
+          <span className="flex-shrink-0 ml-1">
+            <VerifiedBadge />
+          </span>
+        )}
       </div>
 
       {social_links && (

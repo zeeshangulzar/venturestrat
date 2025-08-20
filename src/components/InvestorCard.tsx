@@ -220,7 +220,8 @@ const InvestorCard: React.FC<{ investor: Investor; appliedFilters?: Filters }> =
       {/* Stack on mobile/tablet; row on large screens */}
       <div className="flex flex-col xl:flex-row gap-4 xl:gap-6">
         {/* Column 1: Identity */}
-        <div className="flex min-w-0 flex-1 items-start gap-4 xl:max-w-[450px] pt-4 pb-2 xl:pb-6 px-4">
+        <div className="flex min-w-0 items-start gap-4 pt-4 pb-2 xl:pb-6 px-4
++                 xl:flex-[0_0_370px] xl:max-w-none">
           <div className="min-w-0 flex-1">
             <div className="flex items-start gap-2 mb-2">
               <InvestorHeader
