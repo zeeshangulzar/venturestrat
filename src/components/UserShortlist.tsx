@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react'
 import { getApiUrl } from '@lib/api'
 import InvestorCard from '@components/InvestorCard'
 
+// Final shape your card expects
 type Investor = {
   id: string
   name: string
@@ -24,7 +25,27 @@ type Investor = {
   pastInvestments: Array<{ pastInvestment: { id: string; title: string } }>
 }
 
-type ApiInvestor = Record<string, any>
+// Raw shape coming from your API (loose but typed)
+type ApiInvestor = {
+  id: string | number
+  name?: string
+  companyName?: string
+  fundName?: string
+  avatar?: string
+  website?: string
+  phone?: string
+  title?: string
+  social_links?: Record<string, string>
+  city?: string
+  state?: string
+  country?: string
+  emails?: Array<{ id: string; email: string; status: string }> | null
+  email?: string
+  investorTypes?: string[] | null
+  stages?: string[] | null
+  markets?: Array<{ market: { id: string | number; title: string } }> | null
+  pastInvestments?: Array<{ pastInvestment: { id: string | number; title: string } }> | null
+}
 
 type ApiResponse = {
   user: { id: string; email: string; createdAt: string }
@@ -54,12 +75,20 @@ export default function UserShortlist({ userId }: { userId: string }) {
       emails: Array.isArray(inv.emails)
         ? inv.emails
         : inv.email
-          ? [{ id: 'primary', email: inv.email, status: 'UNKNOWN' }]
-          : [],
+        ? [{ id: 'primary', email: inv.email, status: 'UNKNOWN' }]
+        : [],
       investorTypes: Array.isArray(inv.investorTypes) ? inv.investorTypes : [],
       stages: Array.isArray(inv.stages) ? inv.stages : [],
-      markets: Array.isArray(inv.markets) ? inv.markets : [],
-      pastInvestments: Array.isArray(inv.pastInvestments) ? inv.pastInvestments : [],
+      markets: Array.isArray(inv.markets)
+        ? inv.markets.map((m) => ({
+            market: { id: String(m.market.id), title: m.market.title },
+          }))
+        : [],
+      pastInvestments: Array.isArray(inv.pastInvestments)
+        ? inv.pastInvestments.map((p) => ({
+            pastInvestment: { id: String(p.pastInvestment.id), title: p.pastInvestment.title },
+          }))
+        : [],
     }
   }
 
@@ -69,6 +98,14 @@ export default function UserShortlist({ userId }: { userId: string }) {
       user: { id: userId, email: '', createdAt: '' },
       shortlistedInvestors: [],
       totalShortlisted: 0,
+    }
+
+    const getApiErrorMessage = (body: unknown): string | null => {
+      if (body && typeof body === 'object' && 'error' in body) {
+        const val = (body as { error?: unknown }).error
+        if (typeof val === 'string') return val
+      }
+      return null
     }
 
     async function load() {
@@ -83,16 +120,19 @@ export default function UserShortlist({ userId }: { userId: string }) {
           cache: 'no-store',
         })
 
+        // Treat 404 as empty shortlist
         if (res.status === 404) {
           setData(emptyData)
           return
         }
 
-        const isJson = res.headers.get('content-type')?.includes('application/json')
-        const body = isJson ? await res.json().catch(() => null) : null
+        const isJson = res.headers.get('content-type')?.includes('application/json') ?? false
+        const body: unknown = isJson ? await res.json().catch(() => null) : null
 
         if (!res.ok) {
-          const msg = (body as any)?.error || `HTTP ${res.status}${!isJson ? ' (non-JSON response)' : ''}`
+          const msg =
+            getApiErrorMessage(body) ||
+            `HTTP ${res.status}${!isJson ? ' (non-JSON response)' : ''}`
           throw new Error(msg)
         }
 
@@ -101,9 +141,9 @@ export default function UserShortlist({ userId }: { userId: string }) {
         }
 
         setData(body as ApiResponse)
-      } catch (e: any) {
-        if (e.name === 'AbortError') return
-        setError(e.message || 'Failed to load shortlist')
+      } catch (e) {
+        if (e instanceof DOMException && e.name === 'AbortError') return
+        setError(e instanceof Error ? e.message : 'Failed to load shortlist')
       } finally {
         setLoading(false)
       }
@@ -113,7 +153,7 @@ export default function UserShortlist({ userId }: { userId: string }) {
     return () => abort.abort()
   }, [userId])
 
-  const shortlist = (data?.shortlistedInvestors ?? []).map(normalizeInvestor)
+  const shortlist: Investor[] = (data?.shortlistedInvestors ?? []).map(normalizeInvestor)
 
   return (
     <section className="mt-8">
@@ -148,7 +188,7 @@ export default function UserShortlist({ userId }: { userId: string }) {
         <ul className="space-y-3">
           {shortlist.map((inv) => (
             <li key={inv.id}>
-              <InvestorCard investor={inv} /> {/* reuse same design */}
+              <InvestorCard investor={inv} />
             </li>
           ))}
         </ul>

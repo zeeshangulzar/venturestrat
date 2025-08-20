@@ -8,15 +8,17 @@ import UserShortlist from '@components/UserShortlist'
 export default async function UserShowPage({
   params,
 }: {
-  params: { userId: string }
+  params: Promise<{ userId: string }>
 }) {
+  const { userId } = await params
+
   const isAdmin = await checkRole('admin')
   if (!isAdmin) redirect('/')
 
   try {
     const client = await clerkClient()
-    const user = await client.users.getUser(params.userId)
-    
+    const user = await client.users.getUser(userId)
+
     const primaryEmail = user.emailAddresses.find(
       (e) => e.id === user.primaryEmailAddressId
     )?.emailAddress
@@ -39,7 +41,7 @@ export default async function UserShowPage({
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Link 
+            <Link
               href="/admin/users"
               className="inline-flex items-center text-sm text-slate-600 hover:text-slate-900"
             >
@@ -60,10 +62,9 @@ export default async function UserShowPage({
                 <div>
                   <label className="text-sm font-medium text-slate-700">Full Name</label>
                   <p className="text-slate-900">
-                    {user.firstName || user.lastName 
+                    {user.firstName || user.lastName
                       ? `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim()
-                      : '—'
-                    }
+                      : '—'}
                   </p>
                 </div>
                 <div>
@@ -94,9 +95,11 @@ export default async function UserShowPage({
                 </div>
                 <div>
                   <label className="text-sm font-medium text-slate-700">Status</label>
-                  <span className={`ml-2 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                    user.banned ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
-                  }`}>
+                  <span
+                    className={`ml-2 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                      user.banned ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
+                    }`}
+                  >
                     {user.banned ? 'Banned' : 'Active'}
                   </span>
                 </div>
@@ -108,7 +111,6 @@ export default async function UserShowPage({
         <UserShortlist userId={user.id} />
       </div>
     )
-
   } catch (error) {
     console.error('Error fetching user:', error)
     return (
