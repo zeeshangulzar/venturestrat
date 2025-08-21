@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useClerk, SignOutButton } from '@clerk/nextjs';
+import { useRouter } from 'next/navigation';
 
 // Import custom icons
 import HomeIcon from './icons/HomeIcon';
@@ -19,13 +20,14 @@ import LogoutIcon from './icons/LogoutIcon';
 import LogoIcon from './icons/logoIcon';
 import RIcon from './icons/rtystIcon';
 import UsersIcon from './icons/UsersIcon';
-// import { checkRole } from '@utils/roles'
-const isAdmin = true
+import { useRole } from '@hooks/useRole'
 
 // Sidebar component
 const Sidebar = () => {
   const pathname = usePathname(); // Get the current pathname
+  const router = useRouter();
   const { signOut } = useClerk(); // Get Clerk signOut function
+  const { isAdmin } = useRole(); // Get admin status from client-side hook
 
   // Helper function to apply active class based on current route
   const getLinkClass = (path: string) => {
@@ -40,8 +42,9 @@ const Sidebar = () => {
   };
 
   // Handle sign out
-  const handleSignOut = () => {
-    signOut();
+  const handleSignOut = async () => {
+    await signOut();
+    router.push('/sign-in');
   };
 
   return (

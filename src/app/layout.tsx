@@ -1,6 +1,7 @@
 import './globals.css';
 import Providers from '@components/providers';
 import HeaderClient, { SidebarWrapper } from '@components/HeaderClient';
+import { SignedIn, SignedOut } from '@clerk/nextjs';
 
 export const metadata = {
   title: 'Investor Directory',
@@ -13,14 +14,19 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="antialiased" suppressHydrationWarning>
         <Providers>
           <div className="flex min-h-screen bg-gray-50">
-            {/* Sidebar (client) */}
-            <SidebarWrapper />
-
-            {/* Main */}
-            <div className="flex-1 bg-white">
-              <HeaderClient />
+            {/* Sidebar and Header only for authenticated users */}
+            <SignedIn>
+              <SidebarWrapper />
+              <div className="flex-1 bg-white">
+                <HeaderClient />
+                {children}
+              </div>
+            </SignedIn>
+            
+            {/* For unauthenticated users, just render children */}
+            <SignedOut>
               {children}
-            </div>
+            </SignedOut>
           </div>
         </Providers>
       </body>

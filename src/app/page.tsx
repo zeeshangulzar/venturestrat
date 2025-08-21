@@ -1,35 +1,47 @@
 'use client';
 
-import { SignedIn, SignedOut, SignInButton, SignUpButton } from '@clerk/nextjs';
+import { SignedIn, SignedOut, useUser } from '@clerk/nextjs';
+import { useRouter } from 'next/navigation';
 import InvestorsPage from '@app/investors/page';
+import Loader from '@components/Loader';
 
 export default function Home() {
-  return (
-    <div className="flex min-h-screen bg-gray-50">
-      <div className="flex-1 bg-white">
-        <SignedIn>
-          <InvestorsPage />
-        </SignedIn>
+  const router = useRouter();
+  const { isLoaded } = useUser();
 
-        <SignedOut>
-          <div className="text-center p-8">
+  // Show loading state while Clerk determines authentication status
+  if (!isLoaded) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <Loader size="lg" text="Checking authentication..." />
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <SignedIn>
+        <InvestorsPage />
+      </SignedIn>
+
+      <SignedOut>
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <div className="text-center p-8 bg-white rounded-lg shadow-lg max-w-md mx-4">
             <h1 className="text-3xl font-bold text-gray-800 mb-4">
-              Please Sign In to Explore Investors!
+              Welcome to Investor Directory
             </h1>
             <p className="text-gray-600 mb-6">
-              To explore our list of investors, please sign in or create an account.
+              Please sign in to explore our list of investors and their details.
             </p>
-            <div className="flex justify-center gap-4">
-              <SignInButton>
-                <button className="bg-blue-600 text-white rounded-full px-6 py-3">Sign In</button>
-              </SignInButton>
-              <SignUpButton>
-                <button className="bg-green-600 text-white rounded-full px-6 py-3">Sign Up</button>
-              </SignUpButton>
-            </div>
+            <button 
+              onClick={() => router.push('/sign-in')}
+              className="bg-blue-600 text-white rounded-md px-6 py-3 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+            >
+              Sign In
+            </button>
           </div>
-        </SignedOut>
-      </div>
-    </div>
+        </div>
+      </SignedOut>
+    </>
   );
 }
