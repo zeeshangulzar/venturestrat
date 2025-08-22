@@ -31,7 +31,7 @@ export default function SignUpPage() {
   // Check if user is already signed in and redirect appropriately
   React.useEffect(() => {
     if (user) {
-      const onboardingComplete = (user.publicMetadata as any)?.onboardingComplete === true
+      const onboardingComplete = (user.publicMetadata as { onboardingComplete?: boolean })?.onboardingComplete === true
       if (onboardingComplete) {
         router.replace('/')
       } else {
@@ -112,7 +112,7 @@ export default function SignUpPage() {
         // The middleware will handle redirecting to onboarding if needed
         router.replace('/');
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Sign up error:', err);
       console.error('Error type:', typeof err);
       console.error('Error keys:', Object.keys(err || {}));
@@ -120,14 +120,17 @@ export default function SignUpPage() {
       
       let errorMessage = 'Sign up failed';
       
-      if (err?.errors && err.errors.length > 0) {
-        errorMessage = err.errors[0].message || 'Sign up failed';
-      } else if (err?.message) {
-        errorMessage = err.message;
-      } else if (err?.status) {
-        errorMessage = `Sign up failed with status: ${err.status}`;
-      } else if (err?.code) {
-        errorMessage = `Sign up failed with code: ${err.code}`;
+      if (err && typeof err === 'object' && 'errors' in err && Array.isArray((err as { errors: unknown[] }).errors) && (err as { errors: unknown[] }).errors.length > 0) {
+        const firstError = (err as { errors: unknown[] }).errors[0];
+        if (firstError && typeof firstError === 'object' && 'message' in firstError) {
+          errorMessage = String(firstError.message) || 'Sign up failed';
+        }
+      } else if (err && typeof err === 'object' && 'message' in err) {
+        errorMessage = String((err as { message: unknown }).message);
+      } else if (err && typeof err === 'object' && 'status' in err) {
+        errorMessage = `Sign up failed with status: ${String((err as { status: unknown }).status)}`;
+      } else if (err && typeof err === 'object' && 'code' in err) {
+        errorMessage = `Sign up failed with code: ${String((err as { code: unknown }).code)}`;
       } else if (typeof err === 'string') {
         errorMessage = err;
       } else if (err && typeof err === 'object') {
@@ -167,17 +170,20 @@ export default function SignUpPage() {
         // If not complete yet, you might need to handle other statuses here
         setError(`Verification incomplete. Status: ${attempt.status}. Please try again.`);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Verification error:', err);
       
       let errorMessage = 'Invalid code';
       
-      if (err?.errors && err.errors.length > 0) {
-        errorMessage = err.errors[0].message || 'Invalid code';
-      } else if (err?.message) {
-        errorMessage = err.message;
-      } else if (err?.status) {
-        errorMessage = `Verification failed with status: ${err.status}`;
+      if (err && typeof err === 'object' && 'errors' in err && Array.isArray((err as { errors: unknown[] }).errors) && (err as { errors: unknown[] }).errors.length > 0) {
+        const firstError = (err as { errors: unknown[] }).errors[0];
+        if (firstError && typeof firstError === 'object' && 'message' in firstError) {
+          errorMessage = String(firstError.message) || 'Invalid code';
+        }
+      } else if (err && typeof err === 'object' && 'message' in err) {
+        errorMessage = String((err as { message: unknown }).message);
+      } else if (err && typeof err === 'object' && 'status' in err) {
+        errorMessage = `Verification failed with status: ${String((err as { status: unknown }).status)}`;
       }
       
       setError(errorMessage);
@@ -210,7 +216,7 @@ export default function SignUpPage() {
               <LogoIcon />
             </div>
             <h1 className="text-2xl font-bold text-[#ffffff]">Create your account</h1>
-            <p className="mt-2 text-sm text-white opacity-60">We'll use this information to complete your profile.</p>
+            <p className="mt-2 text-sm text-white opacity-60">We&apos;ll use this information to complete your profile.</p>
           </div>
 
         {error && (
@@ -328,7 +334,7 @@ export default function SignUpPage() {
           <form onSubmit={onVerify} className="space-y-6">
             <div className="text-center">
               <p className="text-sm text-[#a5a6ac] mb-4">We sent a verification code to your email. Enter it below:</p>
-              <p className="text-xs text-[#84858c] mb-4">Check your spam folder if you don't see it in your inbox.</p>
+              <p className="text-xs text-[#84858c] mb-4">Check your spam folder if you don&apos;t see it in your inbox.</p>
             </div>
             <div>
               <label className="block text-sm font-medium text-[#ffffff] mb-2">Verification code</label>
@@ -381,7 +387,7 @@ export default function SignUpPage() {
             </Link>
           </p>
           <p className="text-sm text-[#FFFFFF]">
-            By creating an account, you agreeing to the
+            By creating an account, you&apos;re agreeing to the
           </p>
           <p className="text-sm text-[#FFFFFF]">
             <span className='font-semibold'>Terms of Service</span> and <span className='font-semibold'>Privacy Policy.</span>

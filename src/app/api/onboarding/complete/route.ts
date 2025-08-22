@@ -35,10 +35,16 @@ export async function POST(request: Request) {
       metadata: updatedUser.publicMetadata,
       privateMetadata: updatedUser.privateMetadata,
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Onboarding API error:', error)
+    
+    let errorMessage = 'Unknown error';
+    if (error && typeof error === 'object' && 'message' in error) {
+      errorMessage = String((error as { message: unknown }).message);
+    }
+    
     return new NextResponse(
-      JSON.stringify({ error: 'Internal Server Error', details: error?.message ?? 'Unknown error' }),
+      JSON.stringify({ error: 'Internal Server Error', details: errorMessage }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     )
   }

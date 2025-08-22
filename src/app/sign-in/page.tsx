@@ -20,7 +20,7 @@ export default function SignInPage() {
 
   React.useEffect(() => {
     if (user) {
-      const onboardingComplete = (user.publicMetadata as any)?.onboardingComplete === true
+      const onboardingComplete = (user.publicMetadata as { onboardingComplete?: boolean })?.onboardingComplete === true
       if (onboardingComplete) {
         router.replace('/')
       } else {
@@ -62,8 +62,17 @@ export default function SignInPage() {
         // e.g. needs second factor; handle other statuses if you enabled them
         setError('Additional verification required')
       }
-    } catch (err: any) {
-      setError(err?.errors?.[0]?.message ?? 'Sign in failed')
+    } catch (err: unknown) {
+      let errorMessage = 'Sign in failed';
+      
+      if (err && typeof err === 'object' && 'errors' in err && Array.isArray((err as { errors: unknown[] }).errors) && (err as { errors: unknown[] }).errors.length > 0) {
+        const firstError = (err as { errors: unknown[] }).errors[0];
+        if (firstError && typeof firstError === 'object' && 'message' in firstError) {
+          errorMessage = String(firstError.message) || 'Sign in failed';
+        }
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false)
     }
@@ -169,7 +178,7 @@ export default function SignInPage() {
 
         <div className="text-center">
           <p className="text-sm text-[#a5a6ac]">
-            Don't have an account?{' '}
+            Don&apos;t have an account?{' '}
             <Link href="/sign-up" className="font-medium text-blue-400 hover:text-blue-300">
               Create an account
             </Link>
