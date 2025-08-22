@@ -44,9 +44,10 @@ type Filters = {
   pastInvestment: string[];
 };
 
-const InvestorCard: React.FC<{ investor: Investor; appliedFilters?: Filters }> = ({ 
+const InvestorCard: React.FC<{ investor: Investor; appliedFilters?: Filters; basePath?: string; }> = ({ 
   investor, 
-  appliedFilters 
+  appliedFilters,
+  basePath = '/investors'
 }) => {
   const { user } = useUser();
   const router = useRouter();
@@ -100,7 +101,7 @@ const InvestorCard: React.FC<{ investor: Investor; appliedFilters?: Filters }> =
       params.set('page', currentPage.toString());
     }
     
-    const detailUrl = `/investors/${investor.id}?${params.toString()}`;
+    const detailUrl = `${basePath}/${investor.id}?${params.toString()}`;
     console.log('Detail URL:', detailUrl);
     router.push(detailUrl);
   };

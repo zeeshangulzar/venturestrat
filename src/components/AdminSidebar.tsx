@@ -20,14 +20,13 @@ import LogoutIcon from './icons/LogoutIcon';
 import LogoIcon from './icons/logoIcon';
 import RIcon from './icons/rtystIcon';
 import UsersIcon from './icons/UsersIcon';
-import { useRole } from '@hooks/useRole'
+import InvestorFocusIcon from './icons/investorFocusIcon';
 
-// Sidebar component
-const Sidebar = () => {
+// Admin Sidebar component
+const AdminSidebar = () => {
   const pathname = usePathname(); // Get the current pathname
   const router = useRouter();
   const { signOut } = useClerk(); // Get Clerk signOut function
-  const { isAdmin } = useRole(); // Get admin status from client-side hook
 
   // Helper function to apply active class based on current route
   const getLinkClass = (path: string) => {
@@ -104,19 +103,41 @@ const Sidebar = () => {
       {/* Main Menu */}
       <div className="">
         <div className="px-6 h-[16px] font-manrope font-medium text-[12px] leading-[16px] tracking-[-0.02em] text-[#787F89]">
-          MAIN MENU
+          ADMIN MENU
         </div>
         <div className="space-y-4 mt-6">
-          <div className={getActiveWrapperClass('/')}>
-            <Link href="/" className={`ml-2.5 mr-2.5 block text-lg py-2 rounded-lg transition-colors ${getLinkClass('/')}`}>
+          <div className={getActiveWrapperClass('/admin')}>
+            <Link href="/admin" className={`ml-2.5 mr-2.5 block text-lg py-2 rounded-lg transition-colors ${getLinkClass('/admin')}`}>
               <div className="flex items-center">
                 <HomeIcon className="h-6 w-6 mr-2" />
-                <span className='font-medium text-[14px]'>Home</span>
+                <span className='font-medium text-[14px]'>Dashboard</span>
               </div>
             </Link>
           </div>
 
+          <div className={getActiveWrapperClass('/admin/users')}>
+            <Link
+              href="/admin/users"
+              className={`ml-2.5 mr-2.5 block text-lg py-2 rounded-lg transition-colors ${getLinkClass('/admin/users')}`}
+            >
+              <div className="flex items-center">
+                <UsersIcon className="h-6 w-6 mr-2" />
+                <span className="font-medium text-[14px]">Users</span>
+              </div>
+            </Link>
+          </div>
 
+          <div className={getActiveWrapperClass('/admin/investors')}>
+            <Link
+              href="/admin/investors"
+              className={`ml-2.5 mr-2.5 block text-lg py-2 rounded-lg transition-colors ${getLinkClass('/admin/investors')}`}
+            >
+              <div className="flex items-center">
+                <InvestorFocusIcon className="h-6 w-6 mr-2" />
+                <span className="font-medium text-[14px]">Investors</span>
+              </div>
+            </Link>
+          </div>
 
           <div className={getActiveWrapperClass('/task-manager')}>
             <div className={`ml-2.5 mr-2.5 block text-lg py-2 rounded-lg transition-colors cursor-pointer ${getLinkClass('/task-manager')}`}>
@@ -211,33 +232,8 @@ const Sidebar = () => {
           </SignOutButton>
         </button>
       </div>
-
-      {/* My Tasks Section (static) */}
-      {/* <div className="mt-6 px-6 mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <span className="text-xs font-medium text-[#787F89] font-manrope">MY TASKS</span>
-          <button className="text-2xl text-[#5F6774]">+</button>
-        </div>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <span className="flex items-center justify-center h-12 w-12 rounded-xl bg-gradient-to-br from-[#232A4D] to-[#232A4D] text-white font-semibold text-lg mr-4">TC</span>
-              <span className="text-gray-700 font-medium text-lg">Name Here</span>
-            </div>
-            <span className="bg-[#FFF1F1] text-[#FF5A5F] rounded-xl px-4 py-1 text-sm font-semibold">01</span>
-          </div>
-          <div className="flex items-center">
-            <span className="flex items-center justify-center h-12 w-12 rounded-xl bg-gradient-to-br from-[#7B5CF6] to-[#7B5CF6] text-white font-semibold text-lg mr-4">WL</span>
-            <span className="text-gray-700 font-medium text-lg">Name Here</span>
-          </div>
-          <div className="flex items-center">
-            <span className="flex items-center justify-center h-12 w-12 rounded-xl bg-gradient-to-br from-[#34C759] to-[#34C759] text-white font-semibold text-lg mr-4">ES</span>
-            <span className="text-gray-700 font-medium text-lg">Name Here</span>
-          </div>
-        </div>
-      </div> */}
     </div>
   );
 };
 
-export default Sidebar;
+export default AdminSidebar;

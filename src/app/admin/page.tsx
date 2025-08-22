@@ -1,14 +1,11 @@
 // app/admin/users/page.tsx
 import { checkRole } from '@utils/roles'
 import { redirect } from 'next/navigation'
+import AdminDashboardClient from './AdminDashboardClient'
 
-export default async function UsersTab() {
+export default async function AdminDashboard() {
   const isAdmin = await checkRole('admin')
   if (!isAdmin) redirect('/')
 
-  return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold text-slate-900">Welcome to the admin panel</h1>
-    </div>
-  )
+  return <AdminDashboardClient />;
 }
