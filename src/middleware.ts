@@ -16,9 +16,9 @@ export default clerkMiddleware(async (auth, req) => {
   const isAuthCallback = path.startsWith('/sso-callback')
   const methodIsGet = req.method === 'GET'
 
-  // 1) Redirect unauthenticated users to sign-in (except for public routes)
+  // 1) Redirect unauthenticated users to sign-up (except for public routes)
   if (!userId && !isPublicRoute(req) && !isApi) {
-    url.pathname = '/sign-in'
+    url.pathname = '/sign-up'
     return NextResponse.redirect(url)
   }
 

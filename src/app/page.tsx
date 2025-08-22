@@ -31,13 +31,13 @@ export default function Home() {
               Welcome to Investor Directory
             </h1>
             <p className="text-gray-600 mb-6">
-              Please sign in to explore our list of investors and their details.
+              Create an account to explore our list of investors and their details.
             </p>
             <button 
-              onClick={() => router.push('/sign-in')}
+              onClick={() => router.push('/sign-up')}
               className="bg-blue-600 text-white rounded-md px-6 py-3 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
             >
-              Sign In
+              Sign Up
             </button>
           </div>
         </div>

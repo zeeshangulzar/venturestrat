@@ -12,6 +12,11 @@ export default function ConditionalSidebar() {
     return null;
   }
 
+  // Don't render sidebar for onboarding (focused process)
+  if (pathname?.startsWith('/onboarding')) {
+    return null;
+  }
+
   return (
     <SignedIn>
       <div className="hidden lg:block">

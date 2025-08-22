@@ -88,7 +88,7 @@ export default function SignInPage() {
       
       {/* Center content */}
       <div className="min-h-screen flex items-center justify-center p-6">
-        <div className="w-full max-w-md space-y-8 p-8 shadow-md bg-[#1b2130] rounded-[14px]">
+        <div className="w-full max-w-md space-y-8 p-8 shadow-2xl bg-[#1b2130] rounded-[14px] border border-[rgba(37,99,235,0.1)]">
           <div className="text-center">
             <div className="flex items-center justify-center mb-5">
               <LogoIcon />
@@ -98,8 +98,17 @@ export default function SignInPage() {
           </div>
 
         {error && (
-          <div className="rounded-md bg-red-50 border border-red-200 p-4">
-            <p className="text-sm text-red-600">{error}</p>
+          <div className="rounded-[14px] bg-red-900/20 border border-red-500/30 p-4">
+            <div className="flex items-start">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-red-300" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-red-300">{error}</p>
+              </div>
+            </div>
           </div>
         )}
 
@@ -107,7 +116,7 @@ export default function SignInPage() {
           <div>
             <input
               type="email"
-              className="text-[#5e6269] w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="text-[#84858c] w-full rounded-[14px] border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
               value={email}
               onChange={e => setEmail(e.target.value)}
               required
@@ -119,7 +128,7 @@ export default function SignInPage() {
           <div>
             <input
               type="password"
-              className="text-[#5e6269] w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="text-[#84858c] w-full rounded-[14px] border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
               value={password}
               onChange={e => setPassword(e.target.value)}
               required
@@ -131,7 +140,7 @@ export default function SignInPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 text-white rounded-md px-4 py-2 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-blue-600 text-white rounded-[14px] px-4 py-2 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? 'Signing in…' : 'Sign in'}
           </button>
@@ -139,15 +148,23 @@ export default function SignInPage() {
 
         <div className="flex items-center gap-2">
           <div className="h-px flex-1 bg-gray-200" />
-          <span className="text-xs text-gray-500">or</span>
+          <span className="text-xs text-[#FFFFFF]">OR</span>
           <div className="h-px flex-1 bg-gray-200" />
         </div>
 
         <button
           onClick={onGoogle}
-          className="w-full bg-white text-gray-700 border border-gray-300 rounded-md px-4 py-2 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          className="h-[46px] w-full bg-[rgba(255, 255, 255, 0.1)] text-[#FFFFFF] border not-italic font-small text-sm leading-[19px] tracking-[-0.02em] rounded-[10px] px-4 py-2 hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
         >
-          Continue with Google
+          <span className="inline-flex items-center gap-1">
+            <svg width="21" height="20" viewBox="0 0 21 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M19.325 8.23735H18.6V8.2H10.5V11.8H15.5864C14.8443 13.8956 12.8504 15.4 10.5 15.4C7.51785 15.4 5.1 12.9822 5.1 10C5.1 7.01785 7.51785 4.6 10.5 4.6C11.8765 4.6 13.1289 5.1193 14.0824 5.96755L16.6281 3.4219C15.0207 1.92385 12.8706 1 10.5 1C5.52975 1 1.5 5.02975 1.5 10C1.5 14.9703 5.52975 19 10.5 19C15.4703 19 19.5 14.9703 19.5 10C19.5 9.39655 19.4379 8.8075 19.325 8.23735Z" fill="#FFC107"/>
+              <path d="M2.53781 5.81095L5.49476 7.9795C6.29486 5.9986 8.23245 4.6 10.5 4.6C11.8765 4.6 13.1289 5.1193 14.0824 5.96755L16.6281 3.4219C15.0207 1.92385 12.8706 1 10.5 1C7.0431 1 4.04531 2.95165 2.53781 5.81095Z" fill="#FF3D00"/>
+              <path d="M10.5 19C12.8247 19 14.9367 18.1105 16.5337 16.6638L13.7482 14.3067C12.8142 15.017 11.6734 15.4009 10.5 15.4C8.1591 15.4 6.1711 13.9075 5.4223 11.8245L2.4874 14.0857C3.9769 17.0004 7.00215 19 10.5 19Z" fill="#4CAF50"/>
+              <path d="M19.325 8.23735H18.6V8.2H10.5V11.8H15.5864C15.2314 12.7974 14.5917 13.6691 13.7469 14.3071L13.7482 14.3067L16.5337 16.6638C16.3366 16.8429 19.5 14.5 19.5 10C19.5 9.39655 19.4379 8.8075 19.325 8.23735Z" fill="#1976D2"/>
+            </svg>
+            Continue with<span className='font-medium'>Google</span>
+          </span>
         </button>
 
         <div className="text-center">
