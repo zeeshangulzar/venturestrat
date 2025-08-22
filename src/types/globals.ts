@@ -5,10 +5,10 @@ export type Roles = 'admin' | 'moderator'
 declare global {
   interface CustomJwtSessionClaims {
     metadata: {
-      role?: Roles
-    }
+      role?: Roles,
+      onboardingComplete?: boolean,
+    };
   }
 }
 
-// This makes it a module
 export {}
