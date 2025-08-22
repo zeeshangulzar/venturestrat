@@ -108,7 +108,7 @@ export default async function UserShowPage({
           </div>
         </div>
 
-        <UserShortlist userId={user.id} />
+        <UserShortlist userId={user.id} basePath="/admin/investors" />
       </div>
     )
   } catch (error) {

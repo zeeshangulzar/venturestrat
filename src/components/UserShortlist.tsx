@@ -53,7 +53,7 @@ type ApiResponse = {
   totalShortlisted: number
 }
 
-export default function UserShortlist({ userId }: { userId: string }) {
+export default function UserShortlist({ userId, basePath = '/investors' }: { userId: string; basePath?: string }) {
   const [data, setData] = useState<ApiResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -188,7 +188,7 @@ export default function UserShortlist({ userId }: { userId: string }) {
         <ul className="space-y-3">
           {shortlist.map((inv) => (
             <li key={inv.id}>
-              <InvestorCard investor={inv} />
+              <InvestorCard investor={inv} basePath={basePath} />
             </li>
           ))}
         </ul>

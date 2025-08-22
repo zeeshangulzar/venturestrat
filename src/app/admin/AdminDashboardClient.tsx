@@ -94,7 +94,7 @@ export default function AdminDashboardClient() {
         </Link>
 
         {/* Investors Management Card */}
-        <Link 
+        {/* <Link 
           href="/admin/investors" 
           className="group block p-6 bg-white rounded-lg border border-gray-200 hover:border-green-300 hover:shadow-md transition-all duration-200"
         >
@@ -110,7 +110,7 @@ export default function AdminDashboardClient() {
           <div className="text-green-600 font-medium group-hover:text-green-700">
             Manage Investors →
           </div>
-        </Link>
+        </Link> */}
       </div>
 
       {/* Quick Stats */}

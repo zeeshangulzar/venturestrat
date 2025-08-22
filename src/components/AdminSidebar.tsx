@@ -127,7 +127,7 @@ const AdminSidebar = () => {
             </Link>
           </div>
 
-          <div className={getActiveWrapperClass('/admin/investors')}>
+          {/* <div className={getActiveWrapperClass('/admin/investors')}>
             <Link
               href="/admin/investors"
               className={`ml-2.5 mr-2.5 block text-lg py-2 rounded-lg transition-colors ${getLinkClass('/admin/investors')}`}
@@ -137,9 +137,9 @@ const AdminSidebar = () => {
                 <span className="font-medium text-[14px]">Investors</span>
               </div>
             </Link>
-          </div>
+          </div> */}
 
-          <div className={getActiveWrapperClass('/task-manager')}>
+          {/* <div className={getActiveWrapperClass('/task-manager')}>
             <div className={`ml-2.5 mr-2.5 block text-lg py-2 rounded-lg transition-colors cursor-pointer ${getLinkClass('/task-manager')}`}>
               <div className="flex items-center">
                 <TaskManagerIcon className="h-6 w-6 mr-2" />
@@ -191,12 +191,12 @@ const AdminSidebar = () => {
                  <span className='font-medium text-[14px]'>Marketing</span>
                </div>
              </div>
-           </div>
+           </div> */}
         </div>
       </div>
 
       {/* Other Section */}
-      <div className="mt-8 px-0">
+      {/* <div className="mt-8 px-0">
         <h3 className="px-6 text-xs font-medium text-[#787F89] mb-4 font-manrope">OTHER</h3>
         <div className={`ml-2.5 mr-2.5 block text-lg py-2 rounded-lg transition-colors cursor-pointer ${getLinkClass('/my-files')}`}>
           <div className="flex items-center">
@@ -210,16 +210,16 @@ const AdminSidebar = () => {
             <span className='font-medium text-[14px]'>Help Center</span>
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* Settings and Log Out */}
       <div className="mt-6 px-0">
-        <div className={`ml-2.5 mr-2.5 block text-lg py-2 rounded-lg transition-colors cursor-pointer ${getLinkClass('/settings')}`}> 
+        {/* <div className={`ml-2.5 mr-2.5 block text-lg py-2 rounded-lg transition-colors cursor-pointer ${getLinkClass('/settings')}`}> 
           <div className="flex items-center">
             <SettingsIcon className="h-6 w-6 mr-2" />
             <span className='font-medium text-[14px]'>Settings</span>
           </div>
-        </div>
+        </div> */}
         <button 
           onClick={handleSignOut}
           className="ml-2.5 mr-2.5 block text-lg py-2 rounded-lg transition-colors cursor-pointer text-gray-600 hover:text-gray-900 hover:bg-gray-50 w-full text-left pl-6"

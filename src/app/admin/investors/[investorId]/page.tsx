@@ -36,7 +36,7 @@ export default function AdminInvestorShowPage() {
 
   const [investor, setInvestor] = useState<Investor | null>(null);
   const [loading, setLoading] = useState(true);
-  const [backUrl, setBackUrl] = useState('/admin/investors');
+  const [backUrl, setBackUrl] = useState('/admin/users');
 
   useEffect(() => {
     // Get filters and page from URL parameters for back navigation
@@ -49,7 +49,7 @@ export default function AdminInvestorShowPage() {
       
       if (urlFilters || urlPage) {
         // Create back URL with filters and page
-        let url = '/admin/investors';
+        let url = '/admin/users';
         const params = new URLSearchParams();
         
         if (urlFilters) {
@@ -120,7 +120,7 @@ export default function AdminInvestorShowPage() {
 
       <div className="mb-4">
         <Link href={backUrl} className="text-sm text-slate-600 hover:underline">
-          ← Back to admin investors
+          ← Back to admin users
         </Link>
       </div>
 
