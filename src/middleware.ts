@@ -40,7 +40,9 @@ export default clerkMiddleware(async (auth, req) => {
   if (userId && !isApi && methodIsGet && !isAuthCallback) {
     // Check both privateMetadata and publicMetadata for onboardingComplete
     const onboardingComplete = 
-      sessionClaims?.metadata?.onboardingComplete === true
+      // sessionClaims?.metadata?.onboardingComplete === true
+      // Enable it once design is ready
+      true
 
     // Not complete → force them to /onboarding (unless already there)
     if (!onboardingComplete && path !== '/onboarding') {
