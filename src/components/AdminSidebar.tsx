@@ -106,14 +106,14 @@ const AdminSidebar = () => {
           ADMIN MENU
         </div>
         <div className="space-y-4 mt-6">
-          <div className={getActiveWrapperClass('/admin')}>
+          {/* <div className={getActiveWrapperClass('/admin')}>
             <Link href="/admin" className={`ml-2.5 mr-2.5 block text-lg py-2 rounded-lg transition-colors ${getLinkClass('/admin')}`}>
               <div className="flex items-center">
                 <HomeIcon className="h-6 w-6 mr-2" />
                 <span className='font-medium text-[14px]'>Dashboard</span>
               </div>
             </Link>
-          </div>
+          </div> */}
 
           <div className={getActiveWrapperClass('/admin/users')}>
             <Link
@@ -127,7 +127,7 @@ const AdminSidebar = () => {
             </Link>
           </div>
 
-          {/* <div className={getActiveWrapperClass('/admin/investors')}>
+          <div className={getActiveWrapperClass('/admin/investors')}>
             <Link
               href="/admin/investors"
               className={`ml-2.5 mr-2.5 block text-lg py-2 rounded-lg transition-colors ${getLinkClass('/admin/investors')}`}
@@ -137,7 +137,7 @@ const AdminSidebar = () => {
                 <span className="font-medium text-[14px]">Investors</span>
               </div>
             </Link>
-          </div> */}
+          </div>
 
           {/* <div className={getActiveWrapperClass('/task-manager')}>
             <div className={`ml-2.5 mr-2.5 block text-lg py-2 rounded-lg transition-colors cursor-pointer ${getLinkClass('/task-manager')}`}>
