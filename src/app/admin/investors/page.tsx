@@ -192,14 +192,8 @@ export default function AdminInvestorsPage() {
 
   return (
     <div className="mx-auto">
-      {/* Page Header */}
-      <div className="p-6 border-b border-[#EDEEEF]">
-        <h1 className="text-2xl font-bold text-slate-900">Admin - Investors Management</h1>
-        <p className="text-gray-600 mt-2">Manage and view all investors in the system</p>
-      </div>
-
       {/* Pagination Header */}
-      <div className="flex justify-between items-center p-6">
+      <div className="flex justify-between items-center">
         <Pagination
           currentPage={currentPage}
           setCurrentPage={setCurrentPageWrapper}
@@ -211,7 +205,7 @@ export default function AdminInvestorsPage() {
       </div>
 
       {/* Filters */}
-      <div className="px-6">
+      <div>
         <InvestorFilter
           filters={{
             country: filters.country,
