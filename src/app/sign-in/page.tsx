@@ -125,7 +125,7 @@ export default function SignInPage() {
           <div>
             <input
               type="email"
-              className="h-[42] w-full font-normal text-sm leading-5 bg-[#0C111D] text-[#FFFFFF] border border-[#ffffff1a] rounded-[10px] px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="cursor-pointer h-[42] w-full font-normal text-sm leading-5 bg-[#0C111D] text-[#FFFFFF] border border-[#ffffff1a] rounded-[10px] px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
               value={email}
               onChange={e => setEmail(e.target.value)}
               required
@@ -186,7 +186,7 @@ export default function SignInPage() {
 
         <button
           onClick={onGoogle}
-          className="h-[46px] w-full bg-[rgba(255, 255, 255, 0.1)] text-[#FFFFFF] border not-italic font-small text-sm leading-[19px] tracking-[-0.02em] rounded-[10px] px-4 py-2 hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          className="cursor-pointer h-[46px] w-full bg-[rgba(255, 255, 255, 0.1)] text-[#FFFFFF] border not-italic font-small text-sm leading-[19px] tracking-[-0.02em] rounded-[10px] px-4 py-2 hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
         >
           <span className="inline-flex items-center gap-1">
             <svg width="21" height="20" viewBox="0 0 21 20" fill="none" xmlns="http://www.w3.org/2000/svg">
