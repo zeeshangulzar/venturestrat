@@ -48,3 +48,19 @@ export async function removeRole(formData: FormData): Promise<void> {
     throw new Error('Failed to remove user role')
   }
 }
+
+export async function setDefaultRole(userId: string): Promise<void> {
+  try {
+    const client = await clerkClient()
+    
+    // Set default role to moderator for new users
+    await client.users.updateUserMetadata(userId, {
+      publicMetadata: { role: 'moderator' },
+    })
+    
+    console.log(`Default role 'moderator' set for user: ${userId}`)
+  } catch (err) {
+    console.error('Error setting default role:', err)
+    // Don't throw error here as this is a default action that shouldn't break sign up
+  }
+}

@@ -7,6 +7,7 @@ import { useSignUp, useUser } from '@clerk/nextjs';
 import Link from 'next/link';
 import Loader from '@components/Loader';
 import LogoIcon from '@components/icons/LogoWithText';
+import { setDefaultRole } from '@components/_actions';
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -33,9 +34,9 @@ export default function SignUpPage() {
     if (user) {
       const onboardingComplete = (user.publicMetadata as { onboardingComplete?: boolean })?.onboardingComplete === true
       if (onboardingComplete) {
-        router.replace('/')
+        router.push('/')
       } else {
-        router.replace('/onboarding')
+        router.push('/onboarding')
       }
     }
   }, [user, router])
@@ -108,9 +109,15 @@ export default function SignUpPage() {
 
       // If verification is NOT required, status might already be "complete"
       if (res.status === 'complete' && res.createdSessionId) {
+        // Set default role to moderator for new user
+        if (res.createdUserId) {
+          await setDefaultRole(res.createdUserId);
+        }
+        
         await setActive!({ session: res.createdSessionId });
-        // The middleware will handle redirecting to onboarding if needed
-        router.replace('/');
+        // Redirect to onboarding for new users
+        console.log('Sign up complete, redirecting to onboarding...');
+        window.location.href = '/onboarding';
       }
     } catch (err: unknown) {
       console.error('Sign up error:', err);
@@ -163,9 +170,15 @@ export default function SignUpPage() {
       console.log('Verification response:', attempt);
 
       if (attempt.status === 'complete' && attempt.createdSessionId) {
+        // Set default role to moderator for new user
+        if (attempt.createdUserId) {
+          await setDefaultRole(attempt.createdUserId);
+        }
+        
         await setActive!({ session: attempt.createdSessionId });
-        // The middleware will handle redirecting to onboarding if needed
-        router.replace('/');
+        // Redirect to onboarding for new users
+        console.log('Verification complete, redirecting to onboarding...');
+        window.location.href = '/onboarding';
       } else {
         // If not complete yet, you might need to handle other statuses here
         setError(`Verification incomplete. Status: ${attempt.status}. Please try again.`);
@@ -194,6 +207,8 @@ export default function SignUpPage() {
 
   const onGoogle = async () => {
     if (!isLoaded || !signUp) return;
+    // Note: Google OAuth users will also get the default moderator role
+    // The role is set via the setDefaultRole server action when they complete the flow
     await signUp.authenticateWithRedirect({
       strategy: 'oauth_google',
       redirectUrl: '/sso-callback',
@@ -297,11 +312,14 @@ export default function SignUpPage() {
               </div>
             </div>
 
+            {/* Clerk CAPTCHA Widget */}
+            <div id="clerk-captcha" className="flex justify-center"></div>
+
             <div className='mt-[72px] mb-5'>
               <button 
                 type="submit" 
                 disabled={loading} 
-                className="not-italic font-bold text-sm leading-[19px] tracking-[-0.02em] text-[#FFFFFF] w-full bg-[#2563EB] rounded-[10px] px-5 py-[13px] gap-1 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="cursor-pointer not-italic font-bold text-sm leading-[19px] tracking-[-0.02em] text-[#FFFFFF] w-full bg-[#2563EB] rounded-[10px] px-5 py-[13px] gap-1 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? (
                   <div className="flex items-center justify-center">
@@ -312,7 +330,7 @@ export default function SignUpPage() {
                   <span className="inline-flex items-center gap-1">
                     Create account
                     <svg width="21" height="20" viewBox="0 0 21 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <g clip-path="url(#clip0_1121_3914)">
+                      <g clipPath="url(#clip0_1121_3914)">
                       <path d="M16.332 10H4.66536" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                       <path d="M16.332 10L12.9987 13.3333" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                       <path d="M16.332 10.0001L12.9987 6.66675" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -351,7 +369,7 @@ export default function SignUpPage() {
             <button 
               type="submit" 
               disabled={loading} 
-              className="w-full bg-blue-600 text-white rounded-[14px] px-4 py-2 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="cursor-pointer w-full bg-blue-600 text-white rounded-[14px] px-4 py-2 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Verifying…' : 'Verify & continue'}
             </button>
@@ -370,9 +388,9 @@ export default function SignUpPage() {
         >
           <span className="inline-flex items-center gap-1">
             <svg width="21" height="20" viewBox="0 0 21 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M19.325 8.23735H18.6V8.2H10.5V11.8H15.5864C14.8443 13.8956 12.8504 15.4 10.5 15.4C7.51785 15.4 5.1 12.9822 5.1 10C5.1 7.01785 7.51785 4.6 10.5 4.6C11.8765 4.6 13.1289 5.1193 14.0824 5.96755L16.6281 3.4219C15.0207 1.92385 12.8706 1 10.5 1C5.52975 1 1.5 5.02975 1.5 10C1.5 14.9703 5.52975 19 10.5 19C15.4703 19 19.5 14.9703 19.5 10C19.5 9.39655 19.4379 8.8075 19.325 8.23735Z" fill="#FFC107"/>
+              <path d="M19.325 8.23735H18.6V8.2H10.5V11.8H15.5864C14.8443 13.8956 12.8504 15.4 10.5 15.4C7.51785 15.4 5.1 12.9822 5.1 10C5.1 7.01785 7.51785 4.6 10.5 4.6C11.8765 4.6 13.1289 5.1193 14.0824 5.96755L16.6281 3.4219C15.0207 1.92385 12.8706 1 10.5 1C5.52975 1 1.5 5.02975 1.5 10C5.52975 4.6 1.5 5.02975 1.5 10C5.1 7.01785 7.51785 4.6 10.5 4.6C11.8765 4.6 13.1289 5.1193 14.0824 5.96755L16.6281 3.4219C15.0207 1.92385 12.8706 1 10.5 1C7.0431 1 4.04531 2.95165 2.53781 5.81095Z" fill="#FFC107"/>
               <path d="M2.53781 5.81095L5.49476 7.9795C6.29486 5.9986 8.23245 4.6 10.5 4.6C11.8765 4.6 13.1289 5.1193 14.0824 5.96755L16.6281 3.4219C15.0207 1.92385 12.8706 1 10.5 1C7.0431 1 4.04531 2.95165 2.53781 5.81095Z" fill="#FF3D00"/>
-              <path d="M10.5 19C12.8247 19 14.9367 18.1105 16.5337 16.6638L13.7482 14.3067C12.8142 15.017 11.6734 15.4009 10.5 15.4C8.1591 15.4 6.1711 13.9075 5.4223 11.8245L2.4874 14.0857C3.9769 17.0004 7.00215 19 10.5 19Z" fill="#4CAF50"/>
+              <path d="M10.5 19C12.8247 19 14.9367 18.1105 16.5337 16.6638L13.7482 14.3067C12.8142 15.017 11.6734 15.4009 10.5 15.4C8.1591 15.4 6.1711 13.9075 5.4223 11.8247L2.4874 14.0857C3.9769 17.0004 7.00215 19 10.5 19Z" fill="#4CAF50"/>
               <path d="M19.325 8.23735H18.6V8.2H10.5V11.8H15.5864C15.2314 12.7974 14.5917 13.6691 13.7469 14.3071L13.7482 14.3067L16.5337 16.6638C16.3366 16.8429 19.5 14.5 19.5 10C19.5 9.39655 19.4379 8.8075 19.325 8.23735Z" fill="#1976D2"/>
             </svg>
             Continue with<span className='font-medium'>Google</span>

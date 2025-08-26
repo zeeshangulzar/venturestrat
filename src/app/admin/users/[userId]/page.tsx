@@ -33,7 +33,8 @@ export default async function UserShowPage({
       )
     }
 
-    const role = (user.publicMetadata?.role as string | undefined) ?? 'user'
+    const role = user.publicMetadata?.role as string | undefined ?? ''
+    const titleizedRole = role.charAt(0).toUpperCase() + role.slice(1).toLowerCase()
     const created = user.createdAt ? new Date(user.createdAt).toLocaleDateString() : '—'
 
     return (
@@ -71,10 +72,10 @@ export default async function UserShowPage({
                   <label className="text-sm font-medium text-slate-700">Email</label>
                   <p className="text-slate-900">{primaryEmail}</p>
                 </div>
-                <div>
-                  <label className="text-sm font-medium text-slate-700">Clerk ID</label>
-                  <p className="text-slate-600 font-mono text-sm">{user.id}</p>
-                </div>
+                {/* <div> */}
+                  {/* <label className="text-sm font-medium text-slate-700">Clerk ID</label> */}
+                  {/* <p className="text-slate-600 font-mono text-sm">{user.id}</p> */}
+                {/* </div> */}
               </div>
             </div>
             
@@ -83,14 +84,16 @@ export default async function UserShowPage({
                 Account Information
               </h3>
               <div className="space-y-3">
+                { role && (
+                  <div>
+                    <label className="text-sm font-medium text-slate-700">Role</label>
+                    <span className="ml-2 inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-800">
+                      {titleizedRole}
+                    </span>
+                  </div>
+                ) }
                 <div>
-                  <label className="text-sm font-medium text-slate-700">Role</label>
-                  <span className="ml-2 inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-800">
-                    {role}
-                  </span>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-slate-700">Created</label>
+                  <label className="text-sm font-medium text-slate-700">Created At</label>
                   <p className="text-slate-900">{created}</p>
                 </div>
                 <div>

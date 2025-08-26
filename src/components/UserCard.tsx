@@ -104,7 +104,7 @@ export default function UserCard({ user, showRoleActions }: UserCardProps) {
                 <input type="hidden" name="role" value="admin" />
                 <button
                   type="submit"
-                  className="inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+                  className="cursor-pointer inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
                 >
                   Make Admin
                 </button>
@@ -115,7 +115,7 @@ export default function UserCard({ user, showRoleActions }: UserCardProps) {
                 <input type="hidden" name="role" value="moderator" />
                 <button
                   type="submit"
-                  className="inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+                  className="cursor-pointer inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
                 >
                   Make Moderator
                 </button>
@@ -125,7 +125,7 @@ export default function UserCard({ user, showRoleActions }: UserCardProps) {
                 <input type="hidden" name="id" value={user.id} />
                 <button
                   type="submit"
-                  className="inline-flex items-center justify-center rounded-lg border border-rose-300 bg-white px-3 py-2 text-sm font-medium text-rose-700 transition-colors hover:bg-rose-50"
+                  className="cursor-pointer inline-flex items-center justify-center rounded-lg border border-rose-300 bg-white px-3 py-2 text-sm font-medium text-rose-700 transition-colors hover:bg-rose-50"
                 >
                   Remove Role
                 </button>

@@ -125,19 +125,19 @@ export default function SignInPage() {
           <div>
             <input
               type="email"
-              className="text-[#84858c] w-full rounded-[14px] border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="h-[42] w-full font-normal text-sm leading-5 bg-[#0C111D] text-[#FFFFFF] border border-[#ffffff1a] rounded-[10px] px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
               value={email}
               onChange={e => setEmail(e.target.value)}
               required
               autoComplete="email"
-              placeholder="Enter your email"
+              placeholder="jeff@amazon.com"
             />
           </div>
 
           <div>
             <input
               type="password"
-              className="text-[#84858c] w-full rounded-[14px] border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="h-[42] w-full font-normal text-sm leading-5 bg-[#0C111D] text-[#FFFFFF] border border-[#ffffff1a] rounded-[10px] px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
               value={password}
               onChange={e => setPassword(e.target.value)}
               required
@@ -146,13 +146,36 @@ export default function SignInPage() {
             />
           </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-blue-600 text-white rounded-[14px] px-4 py-2 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? 'Signing in…' : 'Sign in'}
-          </button>
+          <div className='mt-[72px] mb-5'>
+            <button 
+              type="submit" 
+              disabled={loading} 
+              className="cursor-pointer not-italic font-bold text-sm leading-[19px] tracking-[-0.02em] text-[#FFFFFF] w-full bg-[#2563EB] rounded-[10px] px-5 py-[13px] gap-1 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? (
+                <div className="flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Signing in...
+                </div>
+              ) : (
+                <span className="inline-flex items-center gap-1">
+                  Sign in
+                  <svg width="21" height="20" viewBox="0 0 21 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <g clipPath="url(#clip0_1121_3914)">
+                    <path d="M16.332 10H4.66536" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M16.332 10L12.9987 13.3333" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M16.332 10.0001L12.9987 6.66675" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </g>
+                    <defs>
+                    <clipPath id="clip0_1121_3914">
+                    <rect width="20" height="20" fill="white" transform="matrix(-1 0 0 1 20.5 0)"/>
+                    </clipPath>
+                    </defs>
+                  </svg>
+                </span>
+              )}
+            </button>
+          </div>
         </form>
 
         <div className="flex items-center gap-2">
