@@ -11,6 +11,7 @@ interface OnboardingMetadata {
   revenue: string;
   stages: string[];
   businessSectors: string[];
+  fundingAmount?: number;
   onboardingComplete?: boolean;
   [key: string]: unknown; // Allow other metadata properties
 }
@@ -29,6 +30,7 @@ export async function POST(request: Request) {
       revenue, 
       stages, 
       businessSectors,
+      fundingAmount,
       isComplete = false // New flag to indicate if this is completion or just progress save
     } = body ?? {}
 
@@ -47,6 +49,7 @@ export async function POST(request: Request) {
       revenue: revenue ?? '',
       stages: stages ?? [],
       businessSectors: businessSectors ?? [],
+      fundingAmount: fundingAmount ?? 0,
     }
 
     // Only mark as complete if this is the final submission

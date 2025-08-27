@@ -42,6 +42,8 @@ export default function OnboardingPage() {
   });
 
   // API data state
+  const [originalStages, setOriginalStages] = useState<FilterOption[]>([]);
+  const [originalBusinessSectors, setOriginalBusinessSectors] = useState<FilterOption[]>([]);
   const [stages, setStages] = useState<FilterOption[]>([]);
   const [businessSectors, setBusinessSectors] = useState<FilterOption[]>([]);
   const [loadingFilters, setLoadingFilters] = useState(false);
@@ -105,6 +107,9 @@ export default function OnboardingPage() {
         const stagesData = data.stages?.map((v: string) => ({ label: v, value: v })) || [];
         const businessSectorsData = data.investmentFocuses?.map((v: string) => ({ label: v, value: v })) || [];
         
+        // Set both original and current options
+        setOriginalStages(stagesData);
+        setOriginalBusinessSectors(businessSectorsData);
         setStages(stagesData);
         setBusinessSectors(businessSectorsData);
       } catch (err) {
@@ -141,6 +146,16 @@ export default function OnboardingPage() {
     }
   }, [isLoaded, user]);
 
+  // Ensure dropdowns show all options when data is loaded
+  useEffect(() => {
+    if (stages.length > 0) {
+      handleDropdownOpen('investmentStages');
+    }
+    if (businessSectors.length > 0) {
+      handleDropdownOpen('investmentFocuses');
+    }
+  }, [stages.length, businessSectors.length]);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -154,6 +169,78 @@ export default function OnboardingPage() {
       ...prev,
       [field]: value
     }));
+  };
+
+  // Search functionality for dropdowns
+  const handleSearch = async (search: string, type: string) => {
+    if (typeof search !== 'string' || !search.trim()) {
+      // When search is empty, restore original options but include selected values
+      restoreOriginalOptionsWithSelected(type);
+      return;
+    }
+
+    try {
+      const res = await fetch(
+        getApiUrl(`/api/investment-filters?search=${encodeURIComponent(search)}&type=${type}`)
+      );
+
+      if (res.ok) {
+        const data = await res.json();
+        
+        if (type === 'investmentStages') {
+          const searchResults = (data.stages ?? []).map((v: string) => ({ label: v, value: v }));
+          const mergedOptions = mergeSelectedWithOptions(searchResults, formData.stages, originalStages);
+          setStages(mergedOptions);
+        } else if (type === 'investmentFocuses') {
+          const searchResults = (data.investmentFocuses ?? []).map((v: string) => ({ label: v, value: v }));
+          const mergedOptions = mergeSelectedWithOptions(searchResults, formData.businessSectors, originalBusinessSectors);
+          setBusinessSectors(mergedOptions);
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching filtered data:', err);
+    }
+  };
+
+  // Helper function to merge selected values with search results
+  const mergeSelectedWithOptions = (
+    searchResults: FilterOption[], 
+    selectedValues: string[], 
+    originalOptions: FilterOption[]
+  ): FilterOption[] => {
+    // Create a set of values that are already in search results
+    const existingValues = new Set(searchResults.map(option => option.value));
+    
+    // Find selected options that are not in search results
+    const missingSelectedOptions = selectedValues
+      .filter(value => !existingValues.has(value))
+      .map(value => {
+        // Try to find the option in original options first
+        const originalOption = originalOptions.find(opt => opt.value === value);
+        return originalOption || { label: value, value: value };
+      });
+
+    // Combine missing selected options with search results
+    // Put selected options at the top for better UX
+    return [...missingSelectedOptions, ...searchResults];
+  };
+
+  // Restore original options when search is cleared or dropdown is opened
+  const restoreOriginalOptionsWithSelected = (type: string) => {
+    if (type === 'investmentStages') {
+      // Always show all original options, with selected ones at the top
+      const mergedOptions = mergeSelectedWithOptions(originalStages, formData.stages, originalStages);
+      setStages(mergedOptions);
+    } else if (type === 'investmentFocuses') {
+      // Always show all original options, with selected ones at the top
+      const mergedOptions = mergeSelectedWithOptions(originalBusinessSectors, formData.businessSectors, originalBusinessSectors);
+      setBusinessSectors(mergedOptions);
+    }
+  };
+
+  // Ensure dropdowns show all options when opened
+  const handleDropdownOpen = (type: string) => {
+    restoreOriginalOptionsWithSelected(type);
   };
 
   const saveProgress = async () => {
@@ -273,7 +360,7 @@ export default function OnboardingPage() {
               className="bg-white/10 border border-white/10 rounded-[10px] w-full h-[40px] font-normal text-sm leading-[22px] opacity-80  text-white px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
           </div>
-          <h2 className="ont-semibold text-lg leading-[22px] tracking-[-0.02em] text-white mb-4">
+          <h2 className="font-semibold text-lg leading-[22px] tracking-[-0.02em] text-white mb-4">
             Where is your business incorporated and where do you operate?
           </h2>
           <div className='flex gap-[14px]'>
@@ -310,8 +397,8 @@ export default function OnboardingPage() {
       <div>
         <div className="space-y-6">
           <div>
-            <label className="block text-sm font-medium text-white mb-2">
-              What is your current annual revenue or key traction metric? *
+            <label className="font-semibold text-lg leading-[22px] tracking-[-0.02em] text-white mb-4">
+              What is your current annual revenue or key traction metric?
             </label>
             <input
               type="text"
@@ -322,7 +409,7 @@ export default function OnboardingPage() {
               className="bg-white/10 border border-white/10 rounded-[10px] w-full h-[40px] font-normal text-sm leading-[22px] opacity-80  text-white px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
           </div>
-          <h2 className="ont-semibold text-lg leading-[22px] tracking-[-0.02em] text-white mb-4">
+          <h2 className="font-semibold text-lg leading-[22px] tracking-[-0.02em] text-white mb-4">
             Which stage and industry or sector best defines your business?
           </h2>
           <div className='flex gap-[14px]'>

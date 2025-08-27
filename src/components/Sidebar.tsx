@@ -193,12 +193,12 @@ const Sidebar = () => {
 
       {/* Settings and Log Out */}
       <div className="mt-6 px-0">
-        <div className={`ml-2.5 mr-2.5 block text-lg py-2 rounded-lg transition-colors cursor-pointer ${getLinkClass('/settings')}`}> 
+        <Link href="/settings" className={`ml-2.5 mr-2.5 block text-lg py-2 rounded-lg transition-colors ${getLinkClass('/settings')}`}>
           <div className="flex items-center">
             <SettingsIcon className="h-6 w-6 mr-2" />
             <span className='font-medium text-[14px]'>Settings</span>
           </div>
-        </div>
+        </Link>
         <button 
           onClick={handleSignOut}
           className="ml-2.5 mr-2.5 block text-lg py-2 rounded-lg transition-colors cursor-pointer text-gray-600 hover:text-gray-900 hover:bg-gray-50 w-full text-left pl-6"
