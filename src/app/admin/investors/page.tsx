@@ -240,6 +240,7 @@ export default function AdminInvestorsPage() {
               investor={investor}
               appliedFilters={filters}
               basePath="/admin/investors"
+              hideTargetButton={true}
             />
           ))
         ) : (

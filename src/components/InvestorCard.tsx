@@ -44,10 +44,11 @@ type Filters = {
   pastInvestment: string[];
 };
 
-const InvestorCard: React.FC<{ investor: Investor; appliedFilters?: Filters; basePath?: string; }> = ({ 
+const InvestorCard: React.FC<{ investor: Investor; appliedFilters?: Filters; basePath?: string; hideTargetButton?: boolean; }> = ({ 
   investor, 
   appliedFilters,
-  basePath = '/investors'
+  basePath = '/investors',
+  hideTargetButton = false
 }) => {
   const { user } = useUser();
   const router = useRouter();
@@ -319,13 +320,13 @@ const InvestorCard: React.FC<{ investor: Investor; appliedFilters?: Filters; bas
             </div>
           </div>
 
-          {user && (
+          {user && !hideTargetButton && (
             <button
               disabled={shortlisted || loading}
               onClick={handleShortlist}
               className={`w-full sm:w-auto inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-medium text-white transition-all duration-200 ${
                 shortlisted
-                  ? 'bg-emerald-600 hover:bg-emerald-700'
+                  ? 'bg-emerald-600 hover:bg-blue-700'
                   : 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800'
               } disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0`}
               title={shortlisted ? 'Already targeted' : 'Add to target list'}
