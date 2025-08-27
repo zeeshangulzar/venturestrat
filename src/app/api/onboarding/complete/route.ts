@@ -2,31 +2,65 @@
 import { auth, clerkClient } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 
+// Define the type for onboarding metadata
+interface OnboardingMetadata {
+  companyName: string;
+  siteUrl: string;
+  incorporationCountry: string;
+  operationalRegions: string[];
+  revenue: string;
+  stages: string[];
+  businessSectors: string[];
+  onboardingComplete?: boolean;
+  [key: string]: unknown; // Allow other metadata properties
+}
+
 export async function POST(request: Request) {
   try {
     const { userId } = await auth()
     if (!userId) return new NextResponse('Unauthorized', { status: 401 })
 
     const body = await request.json().catch(() => ({}))
-    const { investmentFocus, investmentStage, location } = body ?? {}
+    const { 
+      companyName, 
+      siteUrl,
+      incorporationCountry, 
+      operationalRegions, 
+      revenue, 
+      stages, 
+      businessSectors,
+      isComplete = false // New flag to indicate if this is completion or just progress save
+    } = body ?? {}
 
     const client = await clerkClient()
     
     // First, get the current user to preserve existing metadata
     const currentUser = await client.users.getUser(userId)
+    
+    // Prepare the metadata to save
+    const metadataToSave: OnboardingMetadata = {
+      ...currentUser.publicMetadata,
+      companyName: companyName ?? '',
+      siteUrl: siteUrl ?? '',
+      incorporationCountry: incorporationCountry ?? '',
+      operationalRegions: operationalRegions ?? [],
+      revenue: revenue ?? '',
+      stages: stages ?? [],
+      businessSectors: businessSectors ?? [],
+    }
+
+    // Only mark as complete if this is the final submission
+    if (isComplete) {
+      metadataToSave.onboardingComplete = true;
+    }
+
     const updatedUser = await client.users.updateUser(userId, {
       privateMetadata: {
         ...currentUser.privateMetadata,
-        onboardingComplete: true,
+        // Only mark as complete in private metadata if this is completion
+        ...(isComplete && { onboardingComplete: true }),
       },
-      // Preserve existing publicMetadata and add new onboarding data
-      publicMetadata: {
-        ...currentUser.publicMetadata,
-        investmentFocus: investmentFocus ?? '',
-        investmentStage: investmentStage ?? '',
-        location: location ?? '',
-        onboardingComplete: true, // Also store here for redundancy
-      },
+      publicMetadata: metadataToSave,
     })
 
     return NextResponse.json({
@@ -34,6 +68,7 @@ export async function POST(request: Request) {
       userId: updatedUser.id,
       metadata: updatedUser.publicMetadata,
       privateMetadata: updatedUser.privateMetadata,
+      isComplete: isComplete,
     })
   } catch (error: unknown) {
     console.error('Onboarding API error:', error)
@@ -43,9 +78,9 @@ export async function POST(request: Request) {
       errorMessage = String((error as { message: unknown }).message);
     }
     
-    return new NextResponse(
-      JSON.stringify({ error: 'Internal Server Error', details: errorMessage }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
+    return NextResponse.json(
+      { error: 'Internal Server Error', details: errorMessage },
+      { status: 500 }
     )
   }
 }

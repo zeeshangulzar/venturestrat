@@ -66,7 +66,7 @@ const PaginationNumbers: React.FC<PaginationNumbersProps> = ({
         onClick={goPrev}
         disabled={currentPage <= 1}
         className={`rounded-md border px-3 py-1.5 text-sm transition-colors ${
-          currentPage <= 1 ? 'cursor-not-allowed opacity-40' : 'bg-white hover:bg-slate-50'
+          currentPage <= 1 ? 'cursor-not-allowed opacity-40' : 'bg-white hover:bg-slate-50 cursor-pointer'
         }`}
         aria-label="Previous page"
       >
@@ -88,7 +88,7 @@ const PaginationNumbers: React.FC<PaginationNumbersProps> = ({
               className={`min-w-[36px] rounded-md border px-3 py-1.5 text-sm transition-colors ${
                 p === currentPage
                   ? 'bg-slate-900 text-white border-slate-900'
-                  : 'bg-white hover:bg-slate-50'
+                  : 'bg-white hover:bg-slate-50 cursor-pointer'
               }`}
               aria-current={p === currentPage ? 'page' : undefined}
             >
@@ -104,7 +104,7 @@ const PaginationNumbers: React.FC<PaginationNumbersProps> = ({
         onClick={goNext}
         disabled={currentPage >= totalPages}
         className={`rounded-md border px-3 py-1.5 text-sm transition-colors ${
-          currentPage >= totalPages ? 'cursor-not-allowed opacity-40' : 'bg-white hover:bg-slate-50'
+          currentPage >= totalPages ? 'cursor-not-allowed opacity-40' : 'bg-white hover:bg-slate-50 cursor-pointer'
         }`}
         aria-label="Next page"
       >
