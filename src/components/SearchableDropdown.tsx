@@ -16,7 +16,7 @@ const Dropdown: React.FC<DropdownProps> = ({ children, isOpen, target, onClose, 
       {isOpen && (
         <>
           {/* Menu */}
-          <div className={`absolute z-50 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg min-w-[250px] overflow-hidden ${className}`}>
+          <div className={`absolute z-50 mt-2 min-w-[250px] overflow-hidden ${className || 'bg-white border border-gray-200 rounded-lg shadow-lg'}`}>
             {children}
           </div>
           {/* Blanket to close dropdown when clicking outside */}
@@ -46,11 +46,12 @@ const ChevronDownIcon = () => (
 );
 
 // Checkbox Component
-const Checkbox = ({ checked }: { checked: boolean }) => (
+const Checkbox = ({ checked, isDarkTheme = false }: { checked: boolean; isDarkTheme?: boolean }) => (
   <div
     className={`
       flex items-center justify-center mr-3
-      ${checked ? 'bg-[rgba(205,248,219,0.80)]' : 'bg-white border border-gray-300'}
+      ${checked ? 'bg-[rgba(205,248,219,0.80)]' : ''}
+      ${isDarkTheme ? 'bg-[#0C111D] border border-[#ffffff1a]' : 'bg-white border border-gray-300'}
     `}
     style={{
       borderRadius: '6px',
@@ -88,6 +89,8 @@ interface SearchableDropdownProps {
   enableSearch?: boolean;
   showApplyButton?: boolean;
   onOpen?: () => void; // New prop for handling dropdown open
+  buttonClassName?: string; // New prop for custom button styling
+  dropdownClassName?: string; // New prop for custom dropdown styling
 }
 
 const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
@@ -102,7 +105,9 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
   disabled = false,
   enableSearch = true,
   showApplyButton = false, // Default to false for backward compatibility
-  onOpen // New onOpen callback
+  onOpen, // New onOpen callback
+  buttonClassName, // New prop for custom button styling
+  dropdownClassName // New prop for custom dropdown styling
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -291,15 +296,15 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
     <Dropdown
       isOpen={isOpen}
       onClose={handleClose}
-      className={className}
+      className={dropdownClassName}
       target={
         <button
+          type="button"
           onClick={handleOpen}
           disabled={disabled}
           className={`
-            flex items-center justify-between w-auto px-3 py-2 
-            border border-[#EDEEEF] rounded-[10px] bg-white text-sm font-medium
-            hover:border-gray-300 focus:outline-none focus:border-blue-500
+            flex items-center justify-between w-full h-[42px] px-3 py-2 
+            ${buttonClassName || 'border border-gray-200 rounded-[10px] bg-white text-sm font-medium text-gray-700 hover:border-gray-300 focus:outline-none focus:border-blue-500'}
             ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
             ${isOpen ? 'border-blue-500' : ''}
           `}
@@ -324,7 +329,9 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
               value={searchTerm}
               onChange={handleSearchChange}
               placeholder="Search..."
-              className="w-full pl-10 pr-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:border-blue-500"
+              className={`w-full pl-10 pr-3 py-2 border rounded-[10px] text-sm focus:outline-none focus:border-blue-500 ${
+                dropdownClassName ? 'border-[#ffffff1a] bg-[#0C111D] text-white placeholder-[#a5a6ac]' : 'border-gray-200 bg-white text-gray-700 placeholder-gray-400'
+              }`}
             />
           </div>
         )}
@@ -332,7 +339,9 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
         {/* Options List */}
         <div className="max-h-[200px] overflow-y-auto">
           {filteredOptions.length === 0 ? (
-            <div className="px-3 py-2 text-sm text-gray-500">
+            <div className={`px-3 py-2 text-sm ${
+              dropdownClassName ? 'text-[#a5a6ac]' : 'text-gray-500'
+            }`}>
               No options found
             </div>
           ) : (
@@ -341,14 +350,15 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
                 key={option.value}
                 onClick={() => handleOptionSelect(option)}
                 className={`
-                  px-3 py-2 text-sm cursor-pointer hover:bg-gray-50 rounded
-                  ${isOptionSelected(option.value) ? 'bg-blue-50 text-blue-600' : 'text-gray-700'}
+                  px-3 py-2 text-sm cursor-pointer rounded
+                  ${isOptionSelected(option.value) ? 'bg-[#2563EB] text-white' : ''}
+                  ${dropdownClassName ? 'hover:bg-[#ffffff0a] text-white' : 'hover:bg-gray-50 text-gray-700'}
                 `}
               >
                 <div className="flex items-center">
                   {/* Show checkbox for multi-select, nothing for single-select */}
                   {isMulti && (
-                    <Checkbox checked={isOptionSelected(option.value)} />
+                    <Checkbox checked={isOptionSelected(option.value)} isDarkTheme={!!dropdownClassName} />
                   )}
                   <span className="flex-1">{option.label}</span>
                 </div>
@@ -359,15 +369,18 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
 
         {/* Apply/Cancel Buttons - Only show if showApplyButton is true */}
         {showApplyButton && (
-          <div className="flex gap-2 mt-3 pt-2 border-t border-gray-200">
+          <div className={`flex gap-2 mt-3 pt-2 border-t ${
+            dropdownClassName ? 'border-[#ffffff1a]' : 'border-gray-200'
+          }`}>
             <button
+              type="button"
               onClick={handleApply}
               disabled={!hasChanges()}
               className={`
                 w-[236px] h-[30px] flex-shrink-0 text-sm text-white rounded-[10px] transition-colors
                 ${hasChanges()
                   ? 'bg-[#2563EB] hover:bg-blue-700'
-                  : 'bg-gray-400 cursor-not-allowed'
+                  : 'bg-[#a5a6ac] cursor-not-allowed'
                 }
               `}
             >

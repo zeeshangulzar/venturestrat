@@ -1,4 +1,6 @@
-import React from 'react';
+'use client';
+
+import React, { useState, useEffect } from 'react';
 import Select, { ActionMeta, SingleValue } from 'react-select';
 
 type OptionType = {
@@ -23,6 +25,12 @@ const Pagination: React.FC<PaginationProps> = ({
   totalPages,
   totalItems,
 }) => {
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   // Options for the items per page dropdown
   const itemsPerPageOptions: OptionType[] = [
     { value: 20, label: '20 Per Page' },
@@ -64,49 +72,54 @@ const Pagination: React.FC<PaginationProps> = ({
 
           {/* Per Page Dropdown */}
           <div className="mn-w-[125px]">
-            <Select<OptionType>
-              isMulti={false}
-              options={itemsPerPageOptions}
-              value={itemsPerPageOptions.find(option => option.value === itemsPerPage)}
-              onChange={handleItemsPerPageChange}
-              components={{ IndicatorSeparator: () => null }}
-              classNamePrefix="react-select"
-              isSearchable={false}
-              styles={{
-                control: (provided) => ({
-                  ...provided,
-                  backgroundColor: 'white',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '0.5rem',
-                  minHeight: '40px',
-                  boxShadow: 'none',
-                  width: 'fit-content',
-                  '&:hover': {
-                    borderColor: '#9ca3af',
-                  },
-                }),
-                option: (provided, state) => ({
-                  ...provided,
-                  backgroundColor: state.isSelected ? '#3b82f6' : state.isFocused ? '#f3f4f6' : 'white',
-                  color: state.isSelected ? 'white' : '#374151',
-                  '&:hover': {
-                    backgroundColor: state.isSelected ? '#3b82f6' : '#f3f4f6',
-                  },
-                }),
-                singleValue: (provided) => ({
-                  ...provided,
-                  color: '#374151',
-                  fontSize: '0.875rem',
-                }),
-                menu: (provided) => ({
-                  ...provided,
-                  border: '1px solid #d1d5db',
-                  borderRadius: '0.5rem',
-                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                }),
-                
-              }}
-            />
+            {isClient ? (
+              <Select<OptionType>
+                isMulti={false}
+                options={itemsPerPageOptions}
+                value={itemsPerPageOptions.find(option => option.value === itemsPerPage)}
+                onChange={handleItemsPerPageChange}
+                components={{ IndicatorSeparator: () => null }}
+                classNamePrefix="react-select"
+                isSearchable={false}
+                instanceId="items-per-page-select"
+                menuPlacement="auto"
+                styles={{
+                  control: (provided) => ({
+                    ...provided,
+                    backgroundColor: 'white',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '0.5rem',
+                    minHeight: '40px',
+                    boxShadow: 'none',
+                    width: 'fit-content',
+                    '&:hover': {
+                      borderColor: '#9ca3af',
+                    },
+                  }),
+                  option: (provided, state) => ({
+                    ...provided,
+                    backgroundColor: state.isSelected ? '#3b82f6' : state.isFocused ? '#f3f4f6' : 'white',
+                    color: state.isSelected ? 'white' : '#374151',
+                    '&:hover': {
+                      backgroundColor: state.isSelected ? '#3b82f6' : '#f3f4f6',
+                    },
+                  }),
+                  singleValue: (provided) => ({
+                    ...provided,
+                    color: '#374151',
+                    fontSize: '0.875rem',
+                  }),
+                  menu: (provided) => ({
+                    ...provided,
+                    border: '1px solid #d1d5db',
+                    borderRadius: '0.5rem',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                  }),
+                }}
+              />
+            ) : (
+              <div className="h-10 w-32 bg-gray-100 rounded-lg animate-pulse"></div>
+            )}
           </div>
 
           {/* View Label */}
