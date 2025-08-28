@@ -7,7 +7,9 @@ import { useSignUp, useUser } from '@clerk/nextjs';
 import Link from 'next/link';
 import Loader from '@components/Loader';
 import LogoIcon from '@components/icons/LogoWithText';
+import Logo from '@components/icons/logoIcon';
 import { setDefaultRole } from '@components/_actions';
+import SignInLogo from '@components/icons/SignInLogo';
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -21,6 +23,8 @@ export default function SignUpPage() {
   const [confirmPassword, setConfirmPassword] = React.useState('');
   const [companyName, setCompanyName] = React.useState('');
   const [companyUrl, setCompanyUrl] = React.useState('');
+  const [showPassword, setShowPassword] = React.useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
 
   const [error, setError] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState(false);
@@ -65,21 +69,38 @@ export default function SignUpPage() {
       return;
     }
 
-    // Validate passwords match
-    if (password !== confirmPassword) {
-      setError('Passwords do not match');
-      return;
+    // Custom client-side validation - show all errors at once
+    const validationErrors: string[] = [];
+    
+    if (!firstName.trim()) {
+      validationErrors.push('Please enter your first name');
     }
-
-    // Validate required fields
-    if (!firstName.trim() || !lastName.trim() || !email.trim() || !password.trim()) {
-      setError('Please fill in all required fields');
-      return;
+    
+    if (!lastName.trim()) {
+      validationErrors.push('Please enter your last name');
     }
-
-    // Validate password strength
-    if (password.length < 8) {
-      setError('Password must be at least 8 characters long');
+    
+    if (!email.trim()) {
+      validationErrors.push('Please enter your email address');
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      validationErrors.push('Please enter a valid email address');
+    }
+    
+    if (!password) {
+      validationErrors.push('Please enter a password');
+    } else if (password.length < 8) {
+      validationErrors.push('Password must be at least 8 characters long');
+    }
+    
+    if (!confirmPassword) {
+      validationErrors.push('Please confirm your password');
+    } else if (password !== confirmPassword) {
+      validationErrors.push('Passwords do not match');
+    }
+    
+    // If there are validation errors, show them all and stop
+    if (validationErrors.length > 0) {
+      setError(validationErrors.join('. '));
       return;
     }
 
@@ -128,9 +149,18 @@ export default function SignUpPage() {
       let errorMessage = 'Sign up failed';
       
       if (err && typeof err === 'object' && 'errors' in err && Array.isArray((err as { errors: unknown[] }).errors) && (err as { errors: unknown[] }).errors.length > 0) {
-        const firstError = (err as { errors: unknown[] }).errors[0];
-        if (firstError && typeof firstError === 'object' && 'message' in firstError) {
-          errorMessage = String(firstError.message) || 'Sign up failed';
+        // Show all validation errors at once
+        const allErrors = (err as { errors: unknown[] }).errors
+          .map((error: unknown) => {
+            if (error && typeof error === 'object' && 'message' in error) {
+              return String(error.message);
+            }
+            return 'Unknown error';
+          })
+          .filter(Boolean);
+        
+        if (allErrors.length > 0) {
+          errorMessage = allErrors.join('. ');
         }
       } else if (err && typeof err === 'object' && 'message' in err) {
         errorMessage = String((err as { message: unknown }).message);
@@ -227,10 +257,10 @@ export default function SignUpPage() {
       <div className="min-h-screen flex items-center justify-center p-6">
         <div className="w-full max-w-md space-y-8 p-8 shadow-2xl bg-[#1b2130] rounded-[14px] border border-[rgba(37,99,235,0.1)]">
           <div className="text-center">
-            <div className="flex items-center justify-center mb-5">
-              <LogoIcon />
+            <div className="flex items-center justify-center mb-5 gap-2">
+              <Logo className='w-[20px] h-[20px]'/><SignInLogo />
             </div>
-            <h1 className="text-2xl font-bold text-[#ffffff]">Create your account</h1>
+            <h1 className="text-2xl font-bold text-[#ffffff]">Create an account</h1>
             <p className="mt-2 text-sm text-white opacity-60">We&apos;ll use this information to complete your profile.</p>
           </div>
 
@@ -260,7 +290,6 @@ export default function SignUpPage() {
                   className="h-[42] font-normal text-sm leading-5 bg-[#0C111D] text-[#FFFFFF] border border-[#ffffff1a] w-full rounded-[10px] px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   value={firstName}
                   onChange={e => setFirstName(e.target.value)}
-                  required
                   autoComplete="given-name"
                   placeholder="First Name"
                 />
@@ -269,7 +298,6 @@ export default function SignUpPage() {
                   className="h-[42] font-normal text-sm leading-5 bg-[#0C111D] text-[#FFFFFF] border border-[#ffffff1a] rounded-[10px] px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   value={lastName}
                   onChange={e => setLastName(e.target.value)}
-                  required
                   autoComplete="family-name"
                   placeholder="Last Name"
                 />
@@ -281,34 +309,63 @@ export default function SignUpPage() {
                   className="h-[42] w-full font-normal text-sm leading-5 bg-[#0C111D] text-[#FFFFFF] border border-[#ffffff1a] rounded-[10px] px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
-                  required
                   autoComplete="email"
                   placeholder="jeff@amazon.com"
                 />
               </div>
 
-              <div>
+              <div className="relative">
                 <input
-                  type="password"
-                  className="h-[42] w-full font-normal text-sm leading-5 bg-[#0C111D] text-[#FFFFFF] border border-[#ffffff1a] rounded-[10px] px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  type={showPassword ? "text" : "password"}
+                  className="h-[42] w-full font-normal text-sm leading-5 bg-[#0C111D] text-[#FFFFFF] border border-[#ffffff1a] rounded-[10px] px-3 py-2 pr-10 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   value={password}
                   onChange={e => setPassword(e.target.value)}
-                  required
                   autoComplete="new-password"
                   placeholder="Password"
                 />
+                <button
+                  type="button"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? (
+                    <svg className="h-5 w-5 text-gray-400 hover:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.875A10.05 10.05 0 0112 20c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
+                    </svg>
+                  ) : (
+                    <svg className="h-5 w-5 text-gray-400 hover:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  )}
+                </button>
               </div>
 
-              <div>
+              <div className="relative">
                 <input
-                  type="password"
-                  className="h-[42] w-full font-normal text-sm leading-5 bg-[#0C111D] text-[#FFFFFF] border border-[#ffffff1a] rounded-[10px] px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  type={showConfirmPassword ? "text" : "password"}
+                  className="h-[42] w-full font-normal text-sm leading-5 bg-[#0C111D] text-[#FFFFFF] border border-[#ffffff1a] rounded-[10px] px-3 py-2 pr-10 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   value={confirmPassword}
                   onChange={e => setConfirmPassword(e.target.value)}
-                  required
                   autoComplete="new-password"
                   placeholder="Confirm Password"
                 />
+                <button
+                  type="button"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                >
+                  {showConfirmPassword ? (
+                    <svg className="h-5 w-5 text-gray-400 hover:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.875A10.05 10.05 0 0112 20c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
+                    </svg>
+                  ) : (
+                    <svg className="h-5 w-5 text-gray-400 hover:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  )}
+                </button>
               </div>
             </div>
 
@@ -328,7 +385,7 @@ export default function SignUpPage() {
                   </div>
                 ) : (
                   <span className="inline-flex items-center gap-1">
-                    Create account
+                    Create Account
                     <svg width="21" height="20" viewBox="0 0 21 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <g clipPath="url(#clip0_1121_3914)">
                       <path d="M16.332 10H4.66536" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -362,7 +419,6 @@ export default function SignUpPage() {
                 value={code}
                 onChange={e => setCode(e.target.value)}
                 placeholder="000000"
-                required
                 maxLength={6}
               />
             </div>
