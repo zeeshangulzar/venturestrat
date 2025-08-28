@@ -276,104 +276,109 @@ export default function SettingsPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-50">
-      <div className="pt-20 px-6">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">Settings</h1>
-        
+    <main className="min-h-screen">
+      <div className="flex items-center bg-[rgba(255, 255, 255, 0.8)] h-[60px] px-5 py-4 border-b border-[#EDEEEF]">
+        <h2 className="not-italic font-bold text-[18px] leading-[24px] tracking-[-0.02em] text-[#0C2143]">Setting</h2>
+      </div>
+      <div className="px-4 py-5 bg-[#F4F6FB]">
         {/* Profile Section */}
-        <div className="bg-blue-50 rounded-xl p-6 mb-8">
-          <h2 className="text-xl font-semibold text-gray-900 mb-6">Profile</h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* User Avatar */}
-            <div className="flex items-center space-x-4">
-              <div className="relative">
-                <img
-                  src={user.imageUrl || '/avatar.jpeg'}
-                  alt="User avatar"
-                  className="w-20 h-20 rounded-full object-cover"
-                />
-                <label className="absolute bottom-0 right-0 bg-blue-600 text-white p-2 rounded-full hover:bg-blue-700 transition-colors cursor-pointer">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleProfilePictureUpload}
-                    className="hidden"
-                  />
-                </label>
-              </div>
-            </div>
+        <div className="bg-[#FFFFFF] rounded-xl p-6 mb-8 border border-[#EDEEEF]">
+          <h2 className="not-italic font-bold text-[18px] leading-[24px] tracking-[-0.02em] text-[#0C2143] mb-3">Profile</h2>
 
-            {/* User Info Fields */}
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Name</label>
+          {/* Profile Image */}
+          <div className="flex mb-8">
+            <div className="relative">
+              <img
+                src={user.imageUrl || '/avatar.jpeg'}
+                alt="User avatar"
+                className="w-24 h-24 rounded-full object-cover"
+              />
+              <label className="absolute bottom-0 right-0 bg-[#FFFFFF] text-white p-1 rounded-full hover:bg-[#EDEEEF] transition-colors cursor-pointer">
+                <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="14" cy="14" r="14" fill="white"/>
+                  <circle cx="14" cy="14" r="12" fill="#EDEEEF"/>
+                  <path d="M12.2507 12.8333C12.895 12.8333 13.4173 12.311 13.4173 11.6667C13.4173 11.0223 12.895 10.5 12.2507 10.5C11.6063 10.5 11.084 11.0223 11.084 11.6667C11.084 12.311 11.6063 12.8333 12.2507 12.8333Z" stroke="#525A68" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M14.5827 8.16675H12.2493C9.33268 8.16675 8.16602 9.33341 8.16602 12.2501V15.7501C8.16602 18.6667 9.33268 19.8334 12.2493 19.8334H15.7493C18.666 19.8334 19.8327 18.6667 19.8327 15.7501V12.8334" stroke="#525A68" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M16.1875 9.91675H19.3958" stroke="#525A68" strokeWidth="1.2" strokeLinecap="round"/>
+                  <path d="M17.791 11.5208V8.3125" stroke="#525A68" strokeWidth="1.2" strokeLinecap="round"/>
+                  <path d="M8.55664 18.0542L11.4325 16.1233C11.8933 15.8142 12.5583 15.8492 12.9725 16.205L13.165 16.3742C13.62 16.765 14.355 16.765 14.81 16.3742L17.2366 14.2917C17.6916 13.9008 18.4266 13.9008 18.8816 14.2917L19.8325 15.1083" stroke="#525A68" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
                 <input
-                  type="text"
-                  value={user.fullName || ''}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleProfilePictureUpload}
+                  className="hidden"
+                />
+              </label>
+            </div>
+          </div>
+
+          {/* First Row: Name, Email, Password */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Name</label>
+              <input
+                type="text"
+                value={user.fullName || ''}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                readOnly
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+              <input
+                type="email"
+                value={user.primaryEmailAddress?.emailAddress || ''}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                readOnly
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
+              <div className="relative">
+                <input
+                  type="password"
+                  value="************"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   readOnly
                 />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
-                <input
-                  type="email"
-                  value={user.primaryEmailAddress?.emailAddress || ''}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  readOnly
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
-                <div className="relative">
-                  <input
-                    type="password"
-                    value="************"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    readOnly
-                  />
-                  <button className="absolute inset-y-0 right-0 pr-3 flex items-center">
-                    <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Company name</label>
-                <input
-                  type="text"
-                  name="companyName"
-                  value={formData.companyName}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Country</label>
-                <SearchableDropdown
-                  isMulti={false}
-                  options={countryOptions}
-                  value={formData.incorporationCountry}
-                  onChange={(value) => handleDropdownChange('incorporationCountry', Array.isArray(value) ? '' : value)}
-                  placeholder="Select country..."
-                  enableSearch={true}
-                  showApplyButton={false}
-                />
+                <button className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                  <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                </button>
               </div>
             </div>
           </div>
+
+          {/* Second Row: Company + Country */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Company name</label>
+              <input
+                type="text"
+                name="companyName"
+                value={formData.companyName}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Country</label>
+              <SearchableDropdown
+                isMulti={false}
+                options={countryOptions}
+                value={formData.incorporationCountry}
+                onChange={(value) => handleDropdownChange('incorporationCountry', Array.isArray(value) ? '' : value)}
+                placeholder="Select country..."
+                enableSearch={true}
+                showApplyButton={false}
+              />
+            </div>
+          </div>
         </div>
+
 
         {/* Categories and Content Section */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
@@ -413,24 +418,12 @@ export default function SettingsPage() {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       What industry or sector best describes your business?
                     </label>
-                    {loadingFilters ? (
-                      <div className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500">
-                        Loading sectors...
-                      </div>
-                    ) : (
-                      <SearchableDropdown
-                        isMulti={true}
-                        options={businessSectors}
-                        value={formData.businessSectors}
-                        onChange={(value) => handleDropdownChange('businessSectors', Array.isArray(value) ? value : [])}
-                        placeholder="Select..."
-                        enableSearch={true}
-                        showApplyButton={true}
-                        onSearch={handleSearch}
-                        searchType="investmentFocuses"
-                        onOpen={() => handleDropdownOpen('investmentFocuses')}
-                      />
-                    )}
+                    <div className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-900">
+                      {formData.businessSectors.length > 0 
+                        ? formData.businessSectors.join(', ')
+                        : 'Not specified'
+                      }
+                    </div>
                   </div>
 
                   {/* Question 1.5 - Investment Stages */}
@@ -438,24 +431,12 @@ export default function SettingsPage() {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Which investment stage best defines your business?
                     </label>
-                    {loadingFilters ? (
-                      <div className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500">
-                        Loading stages...
-                      </div>
-                    ) : (
-                      <SearchableDropdown
-                        isMulti={true}
-                        options={stages}
-                        value={formData.stages}
-                        onChange={(value) => handleDropdownChange('stages', Array.isArray(value) ? value : [])}
-                        placeholder="Select investment stages..."
-                        enableSearch={true}
-                        showApplyButton={true}
-                        onSearch={handleSearch}
-                        searchType="investmentStages"
-                        onOpen={() => handleDropdownOpen('investmentStages')}
-                      />
-                    )}
+                    <div className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-900">
+                      {formData.stages.length > 0 
+                        ? formData.stages.join(', ')
+                        : 'Not specified'
+                      }
+                    </div>
                   </div>
 
                   {/* Question 2 */}
@@ -463,34 +444,11 @@ export default function SettingsPage() {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       How much are you looking to raise, and in what currency?
                     </label>
-                    <div className="flex space-x-4">
-                      <div className="flex-1">
-                        <input
-                          type="number"
-                          name="fundingAmount"
-                          value={formData.fundingAmount}
-                          onChange={(e) => handleNumberChange('fundingAmount', Number(e.target.value))}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          placeholder="Enter amount..."
-                          min="0"
-                          step="1000"
-                        />
-                      </div>
-                      <div className="w-32">
-                        <SearchableDropdown
-                          isMulti={false}
-                          options={[
-                            { label: 'USD', value: 'USD' },
-                            { label: 'EUR', value: 'EUR' },
-                            { label: 'GBP', value: 'GBP' }
-                          ]}
-                          value="USD"
-                          onChange={() => {}}
-                          placeholder="Select currency..."
-                          enableSearch={false}
-                          showApplyButton={false}
-                        />
-                      </div>
+                    <div className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-900">
+                      {formData.fundingAmount > 0 
+                        ? `$${formData.fundingAmount.toLocaleString()} USD`
+                        : 'Not specified'
+                      }
                     </div>
                   </div>
 
@@ -499,68 +457,37 @@ export default function SettingsPage() {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Where is your business incorporated and where do you operate?
                     </label>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <SearchableDropdown
-                        isMulti={false}
-                        options={countryOptions}
-                        value={formData.incorporationCountry}
-                        onChange={(value) => handleDropdownChange('incorporationCountry', Array.isArray(value) ? '' : value)}
-                        placeholder="Country of Incorporation..."
-                        enableSearch={true}
-                        showApplyButton={false}
-                      />
-                      <SearchableDropdown
-                        isMulti={true}
-                        options={countryOptions}
-                        value={formData.operationalRegions}
-                        onChange={(value) => handleDropdownChange('operationalRegions', Array.isArray(value) ? value : [])}
-                        placeholder="Operating Countries (multi-selection)..."
-                        enableSearch={true}
-                        showApplyButton={true}
-                      />
+                    <div className="space-y-3">
+                      <div>
+                        <span className="text-sm text-gray-500">Country of Incorporation:</span>
+                        <div className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-900 mt-1">
+                          {formData.incorporationCountry || 'Not specified'}
+                        </div>
+                      </div>
+                      <div>
+                        <span className="text-sm text-gray-500">Operating Countries:</span>
+                        <div className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-900 mt-1">
+                          {formData.operationalRegions.length > 0 
+                            ? formData.operationalRegions.join(', ')
+                            : 'Not specified'
+                          }
+                        </div>
+                      </div>
                     </div>
                   </div>
 
                   {/* Question 4 */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      What is your current annual revenue or key traction metric? (Example: $25,000 MRR and $3.6 CAC)
+                      What is your current annual revenue or key traction metric?
                     </label>
-                    <textarea
-                      name="revenue"
-                      value={formData.revenue}
-                      onChange={handleInputChange}
-                      rows={4}
-                    />
+                    <div className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-900 min-h-[60px]">
+                      {formData.revenue || 'Not specified'}
+                    </div>
                   </div>
                 </div>
 
-                {/* Auto-save indicator */}
-                <div className="mt-8">
-                  {saveStatus === 'saving' && (
-                    <div className="text-sm text-blue-600 flex items-center">
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
-                      Saving...
-                    </div>
-                  )}
-                  {saveStatus === 'saved' && (
-                    <div className="text-sm text-green-600 flex items-center">
-                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                      Changes saved successfully!
-                    </div>
-                  )}
-                  {saveStatus === 'error' && (
-                    <div className="text-sm text-red-600 flex items-center">
-                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                      Failed to save changes
-                    </div>
-                  )}
 
-                </div>
               </div>
             )}
 
