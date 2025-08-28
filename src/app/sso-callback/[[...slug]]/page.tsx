@@ -2,13 +2,13 @@
 'use client'
 
 import { AuthenticateWithRedirectCallback } from '@clerk/nextjs'
-import AuthLoadingScreen from '@components/AuthLoadingScreen'
+import PageLoader from '@components/PageLoader'
 
 export default function SSOCallback() {
   // Clerk finalizes the OAuth flow here, then uses redirectUrlComplete
   return (
     <>
-      <AuthLoadingScreen message="Completing authentication..." />
+      <PageLoader message="Completing sign-in..." />
       <AuthenticateWithRedirectCallback />
     </>
   )
