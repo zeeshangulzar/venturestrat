@@ -30,6 +30,7 @@ export default function SignUpPage() {
   const [error, setError] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState(false);
   const [googleLoading, setGoogleLoading] = React.useState(false);
+  const [fieldErrors, setFieldErrors] = React.useState<Record<string, string>>({});
 
   // Email-code verification step (only used if your Clerk instance requires it)
   const [needsVerification, setNeedsVerification] = React.useState(false);
@@ -67,42 +68,46 @@ export default function SignUpPage() {
       return;
     }
 
-    // Custom client-side validation - show all errors at once
-    const validationErrors: string[] = [];
+    // Reset field errors
+    setFieldErrors({});
+    setError(null);
+
+    // Custom client-side validation - track field-specific errors
+    const errors: Record<string, string> = {};
     
     if (!firstName.trim()) {
-      validationErrors.push('Please enter your first name');
+      errors.firstName = 'Please enter your first name';
     }
     
     if (!lastName.trim()) {
-      validationErrors.push('Please enter your last name');
+      errors.lastName = 'Please enter your last name';
     }
     
     if (!email.trim()) {
-      validationErrors.push('Please enter your email address');
+      errors.email = 'Please enter your email address';
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      validationErrors.push('Please enter a valid email address');
+      errors.email = 'Please enter a valid email address';
     }
     
     if (!password) {
-      validationErrors.push('Please enter a password');
+      errors.password = 'Please enter a password';
     } else if (password.length < 8) {
-      validationErrors.push('Password must be at least 8 characters long');
+      errors.password = 'Password must be at least 8 characters long';
     }
     
     if (!confirmPassword) {
-      validationErrors.push('Please confirm your password');
+      errors.confirmPassword = 'Please confirm your password';
     } else if (password !== confirmPassword) {
-      validationErrors.push('Passwords do not match');
+      errors.confirmPassword = 'Passwords do not match';
     }
     
-    // If there are validation errors, show them all and stop
-    if (validationErrors.length > 0) {
-      setError(validationErrors.join('. '));
+    // If there are validation errors, show them and stop
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      setError('Please review the problems below');
       return;
     }
 
-    setError(null);
     setLoading(true);
     
     try {
@@ -279,7 +284,7 @@ export default function SignUpPage() {
                 </svg>
               </div>
               <div className="ml-3">
-                <p className="text-sm text-red-300">{error}</p>
+                <p className="text-sm text-red-300 font-medium">{error}</p>
               </div>
             </div>
           </div>
@@ -291,87 +296,175 @@ export default function SignUpPage() {
             {/* First Name and Last Name in same row */}
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
-                <input
-                  type="text"
-                  className="h-[42] font-normal text-sm leading-5 bg-[#0C111D] text-[#FFFFFF] border border-[#ffffff1a] w-full rounded-[10px] px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  value={firstName}
-                  onChange={e => setFirstName(e.target.value)}
-                  autoComplete="given-name"
-                  placeholder="First Name"
-                />
-                <input
-                  type="text"
-                  className="h-[42] font-normal text-sm leading-5 bg-[#0C111D] text-[#FFFFFF] border border-[#ffffff1a] rounded-[10px] px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  value={lastName}
-                  onChange={e => setLastName(e.target.value)}
-                  autoComplete="family-name"
-                  placeholder="Last Name"
-                />
+                <div>
+                  <input
+                    type="text"
+                    className={`h-[42] font-normal text-sm leading-5 bg-[#0C111D] text-[#FFFFFF] border w-full rounded-[10px] px-3 py-2 focus:outline-none focus:ring-1 ${
+                      fieldErrors.firstName 
+                        ? 'border-red-500 focus:border-red-500 focus:ring-red-500' 
+                        : 'border-[#ffffff1a] focus:border-blue-500 focus:ring-blue-500'
+                    }`}
+                    value={firstName}
+                    onChange={e => {
+                      setFirstName(e.target.value);
+                      if (fieldErrors.firstName) {
+                        setFieldErrors(prev => {
+                          const newErrors = { ...prev };
+                          delete newErrors.firstName;
+                          return newErrors;
+                        });
+                      }
+                    }}
+                    autoComplete="given-name"
+                    placeholder="First Name"
+                  />
+                  {fieldErrors.firstName && (
+                    <p className="text-red-400 text-xs mt-1 ml-1">{fieldErrors.firstName}</p>
+                  )}
+                </div>
+                <div>
+                  <input
+                    type="text"
+                    className={`h-[42] font-normal text-sm leading-5 bg-[#0C111D] text-[#FFFFFF] border rounded-[10px] px-3 py-2 focus:outline-none focus:ring-1 ${
+                      fieldErrors.lastName 
+                        ? 'border-red-500 focus:border-red-500 focus:ring-red-500' 
+                        : 'border-[#ffffff1a] focus:border-blue-500 focus:ring-blue-500'
+                    }`}
+                    value={lastName}
+                    onChange={e => {
+                      setLastName(e.target.value);
+                      if (fieldErrors.lastName) {
+                        setFieldErrors(prev => {
+                          const newErrors = { ...prev };
+                          delete newErrors.lastName;
+                          return newErrors;
+                        });
+                      }
+                    }}
+                    autoComplete="family-name"
+                    placeholder="Last Name"
+                  />
+                  {fieldErrors.lastName && (
+                    <p className="text-red-400 text-xs mt-1 ml-1">{fieldErrors.lastName}</p>
+                  )}
+                </div>
               </div>
 
               <div>
                 <input
                   type="email"
-                  className="h-[42] w-full font-normal text-sm leading-5 bg-[#0C111D] text-[#FFFFFF] border border-[#ffffff1a] rounded-[10px] px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className={`h-[42] w-full font-normal text-sm leading-5 bg-[#0C111D] text-[#FFFFFF] border rounded-[10px] px-3 py-2 focus:outline-none focus:ring-1 ${
+                    fieldErrors.email 
+                      ? 'border-red-500 focus:border-red-500 focus:ring-red-500' 
+                      : 'border-[#ffffff1a] focus:border-blue-500 focus:ring-blue-500'
+                  }`}
                   value={email}
-                  onChange={e => setEmail(e.target.value)}
+                  onChange={e => {
+                    setEmail(e.target.value);
+                    if (fieldErrors.email) {
+                      setFieldErrors(prev => {
+                        const newErrors = { ...prev };
+                        delete newErrors.email;
+                        return newErrors;
+                      });
+                    }
+                  }}
                   autoComplete="email"
                   placeholder="jeff@amazon.com"
                 />
+                {fieldErrors.email && (
+                  <p className="text-red-400 text-xs mt-1 ml-1">{fieldErrors.email}</p>
+                )}
               </div>
 
-              <div className="relative">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  className="h-[42] w-full font-normal text-sm leading-5 bg-[#0C111D] text-[#FFFFFF] border border-[#ffffff1a] rounded-[10px] px-3 py-2 pr-10 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  autoComplete="new-password"
-                  placeholder="Password"
-                />
-                <button
-                  type="button"
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? (
-                    <svg className="h-5 w-5 text-gray-400 hover:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.875A10.05 10.05 0 0112 20c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
-                    </svg>
-                  ) : (
-                    <svg className="h-5 w-5 text-gray-400 hover:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                  )}
-                </button>
+              <div>
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    className={`h-[42] w-full font-normal text-sm leading-5 bg-[#0C111D] text-[#FFFFFF] border rounded-[10px] px-3 py-2 pr-10 focus:outline-none focus:ring-1 ${
+                      fieldErrors.password 
+                        ? 'border-red-500 focus:border-red-500 focus:ring-red-500' 
+                        : 'border-[#ffffff1a] focus:border-blue-500 focus:ring-blue-500'
+                    }`}
+                    value={password}
+                    onChange={e => {
+                      setPassword(e.target.value);
+                      if (fieldErrors.password) {
+                        setFieldErrors(prev => {
+                          const newErrors = { ...prev };
+                          delete newErrors.password;
+                          return newErrors;
+                        });
+                      }
+                    }}
+                    autoComplete="new-password"
+                    placeholder="Password"
+                  />
+                  <button
+                    type="button"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? (
+                      <svg className="h-5 w-5 text-gray-400 hover:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.875A10.05 10.05 0 0112 20c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
+                      </svg>
+                    ) : (
+                      <svg className="h-5 w-5 text-gray-400 hover:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
+                {fieldErrors.password && (
+                  <p className="text-red-400 text-xs mt-1 ml-1">{fieldErrors.password}</p>
+                )}
               </div>
 
-              <div className="relative">
-                <input
-                  type={showConfirmPassword ? "text" : "password"}
-                  className="h-[42] w-full font-normal text-sm leading-5 bg-[#0C111D] text-[#FFFFFF] border border-[#ffffff1a] rounded-[10px] px-3 py-2 pr-10 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  value={confirmPassword}
-                  onChange={e => setConfirmPassword(e.target.value)}
-                  autoComplete="new-password"
-                  placeholder="Confirm Password"
-                />
-                <button
-                  type="button"
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                >
-                  {showConfirmPassword ? (
-                    <svg className="h-5 w-5 text-gray-400 hover:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.875A10.05 10.05 0 0112 20c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
-                    </svg>
-                  ) : (
-                    <svg className="h-5 w-5 text-gray-400 hover:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                  )}
-                </button>
+              <div>
+                <div className="relative">
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    className={`h-[42] w-full font-normal text-sm leading-5 bg-[#0C111D] text-[#FFFFFF] border rounded-[10px] px-3 py-2 pr-10 focus:outline-none focus:ring-1 ${
+                      fieldErrors.confirmPassword 
+                        ? 'border-red-500 focus:border-red-500 focus:ring-red-500' 
+                        : 'border-[#ffffff1a] focus:border-blue-500 focus:ring-blue-500'
+                    }`}
+                    value={confirmPassword}
+                    onChange={e => {
+                      setConfirmPassword(e.target.value);
+                      if (fieldErrors.confirmPassword) {
+                        setFieldErrors(prev => {
+                          const newErrors = { ...prev };
+                          delete newErrors.confirmPassword;
+                          return newErrors;
+                        });
+                      }
+                    }}
+                    autoComplete="new-password"
+                    placeholder="Confirm Password"
+                  />
+                  <button
+                    type="button"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  >
+                    {showConfirmPassword ? (
+                      <svg className="h-5 w-5 text-gray-400 hover:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.875A10.05 10.05 0 0112 20c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
+                      </svg>
+                    ) : (
+                      <svg className="h-5 w-5 text-gray-400 hover:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
+                {fieldErrors.confirmPassword && (
+                  <p className="text-red-400 text-xs mt-1 ml-1">{fieldErrors.confirmPassword}</p>
+                )}
               </div>
             </div>
 
