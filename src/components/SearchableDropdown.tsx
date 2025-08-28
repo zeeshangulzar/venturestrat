@@ -46,11 +46,11 @@ const ChevronDownIcon = () => (
 );
 
 // Checkbox Component
-const Checkbox = ({ checked, isDarkTheme = false }: { checked: boolean; isDarkTheme?: boolean }) => (
+const Checkbox = ({ checked, isDarkTheme = false, isOnboarding = false }: { checked: boolean; isDarkTheme?: boolean; isOnboarding?: boolean }) => (
   <div
     className={`
       flex items-center justify-center mr-3
-      ${checked ? 'bg-[rgba(205,248,219,0.80)]' : ''}
+      ${checked ? (isOnboarding ? '' : 'bg-[rgba(205,248,219,0.80)]') : ''}
       ${isDarkTheme ? 'bg-[#0C111D] border border-[#ffffff1a]' : 'bg-white border border-gray-300'}
     `}
     style={{
@@ -66,7 +66,7 @@ const Checkbox = ({ checked, isDarkTheme = false }: { checked: boolean; isDarkTh
         height="12"
         viewBox="0 0 24 24"
         fill="none"
-        stroke="green"
+        stroke={isOnboarding ? "white" : "green"}
         strokeWidth="3"
       >
         <polyline points="20,6 9,17 4,12" />
@@ -91,6 +91,7 @@ interface SearchableDropdownProps {
   onOpen?: () => void; // New prop for handling dropdown open
   buttonClassName?: string; // New prop for custom button styling
   dropdownClassName?: string; // New prop for custom dropdown styling
+  isOnboarding?: boolean; // New prop for onboarding page
 }
 
 const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
@@ -107,7 +108,8 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
   showApplyButton = false, // Default to false for backward compatibility
   onOpen, // New onOpen callback
   buttonClassName, // New prop for custom button styling
-  dropdownClassName // New prop for custom dropdown styling
+  dropdownClassName, // New prop for custom dropdown styling
+  isOnboarding // New isOnboarding prop
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -350,7 +352,7 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
                 key={option.value}
                 onClick={() => handleOptionSelect(option)}
                 className={`
-                  px-3 py-2 text-sm cursor-pointer rounded
+                  px-3 py-2 text-sm cursor-pointer rounded mb-1
                   ${isOptionSelected(option.value) ? 'bg-[#2563EB] text-white' : ''}
                   ${dropdownClassName ? 'hover:bg-[#ffffff0a] text-white' : 'hover:bg-gray-50 text-gray-700'}
                 `}
@@ -358,7 +360,7 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
                 <div className="flex items-center">
                   {/* Show checkbox for multi-select, nothing for single-select */}
                   {isMulti && (
-                    <Checkbox checked={isOptionSelected(option.value)} isDarkTheme={!!dropdownClassName} />
+                    <Checkbox checked={isOptionSelected(option.value)} isDarkTheme={!!dropdownClassName} isOnboarding={isOnboarding} />
                   )}
                   <span className="flex-1">{option.label}</span>
                 </div>

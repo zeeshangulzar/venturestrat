@@ -287,6 +287,7 @@ export default function OnboardingPage() {
               showApplyButton={false}
               buttonClassName="bg-[rgba(255,255,255,0.1)] border-[rgba(255,255,255,0.1)] text-white hover:bg-[rgba(255,255,255,0.15)] rounded-[10px]"
               dropdownClassName="bg-[#1b2130] border border-[rgba(37,99,235,0.1)] rounded-[14px] shadow-2xl"
+              isOnboarding={true}
             />
             <SearchableDropdown
               isMulti={true}
@@ -298,6 +299,7 @@ export default function OnboardingPage() {
               showApplyButton={true}
               buttonClassName="bg-[rgba(255,255,255,0.1)] border-[rgba(255,255,255,0.1)] text-white hover:bg-[rgba(255,255,255,0.15)] rounded-[10px]"
               dropdownClassName="bg-[#1b2130] border border-[rgba(37,99,235,0.1)] rounded-[14px] shadow-2xl"
+              isOnboarding={true}
             />
           </div>
         </div>
@@ -308,11 +310,49 @@ export default function OnboardingPage() {
   const renderStep2 = () => (
     <div className="space-y-8">
       <div>
-        <div className="space-y-6">
+        <div className="space-y-6">       
           <div>
-            <label className="block text-sm font-medium text-white mb-2">
-              What is your current annual revenue or key traction metric? *
-            </label>
+            <h2 className="font-semibold text-lg leading-[22px] tracking-[-0.02em] text-white mb-2">
+              What industry or sector best describes your business?
+            </h2>
+            <div className="w-fit">
+              <SearchableDropdown
+                isMulti={true}
+                options={businessSectors}
+                value={formData.businessSectors}
+                onChange={(value) => handleDropdownChange('businessSectors', Array.isArray(value) ? value : [])}
+                placeholder={<span className="font-normal text-sm leading-[22px] opacity-80  text-white">Select business sectors...</span>}
+                enableSearch={true}
+                showApplyButton={true}
+                buttonClassName="bg-[rgba(255,255,255,0.1)] border-[rgba(255,255,255,0.1)] text-white hover:bg-[rgba(255,255,255,0.15)] rounded-[10px]"
+                dropdownClassName="bg-[#1b2130] border border-[rgba(37,99,235,0.1)] rounded-[14px] shadow-2xl"
+                isOnboarding={true}
+              />
+            </div>
+          </div>
+          <div>
+            <h2 className="font-semibold text-lg leading-[22px] tracking-[-0.02em] text-white mb-4">
+              Which growth stage best describes your company?
+            </h2>
+            <div className="w-fit">
+                <SearchableDropdown
+                  isMulti={true}
+                  options={stages}
+                  value={formData.stages}
+                  onChange={(value) => handleDropdownChange('stages', Array.isArray(value) ? value : [])}
+                  placeholder={<span className="font-normal text-sm leading-[22px] opacity-80  text-white">Select business stages...</span>}
+                  enableSearch={true}
+                  showApplyButton={true}
+                  buttonClassName="bg-[rgba(255,255,255,0.1)] border-[rgba(255,255,255,0.1)] text-white hover:bg-[rgba(255,255,255,0.15)] rounded-[10px]"
+                  dropdownClassName="bg-[#1b2130] border border-[rgba(37,99,235,0.1)] rounded-[14px] shadow-2xl"
+                  isOnboarding={true}
+                />
+              </div>
+          </div>
+          <div>
+            <h2 className="font-semibold text-lg leading-[22px] tracking-[-0.02em] text-white mb-2">
+              What is your current annual revenue or key traction metric?
+            </h2>
             <input
               type="text"
               name="revenue"
@@ -320,33 +360,6 @@ export default function OnboardingPage() {
               onChange={handleInputChange}
               placeholder="e.g. $140,000"
               className="bg-white/10 border border-white/10 rounded-[10px] w-full h-[40px] font-normal text-sm leading-[22px] opacity-80  text-white px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            />
-          </div>
-          <h2 className="ont-semibold text-lg leading-[22px] tracking-[-0.02em] text-white mb-4">
-            Which stage and industry or sector best defines your business?
-          </h2>
-          <div className='flex gap-[14px]'>
-            <SearchableDropdown
-              isMulti={true}
-              options={stages}
-              value={formData.stages}
-              onChange={(value) => handleDropdownChange('stages', Array.isArray(value) ? value : [])}
-              placeholder={<span className="font-normal text-sm leading-[22px] opacity-80  text-white">Select investment stages...</span>}
-              enableSearch={true}
-              showApplyButton={true}
-              buttonClassName="bg-[rgba(255,255,255,0.1)] border-[rgba(255,255,255,0.1)] text-white hover:bg-[rgba(255,255,255,0.15)] rounded-[10px]"
-              dropdownClassName="bg-[#1b2130] border border-[rgba(37,99,235,0.1)] rounded-[14px] shadow-2xl"
-            />
-            <SearchableDropdown
-              isMulti={true}
-              options={businessSectors}
-              value={formData.businessSectors}
-              onChange={(value) => handleDropdownChange('businessSectors', Array.isArray(value) ? value : [])}
-              placeholder={<span className="font-normal text-sm leading-[22px] opacity-80  text-white">Select business sectors... *</span>}
-              enableSearch={true}
-              showApplyButton={true}
-              buttonClassName="bg-[rgba(255,255,255,0.1)] border-[rgba(255,255,255,0.1)] text-white hover:bg-[rgba(255,255,255,0.15)] rounded-[10px]"
-              dropdownClassName="bg-[#1b2130] border border-[rgba(37,99,235,0.1)] rounded-[14px] shadow-2xl"
             />
           </div>
         </div>
@@ -437,7 +450,7 @@ export default function OnboardingPage() {
                         </>
                       ) : !isStepComplete() ? (
                         <>
-                          Complete Required Fields
+                          Continue
                           <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <g clipPath="url(#clip0_1168_2734)">
                             <path d="M15.832 10H4.16536" stroke="#0C2143" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
