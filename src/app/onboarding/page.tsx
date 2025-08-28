@@ -2,7 +2,7 @@
 
 import { useUser, useSession } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Country } from 'country-state-city';
 import Loader from '@components/Loader';
 import SearchableDropdown from '@components/SearchableDropdown';
@@ -42,6 +42,8 @@ export default function OnboardingPage() {
   });
 
   // API data state
+  const [originalStages, setOriginalStages] = useState<FilterOption[]>([]);
+  const [originalBusinessSectors, setOriginalBusinessSectors] = useState<FilterOption[]>([]);
   const [stages, setStages] = useState<FilterOption[]>([]);
   const [businessSectors, setBusinessSectors] = useState<FilterOption[]>([]);
   const [loadingFilters, setLoadingFilters] = useState(false);
@@ -94,22 +96,32 @@ export default function OnboardingPage() {
     const fetchFilters = async () => {
       setLoadingFilters(true);
       try {
-        const res = await fetch(getApiUrl('/api/investment-filters'), {
+        const apiUrl = getApiUrl('/api/investment-filters');
+        const res = await fetch(apiUrl, {
           method: 'GET',
           headers: {
             'ngrok-skip-browser-warning': 'true',
           },
         });
+        
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        
         const data = await res.json();
         
         const stagesData = data.stages?.map((v: string) => ({ label: v, value: v })) || [];
         const businessSectorsData = data.investmentFocuses?.map((v: string) => ({ label: v, value: v })) || [];
         
+        // Set both original and current options
+        
+        setOriginalStages(stagesData);
+        setOriginalBusinessSectors(businessSectorsData);
         setStages(stagesData);
         setBusinessSectors(businessSectorsData);
-      } catch (err) {
-        console.error('Error fetching filters:', err);
-      } finally {
+              } catch (err) {
+          // Error handling without logging
+        } finally {
         setLoadingFilters(false);
       }
     };
@@ -155,6 +167,78 @@ export default function OnboardingPage() {
       [field]: value
     }));
   };
+
+  // Search functionality for dropdowns
+  const handleSearch = async (search: string, type: string) => {
+    if (typeof search !== 'string' || !search.trim()) {
+      // When search is empty, restore original options but include selected values
+      restoreOriginalOptionsWithSelected(type);
+      return;
+    }
+
+    try {
+      const res = await fetch(
+        getApiUrl(`/api/investment-filters?search=${encodeURIComponent(search)}&type=${type}`)
+      );
+
+      if (res.ok) {
+        const data = await res.json();
+        
+        if (type === 'investmentStages') {
+          const searchResults = (data.stages ?? []).map((v: string) => ({ label: v, value: v }));
+          const mergedOptions = mergeSelectedWithOptions(searchResults, formData.stages, originalStages);
+          setStages(mergedOptions);
+        } else if (type === 'investmentFocuses') {
+          const searchResults = (data.investmentFocuses ?? []).map((v: string) => ({ label: v, value: v }));
+          const mergedOptions = mergeSelectedWithOptions(searchResults, formData.businessSectors, originalBusinessSectors);
+          setBusinessSectors(mergedOptions);
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching filtered data:', err);
+    }
+  };
+
+  // Helper function to merge selected values with search results
+  const mergeSelectedWithOptions = (
+    searchResults: FilterOption[], 
+    selectedValues: string[], 
+    originalOptions: FilterOption[]
+  ): FilterOption[] => {
+    // Create a set of values that are already in search results
+    const existingValues = new Set(searchResults.map(option => option.value));
+    
+    // Find selected options that are not in search results
+    const missingSelectedOptions = selectedValues
+      .filter(value => !existingValues.has(value))
+      .map(value => {
+        // Try to find the option in original options first
+        const originalOption = originalOptions.find(opt => opt.value === value);
+        return originalOption || { label: value, value: value };
+      });
+
+    // Combine missing selected options with search results
+    // Put selected options at the top for better UX
+    return [...missingSelectedOptions, ...searchResults];
+  };
+
+  // Restore original options when search is cleared or dropdown is opened
+  const restoreOriginalOptionsWithSelected = (type: string) => {
+    if (type === 'investmentStages') {
+      // Always show all original options, with selected ones at the top
+      const mergedOptions = mergeSelectedWithOptions(originalStages, formData.stages, originalStages);
+      setStages(mergedOptions);
+    } else if (type === 'investmentFocuses') {
+      // Always show all original options, with selected ones at the top
+      const mergedOptions = mergeSelectedWithOptions(originalBusinessSectors, formData.businessSectors, originalBusinessSectors);
+      setBusinessSectors(mergedOptions);
+    }
+  };
+
+  // Handle dropdown opening - no automatic restoration needed
+  const handleDropdownOpen = useCallback((type: string) => {
+    // No state changes needed
+  }, []);
 
   const saveProgress = async () => {
     try {
@@ -208,10 +292,8 @@ export default function OnboardingPage() {
         }),
       });
 
-      if (response.ok) {
-        console.log('Onboarding completed successfully');
-        
-        // Force session reload and wait for it to complete
+              if (response.ok) {
+          // Force session reload and wait for it to complete
         await Promise.all([
           session?.reload(),
           user?.reload()
@@ -273,7 +355,7 @@ export default function OnboardingPage() {
               className="bg-white/10 border border-white/10 rounded-[10px] w-full h-[40px] font-normal text-sm leading-[22px] opacity-80  text-white px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
           </div>
-          <h2 className="ont-semibold text-lg leading-[22px] tracking-[-0.02em] text-white mb-4">
+          <h2 className="font-semibold text-lg leading-[22px] tracking-[-0.02em] text-white mb-4">
             Where is your business incorporated and where do you operate?
           </h2>
           <div className='flex gap-[14px]'>
@@ -316,18 +398,27 @@ export default function OnboardingPage() {
               What industry or sector best describes your business?
             </h2>
             <div className="w-fit">
-              <SearchableDropdown
-                isMulti={true}
-                options={businessSectors}
-                value={formData.businessSectors}
-                onChange={(value) => handleDropdownChange('businessSectors', Array.isArray(value) ? value : [])}
-                placeholder={<span className="font-normal text-sm leading-[22px] opacity-80  text-white">Select business sectors...</span>}
-                enableSearch={true}
-                showApplyButton={true}
-                buttonClassName="bg-[rgba(255,255,255,0.1)] border-[rgba(255,255,255,0.1)] text-white hover:bg-[rgba(255,255,255,0.15)] rounded-[10px]"
-                dropdownClassName="bg-[#1b2130] border border-[rgba(37,99,235,0.1)] rounded-[14px] shadow-2xl"
-                isOnboarding={true}
-              />
+              {loadingFilters ? (
+                <div className="w-full px-3 py-2 border border-white/10 rounded-lg bg-white/5 text-white/60 text-sm">
+                  Loading sectors...
+                </div>
+              ) : (
+                <SearchableDropdown
+                  isMulti={true}
+                  options={businessSectors}
+                  value={formData.businessSectors}
+                  onChange={(value) => handleDropdownChange('businessSectors', Array.isArray(value) ? value : [])}
+                  placeholder={<span className="font-normal text-sm leading-[22px] opacity-80  text-white">Select business sectors...</span>}
+                  enableSearch={true}
+                  showApplyButton={true}
+                  onSearch={handleSearch}
+                  searchType="investmentFocuses"
+                  onOpen={() => handleDropdownOpen('investmentFocuses')}
+                  buttonClassName="bg-[rgba(255,255,255,0.1)] border-[rgba(255,255,255,0.1)] text-white hover:bg-[rgba(255,255,255,0.15)] rounded-[10px]"
+                  dropdownClassName="bg-[#1b2130] border border-[rgba(37,99,235,0.1)] rounded-[14px] shadow-2xl"
+                  isOnboarding={true}
+                />
+              )}
             </div>
           </div>
           <div>
@@ -335,6 +426,11 @@ export default function OnboardingPage() {
               Which growth stage best describes your company?
             </h2>
             <div className="w-fit">
+              {loadingFilters ? (
+                <div className="w-full px-3 py-2 border border-white/10 rounded-lg bg-white/5 text-white/60 text-sm">
+                  Loading stages...
+                </div>
+              ) : (
                 <SearchableDropdown
                   isMulti={true}
                   options={stages}
@@ -343,11 +439,15 @@ export default function OnboardingPage() {
                   placeholder={<span className="font-normal text-sm leading-[22px] opacity-80  text-white">Select business stages...</span>}
                   enableSearch={true}
                   showApplyButton={true}
+                  onSearch={handleSearch}
+                  searchType="investmentStages"
+                  onOpen={() => handleDropdownOpen('investmentStages')}
                   buttonClassName="bg-[rgba(255,255,255,0.1)] border-[rgba(255,255,255,0.1)] text-white hover:bg-[rgba(255,255,255,0.15)] rounded-[10px]"
                   dropdownClassName="bg-[#1b2130] border border-[rgba(37,99,235,0.1)] rounded-[14px] shadow-2xl"
                   isOnboarding={true}
                 />
-              </div>
+              )}
+            </div>
           </div>
           <div>
             <h2 className="font-semibold text-lg leading-[22px] tracking-[-0.02em] text-white mb-2">

@@ -369,8 +369,6 @@ export default function SettingsPage() {
                   placeholder="Select country..."
                   enableSearch={true}
                   showApplyButton={false}
-                  buttonClassName="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-left"
-                  dropdownClassName="bg-white border border-gray-300 rounded-lg shadow-lg"
                 />
               </div>
             </div>
@@ -533,8 +531,6 @@ export default function SettingsPage() {
                       value={formData.revenue}
                       onChange={handleInputChange}
                       rows={4}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
-                      placeholder="Enter your revenue or traction metrics..."
                     />
                   </div>
                 </div>
