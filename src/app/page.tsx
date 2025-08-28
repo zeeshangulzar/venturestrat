@@ -3,7 +3,7 @@
 import { SignedIn, SignedOut, useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import InvestorsPage from '@app/investors/page';
-import Loader from '@components/Loader';
+import PageLoader from '@components/PageLoader';
 
 export default function Home() {
   const router = useRouter();
@@ -11,11 +11,7 @@ export default function Home() {
 
   // Show loading state while Clerk determines authentication status
   if (!isLoaded) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <Loader size="lg" text="Checking authentication..." />
-      </div>
-    );
+    return <PageLoader message="Checking authentication..." />;
   }
 
   return (

@@ -317,10 +317,12 @@ export default function OnboardingPage() {
   };
 
       // Show loading state while user data is loading
-    if (!isLoaded || !user) {
+    if (!isLoaded) {
       return (
-        <div className="min-h-screen flex items-center justify-center">
-          <Loader size="lg" text="Loading onboarding..." />
+        <div className="min-h-screen bg-[#0c2143] flex items-center justify-center">
+          <div className="bg-[#1b2130] rounded-[14px] border border-[rgba(37,99,235,0.1)] p-8 shadow-2xl max-w-sm w-full">
+            <Loader size="lg" text="Loading onboarding..." textColor="text-[#FFFFFF]" spinnerColor="border-[#2563EB]" />
+          </div>
         </div>
       );
     }
