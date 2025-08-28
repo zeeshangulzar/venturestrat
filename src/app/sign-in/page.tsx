@@ -106,7 +106,7 @@ export default function SignInPage() {
       
       {/* Center content */}
       <div className="min-h-screen flex items-center justify-center p-6">
-        <div className="w-full max-w-md space-y-8 p-8 shadow-2xl bg-[#1b2130] rounded-[14px] border border-[rgba(37,99,235,0.1)]">
+        <div className="w-full max-w-md space-y-8 p-8 shadow-[0_0_15px_5px_rgba(37,99,235,0.1)] bg-[#1b2130] rounded-[14px] border border-[rgba(37,99,235,0.1)]">
           <div className="text-center">
             <div className="flex items-center justify-center mb-5 gap-2">
               <Logo className='w-[20px] h-[20px]'/><SignInLogo />
