@@ -2,8 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useClerk, SignOutButton } from '@clerk/nextjs';
-import { useRouter } from 'next/navigation';
+import { SignOutButton } from '@clerk/nextjs';
 
 // Import custom icons
 import HomeIcon from './icons/HomeIcon';
@@ -25,8 +24,6 @@ import { useRole } from '@hooks/useRole'
 // Sidebar component
 const Sidebar = () => {
   const pathname = usePathname(); // Get the current pathname
-  const router = useRouter();
-  const { signOut } = useClerk(); // Get Clerk signOut function
   const { isAdmin } = useRole(); // Get admin status from client-side hook
 
   // Helper function to apply active class based on current route
@@ -39,12 +36,6 @@ const Sidebar = () => {
   // Helper function to get active wrapper class
   const getActiveWrapperClass = (path: string) => {
     return pathname === path ? 'border-l-4 border-l-[#2563EB]' : '';
-  };
-
-  // Handle sign out
-  const handleSignOut = async () => {
-    await signOut();
-    router.push('/sign-in');
   };
 
   return (
@@ -199,17 +190,14 @@ const Sidebar = () => {
             <span className='font-medium text-[14px]'>Settings</span>
           </div>
         </div>
-        <button 
-          onClick={handleSignOut}
-          className="ml-2.5 mr-2.5 block text-lg py-2 rounded-lg transition-colors cursor-pointer text-gray-600 hover:text-gray-900 hover:bg-gray-50 w-full text-left pl-6"
-        >
-          <SignOutButton>
+        <SignOutButton redirectUrl="/sign-in">
+          <button className="ml-2.5 mr-2.5 block text-lg py-2 rounded-lg transition-colors cursor-pointer text-gray-600 hover:text-gray-900 hover:bg-gray-50 w-full text-left pl-6">
             <div className="flex items-center">
               <LogoutIcon className="h-6 w-6 mr-2" />
               <span className='font-medium text-[14px]'>Log Out</span>
             </div>
-          </SignOutButton>
-        </button>
+          </button>
+        </SignOutButton>
       </div>
 
       {/* My Tasks Section (static) */}

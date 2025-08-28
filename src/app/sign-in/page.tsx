@@ -7,6 +7,8 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Loader from '@components/Loader'
 import LogoIcon from '@components/icons/LogoWithText';
+import Logo from '@components/icons/logoIcon';
+import SignInLogo from '@components/icons/SignInLogo';
 
 export default function SignInPage() {
   const router = useRouter()
@@ -17,6 +19,7 @@ export default function SignInPage() {
   const [password, setPassword] = React.useState('')
   const [error, setError] = React.useState<string | null>(null)
   const [loading, setLoading] = React.useState(false)
+  const [showPassword, setShowPassword] = React.useState(false)
 
   React.useEffect(() => {
     if (user) {
@@ -99,8 +102,8 @@ export default function SignInPage() {
       <div className="min-h-screen flex items-center justify-center p-6">
         <div className="w-full max-w-md space-y-8 p-8 shadow-2xl bg-[#1b2130] rounded-[14px] border border-[rgba(37,99,235,0.1)]">
           <div className="text-center">
-            <div className="flex items-center justify-center mb-5">
-              <LogoIcon />
+            <div className="flex items-center justify-center mb-5 gap-2">
+              <Logo className='w-[20px] h-[20px]'/><SignInLogo />
             </div>
             <h1 className="text-2xl font-bold text-[#ffffff]">Sign in to your account</h1>
             <p className="mt-2 text-sm text-[#a5a6ac]">Welcome back! Please sign in to continue.</p>
@@ -134,16 +137,32 @@ export default function SignInPage() {
             />
           </div>
 
-          <div>
+          <div className="relative">
             <input
-              type="password"
-              className="h-[42] w-full font-normal text-sm leading-5 bg-[#0C111D] text-[#FFFFFF] border border-[#ffffff1a] rounded-[10px] px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              type={showPassword ? "text" : "password"}
+              className="h-[42] w-full font-normal text-sm leading-5 bg-[#0C111D] text-[#FFFFFF] border border-[#ffffff1a] rounded-[10px] px-3 py-2 pr-10 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
               value={password}
               onChange={e => setPassword(e.target.value)}
               required
               autoComplete="current-password"
               placeholder="Password"
             />
+            <button
+              type="button"
+              className="absolute inset-y-0 right-0 pr-3 flex items-center"
+              onClick={() => setShowPassword(!showPassword)}
+            >
+              {showPassword ? (
+                <svg className="h-5 w-5 text-gray-400 hover:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
+                </svg>
+              ) : (
+                <svg className="h-5 w-5 text-gray-400 hover:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+              )}
+            </button>
           </div>
 
           <div className='mt-[72px] mb-5'>
