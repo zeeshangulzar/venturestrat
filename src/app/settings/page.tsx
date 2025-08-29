@@ -32,6 +32,8 @@ export default function SettingsPage() {
   const { user, isLoaded } = useUser();
   const [currentCategory, setCurrentCategory] = useState('financials');
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [profileUploadStatus, setProfileUploadStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [formData, setFormData] = useState<OnboardingData>({
     companyName: '',
     siteUrl: '',
@@ -166,19 +168,39 @@ export default function SettingsPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Reset states
+    setProfileUploadStatus('uploading');
+    setUploadProgress(0);
+
     try {
-      // Create FormData for file upload
-      const formData = new FormData();
-      formData.append('file', file);
+      // Simulate upload progress (since Clerk doesn't provide progress callbacks)
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => {
+          if (prev >= 90) {
+            clearInterval(progressInterval);
+            return 90;
+          }
+          return prev + 10;
+        });
+      }, 200);
 
       // Upload to Clerk's user profile
       await user?.setProfileImage({ file });
       
+      // Complete progress
+      setUploadProgress(100);
+      clearInterval(progressInterval);
+      
       // Force user reload to update the UI
       await user?.reload();
+      
+      // Show success state
+      setProfileUploadStatus('success');
+      setTimeout(() => setProfileUploadStatus('idle'), 3000);
     } catch (error) {
       console.error('Profile picture upload error:', error);
-      alert('Failed to upload profile picture. Please try again.');
+      setProfileUploadStatus('error');
+      setTimeout(() => setProfileUploadStatus('idle'), 5000);
     }
   };
 
@@ -254,8 +276,6 @@ export default function SettingsPage() {
     restoreOriginalOptionsWithSelected(type);
   };
 
-
-
   const categories = [
     { id: 'home', label: 'Home', icon: HomeIcon },
     { id: 'task-manager', label: 'Task Manager', icon: TaskManagerIcon },
@@ -291,63 +311,112 @@ export default function SettingsPage() {
               <img
                 src={user.imageUrl || '/avatar.jpeg'}
                 alt="User avatar"
-                className="w-24 h-24 rounded-full object-cover"
+                className={`w-[80px] h-[80px] rounded-full object-cover ${
+                  profileUploadStatus === 'uploading' ? 'opacity-50' : ''
+                }`}
               />
-              <label className="absolute bottom-0 right-0 bg-[#FFFFFF] text-white p-1 rounded-full hover:bg-[#EDEEEF] transition-colors cursor-pointer">
-                <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="14" cy="14" r="14" fill="white"/>
-                  <circle cx="14" cy="14" r="12" fill="#EDEEEF"/>
-                  <path d="M12.2507 12.8333C12.895 12.8333 13.4173 12.311 13.4173 11.6667C13.4173 11.0223 12.895 10.5 12.2507 10.5C11.6063 10.5 11.084 11.0223 11.084 11.6667C11.084 12.311 11.6063 12.8333 12.2507 12.8333Z" stroke="#525A68" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M14.5827 8.16675H12.2493C9.33268 8.16675 8.16602 9.33341 8.16602 12.2501V15.7501C8.16602 18.6667 9.33268 19.8334 12.2493 19.8334H15.7493C18.666 19.8334 19.8327 18.6667 19.8327 15.7501V12.8334" stroke="#525A68" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M16.1875 9.91675H19.3958" stroke="#525A68" strokeWidth="1.2" strokeLinecap="round"/>
-                  <path d="M17.791 11.5208V8.3125" stroke="#525A68" strokeWidth="1.2" strokeLinecap="round"/>
-                  <path d="M8.55664 18.0542L11.4325 16.1233C11.8933 15.8142 12.5583 15.8492 12.9725 16.205L13.165 16.3742C13.62 16.765 14.355 16.765 14.81 16.3742L17.2366 14.2917C17.6916 13.9008 18.4266 13.9008 18.8816 14.2917L19.8325 15.1083" stroke="#525A68" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
+              
+              {/* Upload Progress Overlay */}
+              {profileUploadStatus === 'uploading' && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 rounded-full">
+                  <div className="text-white text-xs font-medium">{uploadProgress}%</div>
+                </div>
+              )}
+              
+              {/* Success/Error Indicators */}
+              {profileUploadStatus === 'success' && (
+                <div className="absolute -top-2 -right-2 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+              )}
+              
+              {profileUploadStatus === 'error' && (
+                <div className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
+                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </div>
+              )}
+              
+              <label className={`absolute bottom-0 right-0 bg-[#FFFFFF] text-white p-1 rounded-full hover:bg-[#EDEEEF] transition-colors cursor-pointer ${
+                profileUploadStatus === 'uploading' ? 'opacity-50 cursor-not-allowed' : ''
+              }`}>
+                {profileUploadStatus === 'uploading' ? (
+                  <div className="w-6 h-6 flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                  </div>
+                ) : (
+                  <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="14" cy="14" r="14" fill="white"/>
+                    <circle cx="14" cy="14" r="12" fill="#EDEEEF"/>
+                    <path d="M12.2507 12.8333C12.895 12.8333 13.4173 12.311 13.4173 11.6667C13.4173 11.0223 12.895 10.5 12.2507 10.5C11.6063 10.5 11.084 11.0223 11.084 11.6667C11.084 12.311 11.6063 12.8333 12.2507 12.8333Z" stroke="#525A68" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M14.5827 8.16675H12.2493C9.33268 8.16675 8.16602 9.33341 8.16602 12.2501V15.7501C8.16602 18.6667 9.33268 19.8334 12.2493 19.8334H15.7493C18.666 19.8334 19.8327 18.6667 19.8327 15.7501V12.8334" stroke="#525A68" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M16.1875 9.91675H19.3958" stroke="#525A68" strokeWidth="1.2" strokeLinecap="round"/>
+                    <path d="M17.791 11.5208V8.3125" stroke="#525A68" strokeWidth="1.2" strokeLinecap="round"/>
+                    <path d="M8.55664 18.0542L11.4325 16.1233C11.8933 15.8142 12.5583 15.8492 12.9725 16.205L13.165 16.3742C13.62 16.765 14.355 16.765 14.81 16.3742L17.2366 14.2917C17.6916 13.9008 18.4266 13.9008 18.8816 14.2917L19.8325 15.1083" stroke="#525A68" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                )}
                 <input
                   type="file"
                   accept="image/*"
                   onChange={handleProfilePictureUpload}
                   className="hidden"
+                  disabled={profileUploadStatus === 'uploading'}
                 />
               </label>
+            </div>
+            
+            {/* Upload Status Message */}
+            <div className="ml-4 flex flex-col justify-center">
+              {profileUploadStatus === 'uploading' && (
+                <div className="text-blue-600 text-sm font-medium">
+                  Uploading profile picture... {uploadProgress}%
+                </div>
+              )}
+              {profileUploadStatus === 'success' && (
+                <div className="text-green-600 text-sm font-medium">
+                  Profile picture updated successfully!
+                </div>
+              )}
+              {profileUploadStatus === 'error' && (
+                <div className="text-red-600 text-sm font-medium">
+                  Failed to upload profile picture. Please try again.
+                </div>
+              )}
             </div>
           </div>
 
           {/* First Row: Name, Email, Password */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Name</label>
+              <label className="not-italic font-medium text-sm leading-6 text-[#525A68] mb-2">Name</label>
               <input
                 type="text"
                 value={user.fullName || ''}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="h-[46px] w-full px-3 py-2 bg-[#F6F6F7] border border-[#EDEEEF] rounded-[10px] focus:ring-2 focus:ring-blue-500 focus:border-blue-500 not-italic font-medium text-sm leading-6 text-[#0C2143]"
                 readOnly
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+              <label className="not-italic font-medium text-sm leading-6 text-[#525A68] mb-2">Email Address</label>
               <input
                 type="email"
                 value={user.primaryEmailAddress?.emailAddress || ''}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="h-[46px] w-full px-3 py-2 bg-[#F6F6F7] border border-[#EDEEEF] rounded-[10px] focus:ring-2 focus:ring-blue-500 focus:border-blue-500 not-italic font-medium text-sm leading-6 text-[#0C2143]"
                 readOnly
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
+              <label className="not-italic font-medium text-sm leading-6 text-[#525A68] mb-2">Password</label>
               <div className="relative">
                 <input
                   type="password"
                   value="************"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="h-[46px] w-full px-3 py-2 bg-[#F6F6F7] border border-[#EDEEEF] rounded-[10px] focus:ring-2 focus:ring-blue-500 focus:border-blue-500 not-italic font-medium text-sm leading-6 text-[#0C2143]"
                   readOnly
                 />
-                <button className="absolute inset-y-0 right-0 pr-3 flex items-center">
-                  <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                  </svg>
-                </button>
               </div>
             </div>
           </div>
@@ -355,17 +424,17 @@ export default function SettingsPage() {
           {/* Second Row: Company + Country */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Company name</label>
+              <label className="not-italic font-medium text-sm leading-6 text-[#525A68] mb-2">Company name</label>
               <input
                 type="text"
                 name="companyName"
                 value={formData.companyName}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="h-[46px] w-full px-3 py-2 bg-[#F6F6F7] border border-[#EDEEEF] rounded-[10px] focus:ring-2 focus:ring-blue-500 focus:border-blue-500 not-italic font-medium text-sm leading-6 text-[#0C2143]"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Country</label>
+              <label className="not-italic font-medium text-sm leading-6 text-[#525A68] mb-2">Country</label>
               <SearchableDropdown
                 isMulti={false}
                 options={countryOptions}
@@ -374,6 +443,7 @@ export default function SettingsPage() {
                 placeholder="Select country..."
                 enableSearch={true}
                 showApplyButton={false}
+                buttonClassName="bg-[#F6F6F7] border-[#EDEEEF] rounded-[10px] text-[#0C2143] hover:bg-[#EDEEEF] rounded-[10px]"
               />
             </div>
           </div>
@@ -388,10 +458,12 @@ export default function SettingsPage() {
             <div className="space-y-2">
               {categories.map((category) => {
                 const Icon = category.icon;
+                const isDisabled = category.id !== 'financials';
+                
                 return (
                   <button
                     key={category.id}
-                    onClick={() => setCurrentCategory(category.id)}
+                    onClick={() => !isDisabled && setCurrentCategory(category.id)}
                     className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
                       currentCategory === category.id
                         ? 'bg-blue-100 text-blue-700 border-l-4 border-l-blue-600'
@@ -485,16 +557,6 @@ export default function SettingsPage() {
                       {formData.revenue || 'Not specified'}
                     </div>
                   </div>
-                </div>
-
-
-              </div>
-            )}
-
-            {currentCategory !== 'financials' && (
-              <div className="text-center py-12">
-                <div className="text-gray-400 text-lg">
-                  {categories.find(c => c.id === currentCategory)?.label} content coming soon...
                 </div>
               </div>
             )}
