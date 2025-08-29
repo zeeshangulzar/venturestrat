@@ -353,8 +353,12 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
                 onClick={() => handleOptionSelect(option)}
                 className={`
                   px-3 py-2 text-sm cursor-pointer rounded mb-1
-                  ${isOptionSelected(option.value) ? 'bg-[#2563EB] text-white' : ''}
-                  ${dropdownClassName ? 'hover:bg-[#ffffff0a] text-white' : 'hover:bg-gray-50 text-gray-700'}
+                  ${isOptionSelected(option.value) 
+                    ? 'bg-[#2563EB] text-white hover:bg-[#1d4ed8]' 
+                    : dropdownClassName 
+                      ? 'hover:bg-[#ffffff0a] text-white' 
+                      : 'hover:bg-[#EDEEEF] text-gray-700'
+                  }
                 `}
               >
                 <div className="flex items-center">

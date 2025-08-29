@@ -685,7 +685,7 @@ export default function SettingsPage() {
                         onSearch={(search) => handleSearch(search, 'investmentFocuses')}
                         searchType="investmentFocuses"
                         onOpen={() => handleDropdownOpen('investmentFocuses')}
-                        buttonClassName="bborder border-[#EDEEEF] rounded-[10px] h-[46px] text-[#787F89] not-italic font-medium text-sm leading-6 hover:bg-gray-50 h-[46px] w-full px-3 py-2 bg-[#F6F6F7]"
+                        buttonClassName="bborder border-[#EDEEEF] rounded-[10px] h-[46px] text-[#787F89] not-italic font-medium text-sm leading-6 hover:bg-[#EDEEEF] h-[46px] w-full px-3 py-2 bg-[#F6F6F7]"
                       />
                     </div>
 
@@ -705,7 +705,7 @@ export default function SettingsPage() {
                         onSearch={(search) => handleSearch(search, 'investmentStages')}
                         searchType="investmentStages"
                         onOpen={() => handleDropdownOpen('investmentStages')}
-                        buttonClassName="bborder border-[#EDEEEF] rounded-[10px] h-[46px] text-[#787F89] not-italic font-medium text-sm leading-6 hover:bg-gray-50 h-[46px] w-full px-3 py-2 bg-[#F6F6F7]"
+                        buttonClassName="bborder border-[#EDEEEF] rounded-[10px] h-[46px] text-[#787F89] not-italic font-medium text-sm leading-6 hover:bg-[#EDEEEF] h-[46px] w-full px-3 py-2 bg-[#F6F6F7]"
                       />
                     </div>
 
@@ -782,7 +782,7 @@ export default function SettingsPage() {
                               placeholder="Select country..."
                               enableSearch={true}
                               showApplyButton={false}
-                              buttonClassName="border border-[#EDEEEF] rounded-[10px] h-[46px] text-[#787F89] not-italic font-medium text-sm leading-6 hover:bg-gray-50 h-[46px] w-full px-3 py-2 bg-[#F6F6F7]"
+                              buttonClassName="border border-[#EDEEEF] rounded-[10px] h-[46px] text-[#787F89] not-italic font-medium text-sm leading-6 hover:bg-[#EDEEEF] h-[46px] w-full px-3 py-2 bg-[#F6F6F7]"
                             />
                           </div>
                         </div>
@@ -796,7 +796,7 @@ export default function SettingsPage() {
                               placeholder="Select operating countries..."
                               enableSearch={true}
                               showApplyButton={false}
-                              buttonClassName="border border-[#EDEEEF] rounded-[10px] h-[46px] text-[#787F89] not-italic font-medium text-sm leading-6 hover:bg-gray-50 h-[46px] w-full px-3 py-2 bg-[#F6F6F7]"
+                              buttonClassName="border border-[#EDEEEF] rounded-[10px] h-[46px] text-[#787F89] not-italic font-medium text-sm leading-6 hover:bg-[#EDEEEF] h-[46px] w-full px-3 py-2 bg-[#F6F6F7]"
                             />
                           </div>
                         </div>
@@ -814,7 +814,7 @@ export default function SettingsPage() {
                         value={formData.revenue}
                         onChange={handleInputChange}
                         placeholder="e.g. $140,000"
-                        className="w-full px-3 py-2 border border-[#EDEEEF] rounded-[10px] h-[46px] text-[#787F89] not-italic font-medium text-sm leading-6 hover:bg-gray-50 bg-[#F6F6F7]"
+                        className="w-full px-3 py-2 border border-[#EDEEEF] rounded-[10px] h-[46px] text-[#787F89] not-italic font-medium text-sm leading-6 hover:bg-[#EDEEEF] bg-[#F6F6F7]"
                       />
                     </div>
 
