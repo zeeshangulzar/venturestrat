@@ -10,13 +10,43 @@ interface DropdownProps {
 }
 
 const Dropdown: React.FC<DropdownProps> = ({ children, isOpen, target, onClose, className = '' }) => {
+  const [position, setPosition] = useState<'bottom' | 'top'>('bottom');
+  const targetRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (isOpen && targetRef.current && menuRef.current) {
+      const targetRect = targetRef.current.getBoundingClientRect();
+      const menuHeight = menuRef.current.offsetHeight;
+      const viewportHeight = window.innerHeight;
+      
+      // Check if there's enough space below
+      const spaceBelow = viewportHeight - targetRect.bottom;
+      const spaceAbove = targetRect.top;
+      
+      // If not enough space below but enough above, open upward
+      if (spaceBelow < menuHeight && spaceAbove > menuHeight) {
+        setPosition('top');
+      } else {
+        setPosition('bottom');
+      }
+    }
+  }, [isOpen]);
+
   return (
-    <div className="relative">
+    <div className="relative" ref={targetRef}>
       {target}
       {isOpen && (
         <>
           {/* Menu */}
-          <div className={`absolute z-50 mt-2 min-w-[250px] overflow-hidden ${className || 'bg-white border border-gray-200 rounded-lg shadow-lg'}`}>
+          <div 
+            ref={menuRef}
+            className={`
+              absolute z-50 min-w-[250px] overflow-hidden 
+              ${position === 'bottom' ? 'mt-2 top-full' : 'mb-2 bottom-full'}
+              ${className || 'bg-white border border-gray-200 rounded-lg shadow-lg'}
+            `}
+          >
             {children}
           </div>
           {/* Blanket to close dropdown when clicking outside */}
