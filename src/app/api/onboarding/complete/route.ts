@@ -4,6 +4,8 @@ import { NextResponse } from 'next/server'
 
 // Define the type for onboarding metadata
 interface OnboardingMetadata {
+  firstName: string;
+  lastName: string;
   companyName: string;
   siteUrl: string;
   incorporationCountry: string;
@@ -11,6 +13,8 @@ interface OnboardingMetadata {
   revenue: string;
   stages: string[];
   businessSectors: string[];
+  currency: string;
+  fundingCurrency: string;
   fundingAmount?: number;
   onboardingComplete?: boolean;
   [key: string]: unknown; // Allow other metadata properties
@@ -23,6 +27,8 @@ export async function POST(request: Request) {
 
     const body = await request.json().catch(() => ({}))
     const { 
+      firstName,
+      lastName,
       companyName, 
       siteUrl,
       incorporationCountry, 
@@ -30,6 +36,8 @@ export async function POST(request: Request) {
       revenue, 
       stages, 
       businessSectors,
+      currency,
+      fundingCurrency,
       fundingAmount,
       isComplete = false // New flag to indicate if this is completion or just progress save
     } = body ?? {}
@@ -42,6 +50,8 @@ export async function POST(request: Request) {
     // Prepare the metadata to save
     const metadataToSave: OnboardingMetadata = {
       ...currentUser.publicMetadata,
+      firstName: firstName ?? '',
+      lastName: lastName ?? '',
       companyName: companyName ?? '',
       siteUrl: siteUrl ?? '',
       incorporationCountry: incorporationCountry ?? '',
@@ -49,6 +59,8 @@ export async function POST(request: Request) {
       revenue: revenue ?? '',
       stages: stages ?? [],
       businessSectors: businessSectors ?? [],
+      currency: currency ?? '',
+      fundingCurrency: fundingCurrency ?? '',
       fundingAmount: fundingAmount ?? 0,
     }
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { useUser } from '@clerk/nextjs';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Country } from 'country-state-city';
 import Loader from '@components/Loader';
 import SearchableDropdown from '@components/SearchableDropdown';
@@ -18,6 +18,8 @@ import MarketingIcon from '@components/icons/MarketingIcon';
 type FilterOption = { label: string; value: string };
 
 type OnboardingData = {
+  firstName: string;
+  lastName: string;
   companyName: string;
   siteUrl: string;
   incorporationCountry: string;
@@ -26,6 +28,8 @@ type OnboardingData = {
   stages: string[];
   businessSectors: string[];
   fundingAmount: number;
+  fundingCurrency: string;
+  currency: string;
 };
 
 export default function SettingsPage() {
@@ -34,7 +38,10 @@ export default function SettingsPage() {
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [profileUploadStatus, setProfileUploadStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [formData, setFormData] = useState<OnboardingData>({
+    firstName: '',
+    lastName: '',
     companyName: '',
     siteUrl: '',
     incorporationCountry: '',
@@ -42,7 +49,9 @@ export default function SettingsPage() {
     revenue: '',
     stages: [],
     businessSectors: [],
-    fundingAmount: 0
+    fundingAmount: 0,
+    fundingCurrency: '',
+    currency: ''
   });
 
   // API data state for stages and business sectors
@@ -52,9 +61,121 @@ export default function SettingsPage() {
   const [businessSectors, setBusinessSectors] = useState<FilterOption[]>([]);
   const [loadingFilters, setLoadingFilters] = useState(false);
 
+  // Debounced auto-save functionality
+  const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Define autoSave function first
+  const autoSave = useCallback(async (data: OnboardingData) => {
+    // Validate required fields before saving
+    const errors: Record<string, string> = {};
+    
+    if (!data.firstName.trim()) {
+      errors.firstName = "First name can't be blank";
+    }
+    
+    if (!data.lastName.trim()) {
+      errors.lastName = "Last name can't be blank";
+    }
+    
+    if (!data.companyName.trim()) {
+      errors.companyName = "Company name can't be blank";
+    }
+    
+    // If there are validation errors, don't save and show errors
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      setSaveStatus('error');
+      setTimeout(() => setSaveStatus('idle'), 3000);
+      return;
+    }
+    
+    setSaveStatus('saving');
+    try {
+      console.log('Auto-saving data:', data); // Debug log
+      
+      // Update Clerk user profile if firstName or lastName changed
+      if (user && (data.firstName !== user.firstName || data.lastName !== user.lastName)) {
+        try {
+          await user.update({
+            firstName: data.firstName,
+            lastName: data.lastName,
+          });
+          console.log('Clerk user profile updated');
+        } catch (profileError) {
+          console.error('Failed to update Clerk user profile:', profileError);
+          // Continue with API save even if profile update fails
+        }
+      }
+      
+      // Save to API endpoint
+      const response = await fetch('/api/onboarding/complete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...data,
+          isComplete: false
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('API response error:', errorData);
+        throw new Error(`API error: ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log('Auto-save result:', result); // Debug log
+
+      setSaveStatus('saved');
+      setTimeout(() => setSaveStatus('idle'), 2000);
+    } catch (error) {
+      console.error('Auto-save error:', error);
+      setSaveStatus('error');
+      setTimeout(() => setSaveStatus('idle'), 3000);
+    }
+  }, [user]);
+  
+  const debouncedAutoSave = useCallback((data: OnboardingData) => {
+    // Clear any existing timeout
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
+    }
+    
+    // Set new timeout for 1.5 seconds after user stops typing
+    autoSaveTimeoutRef.current = setTimeout(() => {
+      autoSave(data);
+    }, 1500);
+  }, [autoSave]);
+
   // Get countries for dropdowns
   const countries = Country.getAllCountries();
   const countryOptions = countries.map((c) => ({ label: c.name, value: c.name }));
+
+  // Currency options
+  const currencyOptions = [
+    { label: 'USD - US Dollar', value: 'USD' },
+    { label: 'EUR - Euro', value: 'EUR' },
+    { label: 'GBP - British Pound', value: 'GBP' },
+    { label: 'CAD - Canadian Dollar', value: 'CAD' },
+    { label: 'AUD - Australian Dollar', value: 'AUD' },
+    { label: 'JPY - Japanese Yen', value: 'JPY' },
+    { label: 'CHF - Swiss Franc', value: 'CHF' },
+    { label: 'CNY - Chinese Yuan', value: 'CNY' },
+    { label: 'INR - Indian Rupee', value: 'INR' },
+    { label: 'BRL - Brazilian Real', value: 'BRL' },
+    { label: 'MXN - Mexican Peso', value: 'MXN' },
+    { label: 'SGD - Singapore Dollar', value: 'SGD' },
+    { label: 'HKD - Hong Kong Dollar', value: 'HKD' },
+    { label: 'KRW - South Korean Won', value: 'KRW' },
+    { label: 'SEK - Swedish Krona', value: 'SEK' },
+    { label: 'NOK - Norwegian Krone', value: 'NOK' },
+    { label: 'DKK - Danish Krone', value: 'DKK' },
+    { label: 'PLN - Polish Zloty', value: 'PLN' },
+    { label: 'CZK - Czech Koruna', value: 'CZK' },
+    { label: 'HUF - Hungarian Forint', value: 'HUF' }
+  ];
 
   // Fetch stages and business sectors from API
   useEffect(() => {
@@ -91,7 +212,10 @@ export default function SettingsPage() {
   useEffect(() => {
     if (isLoaded && user) {
       const metadata = user.publicMetadata;
-      setFormData({
+      console.log('Loading user metadata:', metadata); // Debug log
+      const newFormData = {
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
         companyName: (metadata.companyName as string) || '',
         siteUrl: (metadata.siteUrl as string) || '',
         incorporationCountry: (metadata.incorporationCountry as string) || '',
@@ -99,8 +223,12 @@ export default function SettingsPage() {
         revenue: (metadata.revenue as string) || '',
         stages: (metadata.stages as string[]) || [],
         businessSectors: (metadata.businessSectors as string[]) || [],
-        fundingAmount: (metadata.fundingAmount as number) || 0
-      });
+        fundingAmount: (metadata.fundingAmount as number) || 0,
+        fundingCurrency: (metadata.fundingCurrency as string) || '',
+        currency: (metadata.currency as string) || ''
+      };
+      console.log('Setting form data:', newFormData); // Debug log
+      setFormData(newFormData);
     }
   }, [isLoaded, user]);
 
@@ -116,52 +244,63 @@ export default function SettingsPage() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-    // Auto-save after input change
-    setTimeout(() => autoSave({ ...formData, [name]: value }), 1000);
+    
+    // Clear field error when user starts typing
+    if (fieldErrors[name]) {
+      setFieldErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
+    
+    setFormData(prev => {
+      const newData = {
+        ...prev,
+        [name]: value
+      };
+      // Use debounced auto-save instead of immediate timeout
+      debouncedAutoSave(newData);
+      return newData;
+    });
   };
 
   const handleDropdownChange = (field: keyof OnboardingData, value: string | string[]) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-    // Auto-save after dropdown change
-    setTimeout(() => autoSave({ ...formData, [field]: value }), 1000);
+    console.log(`Dropdown change - Field: ${field}, Value:`, value); // Debug log
+    setFormData(prev => {
+      const newData = {
+        ...prev,
+        [field]: value
+      };
+      console.log('Updated formData:', newData); // Debug log
+      // Use debounced auto-save instead of immediate timeout
+      debouncedAutoSave(newData);
+      return newData;
+    });
   };
 
   const handleNumberChange = (field: keyof OnboardingData, value: number) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-    // Auto-save after number change
-    setTimeout(() => autoSave({ ...formData, [field]: value }), 1000);
+    setFormData(prev => {
+      const newData = {
+        ...prev,
+        [field]: value
+      };
+      // Use debounced auto-save instead of immediate timeout
+      debouncedAutoSave(newData);
+      return newData;
+    });
   };
 
-  const autoSave = async (data: OnboardingData) => {
-    setSaveStatus('saving');
-    try {
-      await fetch('/api/onboarding/complete', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...data,
-          isComplete: false
-        }),
-      });
-      setSaveStatus('saved');
-      setTimeout(() => setSaveStatus('idle'), 2000);
-    } catch (error) {
-      console.error('Auto-save error:', error);
-      setSaveStatus('error');
-      setTimeout(() => setSaveStatus('idle'), 3000);
-    }
+  const handleNumberIncrement = (field: keyof OnboardingData, increment: number = 1) => {
+    setFormData(prev => {
+      const newData = {
+        ...prev,
+        [field]: (prev[field] as number) + increment
+      };
+      // Use debounced auto-save instead of immediate timeout
+      debouncedAutoSave(newData);
+      return newData;
+    });
   };
 
   const handleProfilePictureUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -276,6 +415,15 @@ export default function SettingsPage() {
     restoreOriginalOptionsWithSelected(type);
   };
 
+  // Cleanup timeout on component unmount
+  useEffect(() => {
+    return () => {
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const categories = [
     { id: 'home', label: 'Home', icon: HomeIcon },
     { id: 'task-manager', label: 'Task Manager', icon: TaskManagerIcon },
@@ -388,16 +536,43 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          {/* First Row: Name, Email, Password */}
+          {/* First Row: First Name, Last Name, Email */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
             <div>
-              <label className="not-italic font-medium text-sm leading-6 text-[#525A68] mb-2">Name</label>
+              <label className="not-italic font-medium text-sm leading-6 text-[#525A68] mb-2">First Name</label>
               <input
                 type="text"
-                value={user.fullName || ''}
-                className="h-[46px] w-full px-3 py-2 bg-[#F6F6F7] border border-[#EDEEEF] rounded-[10px] focus:ring-2 focus:ring-blue-500 focus:border-blue-500 not-italic font-medium text-sm leading-6 text-[#0C2143]"
-                readOnly
+                name="firstName"
+                value={formData.firstName}
+                onChange={handleInputChange}
+                className={`h-[46px] w-full px-3 py-2 bg-[#F6F6F7] border rounded-[10px] focus:ring-2 focus:ring-blue-500 focus:border-blue-500 not-italic font-medium text-sm leading-6 text-[#0C2143] ${
+                  fieldErrors.firstName 
+                    ? 'border-red-500 focus:border-red-500 focus:ring-red-500' 
+                    : 'border-[#EDEEEF]'
+                }`}
+                placeholder="Enter first name"
               />
+              {fieldErrors.firstName && (
+                <p className="text-red-500 text-xs mt-1 ml-1">{fieldErrors.firstName}</p>
+              )}
+            </div>
+            <div>
+              <label className="not-italic font-medium text-sm leading-6 text-[#525A68] mb-2">Last Name</label>
+              <input
+                type="text"
+                name="lastName"
+                value={formData.lastName}
+                onChange={handleInputChange}
+                className={`h-[46px] w-full px-3 py-2 bg-[#F6F6F7] border rounded-[10px] focus:ring-2 focus:ring-blue-500 focus:border-blue-500 not-italic font-medium text-sm leading-6 text-[#0C2143] ${
+                  fieldErrors.lastName 
+                    ? 'border-red-500 focus:border-red-500 focus:ring-red-500' 
+                    : 'border-[#EDEEEF]'
+                }`}
+                placeholder="Enter last name"
+              />
+              {fieldErrors.lastName && (
+                <p className="text-red-500 text-xs mt-1 ml-1">{fieldErrors.lastName}</p>
+              )}
             </div>
             <div>
               <label className="not-italic font-medium text-sm leading-6 text-[#525A68] mb-2">Email Address</label>
@@ -408,6 +583,10 @@ export default function SettingsPage() {
                 readOnly
               />
             </div>
+          </div>
+
+          {/* Second Row: Password, Company + Country */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
             <div>
               <label className="not-italic font-medium text-sm leading-6 text-[#525A68] mb-2">Password</label>
               <div className="relative">
@@ -419,10 +598,6 @@ export default function SettingsPage() {
                 />
               </div>
             </div>
-          </div>
-
-          {/* Second Row: Company + Country */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="not-italic font-medium text-sm leading-6 text-[#525A68] mb-2">Company name</label>
               <input
@@ -430,8 +605,16 @@ export default function SettingsPage() {
                 name="companyName"
                 value={formData.companyName}
                 onChange={handleInputChange}
-                className="h-[46px] w-full px-3 py-2 bg-[#F6F6F7] border border-[#EDEEEF] rounded-[10px] focus:ring-2 focus:ring-blue-500 focus:border-blue-500 not-italic font-medium text-sm leading-6 text-[#0C2143]"
+                className={`h-[46px] w-full px-3 py-2 bg-[#F6F6F7] border rounded-[10px] focus:ring-2 focus:ring-blue-500 focus:border-blue-500 not-italic font-medium text-sm leading-6 text-[#0C2143] ${
+                  fieldErrors.companyName 
+                    ? 'border-red-500 focus:border-red-500 focus:ring-red-500' 
+                    : 'border-[#EDEEEF]'
+                }`}
+                placeholder="Enter company name"
               />
+              {fieldErrors.companyName && (
+                <p className="text-red-500 text-xs mt-1 ml-1">{fieldErrors.companyName}</p>
+              )}
             </div>
             <div>
               <label className="not-italic font-medium text-sm leading-6 text-[#525A68] mb-2">Country</label>
@@ -449,117 +632,248 @@ export default function SettingsPage() {
           </div>
         </div>
 
-
-        {/* Categories and Content Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Categories Sidebar */}
-          <div className="lg:col-span-1">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Categories</h3>
-            <div className="space-y-2">
-              {categories.map((category) => {
-                const Icon = category.icon;
-                const isDisabled = category.id !== 'financials';
-                
-                return (
-                  <button
-                    key={category.id}
-                    onClick={() => !isDisabled && setCurrentCategory(category.id)}
-                    className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
-                      currentCategory === category.id
-                        ? 'bg-blue-100 text-blue-700 border-l-4 border-l-blue-600'
-                        : 'text-gray-600 hover:bg-gray-100'
-                    }`}
-                  >
-                    <Icon className="h-5 w-5" />
-                    <span className="font-medium">{category.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Content Area */}
-          <div className="lg:col-span-3">
-            {currentCategory === 'financials' && (
-              <div>
-                <h2 className="text-xl font-semibold text-gray-900 mb-6">Fundraising</h2>
-                
-                <div className="space-y-6">
-                  {/* Question 1 */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      What industry or sector best describes your business?
-                    </label>
-                    <div className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-900">
-                      {formData.businessSectors.length > 0 
-                        ? formData.businessSectors.join(', ')
-                        : 'Not specified'
-                      }
-                    </div>
-                  </div>
-
-                  {/* Question 1.5 - Investment Stages */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Which investment stage best defines your business?
-                    </label>
-                    <div className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-900">
-                      {formData.stages.length > 0 
-                        ? formData.stages.join(', ')
-                        : 'Not specified'
-                      }
-                    </div>
-                  </div>
-
-                  {/* Question 2 */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      How much are you looking to raise, and in what currency?
-                    </label>
-                    <div className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-900">
-                      {formData.fundingAmount > 0 
-                        ? `$${formData.fundingAmount.toLocaleString()} USD`
-                        : 'Not specified'
-                      }
-                    </div>
-                  </div>
-
-                  {/* Question 3 */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Where is your business incorporated and where do you operate?
-                    </label>
-                    <div className="space-y-3">
-                      <div>
-                        <span className="text-sm text-gray-500">Country of Incorporation:</span>
-                        <div className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-900 mt-1">
-                          {formData.incorporationCountry || 'Not specified'}
-                        </div>
-                      </div>
-                      <div>
-                        <span className="text-sm text-gray-500">Operating Countries:</span>
-                        <div className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-900 mt-1">
-                          {formData.operationalRegions.length > 0 
-                            ? formData.operationalRegions.join(', ')
-                            : 'Not specified'
-                          }
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Question 4 */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      What is your current annual revenue or key traction metric?
-                    </label>
-                    <div className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-900 min-h-[60px]">
-                      {formData.revenue || 'Not specified'}
-                    </div>
-                  </div>
-                </div>
+        {/* Save Status Indicator */}
+        {saveStatus !== 'idle' && (
+          <div className="mb-4 p-3 rounded-lg text-sm font-medium">
+            {saveStatus === 'saving' && (
+              <div className="flex items-center text-blue-600 bg-blue-50 p-3 rounded-lg">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+                Saving changes...
               </div>
             )}
+            {saveStatus === 'saved' && (
+              <div className="flex items-center text-green-600 bg-green-50 p-3 rounded-lg">
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                Changes saved successfully!
+              </div>
+            )}
+            {saveStatus === 'error' && (
+              <div className="flex items-center text-red-600 bg-red-50 p-3 rounded-lg">
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                {Object.keys(fieldErrors).length > 0 
+                  ? 'Please fix the validation errors above' 
+                  : 'Failed to save changes. Please try again.'
+                }
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Categories and Content Section */}
+        <div className='bg-[#FFFFFF] border border-[#EDEEEF] rounded-[14px]'>
+          <div className="grid grid-cols-1 lg:grid-cols-4">
+            {/* Categories Sidebar */}
+            <div className="lg:col-span-1 border-r border-[#EDEEEF]">
+              <div className='border-b border-[#EDEEEF]'>
+                <h3 className="not-italic text-[#0C2143] font-bold text-lg leading-6 pl-5 py-5">Categories</h3>
+              </div>
+              <div className="space-y-2">
+                {categories.map((category) => {
+                  const Icon = category.icon;
+                  const isDisabled = category.id !== 'financials';
+                  
+                  return (
+                    <button
+                      key={category.id}
+                      onClick={() => !isDisabled && setCurrentCategory(category.id)}
+                      className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
+                        currentCategory === category.id
+                          ? 'bg-blue-100 text-blue-700 border-l-4 border-l-blue-600'
+                          : 'text-gray-600 hover:bg-gray-100'
+                      }`}
+                    >
+                      <Icon className="h-5 w-5" />
+                      <span className="not-italic font-normal text-sm leading-[19px] text-[#0C2143]">{category.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Content Area */}
+            <div className="lg:col-span-3">
+              {currentCategory === 'financials' && (
+                <div>
+                  <div className='border-b border-[#EDEEEF]'>
+                    <h2 className="not-italic text-[#0C2143] font-bold text-lg leading-6 pl-5 py-5">Fundraising</h2>
+                  </div>
+                  
+                  <div className="space-y-6 p-5">
+                    {/* Question 1 */}
+                    <div>
+                      <label className="not-italic font-semibold text-base leading-6 tracking-[-0.02em] text-[#0C2143] mb-2">
+                        What industry or sector best describes your business?
+                      </label>
+                      <SearchableDropdown
+                        isMulti={true}
+                        options={businessSectors}
+                        value={formData.businessSectors}
+                        onChange={(value) => handleDropdownChange('businessSectors', Array.isArray(value) ? value : [])}
+                        placeholder="Select business sectors..."
+                        enableSearch={true}
+                        showApplyButton={true}
+                        onSearch={(search) => handleSearch(search, 'investmentFocuses')}
+                        searchType="investmentFocuses"
+                        onOpen={() => handleDropdownOpen('investmentFocuses')}
+                        buttonClassName="bg-[#F6F6F7] border-[#EDEEEF] rounded-[10px] text-[#0C2143] hover:bg-[#EDEEEF] rounded-[10px]"
+                      />
+                    </div>
+
+                    {/* Question 1.5 - Investment Stages */}
+                    <div>
+                      <label className="not-italic font-semibold text-base leading-6 tracking-[-0.02em] text-[#0C2143] mb-2">
+                        Which investment stage best defines your business?
+                      </label>
+                      <SearchableDropdown
+                        isMulti={true}
+                        options={stages}
+                        value={formData.stages}
+                        onChange={(value) => handleDropdownChange('stages', Array.isArray(value) ? value : [])}
+                        placeholder="Select business stages..."
+                        enableSearch={true}
+                        showApplyButton={true}
+                        onSearch={(search) => handleSearch(search, 'investmentStages')}
+                        searchType="investmentStages"
+                        onOpen={() => handleDropdownOpen('investmentStages')}
+                        buttonClassName="bg-[#F6F6F7] border-[#EDEEEF] rounded-[10px] text-[#0C2143] hover:bg-[#EDEEEF]"
+                      />
+                    </div>
+
+                    {/* Question 2 */}
+                    {/* <div>
+                      <label className="not-italic font-semibold text-base leading-6 tracking-[-0.02em] text-[#0C2143] mb-2">
+                        How much are you looking to raise, and in what currency?
+                      </label>
+                      <div className="flex items-center space-x-3">
+                        <div className='w-full'>
+                          <div className="mt-1 relative">
+                            <div className="flex items-center">
+                              <button
+                                type="button"
+                                onClick={() => handleNumberIncrement('fundingAmount', -1)}
+                                className="h-[42px] px-3 py-2 bg-[#F6F6F7] border border-r-0 border-[#EDEEEF] rounded-l-[10px] text-[#0C2143] hover:bg-[#EDEEEF] transition-colors"
+                                aria-label="Decrease amount"
+                              >
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <path d="M20 12H4" strokeLinecap="round" strokeLinejoin="round"/>
+                                </svg>
+                              </button>
+                              <input
+                                type="number"
+                                name="fundingAmount"
+                                value={formData.fundingAmount || ''}
+                                onChange={(e) => handleNumberChange('fundingAmount', Number(e.target.value) || 0)}
+                                placeholder="Enter amount"
+                                className="px-3 py-2 bg-[#F6F6F7] border-t border-b border-[#EDEEEF] text-[#0C2143] w-full text-center focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => handleNumberIncrement('fundingAmount', 1)}
+                                className="h-[42px] px-3 py-2 bg-[#F6F6F7] border border-l-0 border-[#EDEEEF] rounded-r-[10px] text-[#0C2143] hover:bg-[#EDEEEF] transition-colors"
+                                aria-label="Increase amount"
+                              >
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <path d="M12 4v16m8-8H4" strokeLinecap="round" strokeLinejoin="round"/>
+                                </svg>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                        <div className='w-full'>
+                          <div className="mt-1">
+                            <SearchableDropdown
+                              isMulti={false}
+                              options={currencyOptions}
+                              value={formData.fundingCurrency}
+                              onChange={(value) => handleDropdownChange('fundingCurrency', Array.isArray(value) ? '' : value)}
+                              placeholder="Select currency..."
+                              enableSearch={true}
+                              showApplyButton={false}
+                              buttonClassName="w-full bg-[#F6F6F7] border-[#EDEEEF] rounded-[10px] text-[#0C2143] hover:bg-[#EDEEEF]"
+                            />
+                          </div>
+                        </div>    
+                      </div>
+                    </div> */}
+
+                    {/* Question 3 */}
+                    <div>
+                      <label className="not-italic font-semibold text-base leading-6 tracking-[-0.02em] text-[#0C2143] mb-2">
+                        Where is your business incorporated and where do you operate?
+                      </label>
+                      <div className="space-y-3 flex gap-2">
+                        <div className='w-full'>
+                          <div className="mt-1">
+                            <SearchableDropdown
+                              isMulti={false}
+                              options={countryOptions}
+                              value={formData.incorporationCountry}
+                              onChange={(value) => handleDropdownChange('incorporationCountry', Array.isArray(value) ? '' : value)}
+                              placeholder="Select country..."
+                              enableSearch={true}
+                              showApplyButton={false}
+                              buttonClassName="border border-[#EDEEEF] rounded-[10px] h-[46px] text-[#787F89] not-italic font-medium text-sm leading-6 hover:bg-gray-50 h-[46px] w-full px-3 py-2 bg-[#F6F6F7]"
+                            />
+                          </div>
+                        </div>
+                        <div className='w-full'>
+                          <div className="mt-1">
+                            <SearchableDropdown
+                              isMulti={true}
+                              options={countryOptions}
+                              value={formData.operationalRegions}
+                              onChange={(value) => handleDropdownChange('operationalRegions', Array.isArray(value) ? value : [])}
+                              placeholder="Select operating countries..."
+                              enableSearch={true}
+                              showApplyButton={false}
+                              buttonClassName="border border-[#EDEEEF] rounded-[10px] h-[46px] text-[#787F89] not-italic font-medium text-sm leading-6 hover:bg-gray-50 h-[46px] w-full px-3 py-2 bg-[#F6F6F7]"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Question 4 */}
+                    <div>
+                      <label className="not-italic font-semibold text-base leading-6 tracking-[-0.02em] text-[#0C2143] mb-2">
+                        What is your current annual revenue or key traction metric?
+                      </label>
+                      <input
+                        type="text"
+                        name="revenue"
+                        value={formData.revenue}
+                        onChange={handleInputChange}
+                        placeholder="e.g. $140,000"
+                        className="w-full px-3 py-2 border border-[#EDEEEF] rounded-[10px] h-[46px] text-[#787F89] not-italic font-medium text-sm leading-6 hover:bg-gray-50 bg-[#F6F6F7]"
+                      />
+                    </div>
+
+                    {/* Question 5 - Business Currency */}
+                    {/* <div>
+                      <label className="not-italic font-semibold text-base leading-6 tracking-[-0.02em] text-[#0C2143] mb-2">
+                        What currency do you use for your business operations and financial reporting?
+                      </label>
+                      <SearchableDropdown
+                        isMulti={false}
+                        options={currencyOptions}
+                        value={formData.currency}
+                        onChange={(value) => handleDropdownChange('currency', Array.isArray(value) ? '' : value)}
+                        placeholder="Select business currency..."
+                        enableSearch={true}
+                        showApplyButton={false}
+                        buttonClassName="w-full bg-[#F6F6F7] border border-[#EDEEEF] rounded-[10px] text-[#0C2143] hover:bg-[#EDEEEF] h-[46px]"
+                      />
+                    </div> */}
+
+
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
