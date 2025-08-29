@@ -1,13 +1,21 @@
 'use client';
 
 import { useUser, useSession } from '@clerk/nextjs';
-import { useRouter } from 'next/navigation';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { Country } from 'country-state-city';
 import Loader from '@components/Loader';
 import SearchableDropdown from '@components/SearchableDropdown';
 import LogoIcon from '@components/icons/LogoWithText';
 import { getApiUrl } from '@lib/api';
+
+// Debounce utility function for search
+const debounceSearch = (func: (search: string, type: string) => void, wait: number) => {
+  let timeout: NodeJS.Timeout;
+  return (search: string, type: string) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func(search, type), wait);
+  };
+};
 
 type FilterOption = { label: string; value: string };
 
@@ -26,7 +34,6 @@ type OnboardingData = {
 export default function OnboardingPage() {
   const { session } = useSession();
   const { user, isLoaded } = useUser();
-  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [nextStepLoading, setNextStepLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
@@ -124,7 +131,7 @@ export default function OnboardingPage() {
         setOriginalBusinessSectors(businessSectorsData);
         setStages(stagesData);
         setBusinessSectors(businessSectorsData);
-              } catch (err) {
+              } catch {
           // Error handling without logging
         } finally {
         setLoadingFilters(false);
@@ -161,15 +168,15 @@ export default function OnboardingPage() {
     }
   }, [isLoaded, user]);
 
-  // Ensure dropdowns show all options when data is loaded
+  // Initialize dropdowns with all options when data is first loaded
   useEffect(() => {
-    if (stages.length > 0) {
-      handleDropdownOpen('investmentStages');
+    if (originalStages.length > 0 && stages.length === 0) {
+      setStages(originalStages);
     }
-    if (businessSectors.length > 0) {
-      handleDropdownOpen('investmentFocuses');
+    if (originalBusinessSectors.length > 0 && businessSectors.length === 0) {
+      setBusinessSectors(originalBusinessSectors);
     }
-  }, [stages.length, businessSectors.length]);
+  }, [originalStages.length, originalBusinessSectors.length, stages.length, businessSectors.length]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -187,7 +194,7 @@ export default function OnboardingPage() {
   };
 
   // Search functionality for dropdowns
-  const handleSearch = async (search: string, type: string) => {
+  const handleSearch = debounceSearch(async (search: string, type: string) => {
     if (typeof search !== 'string' || !search.trim()) {
       // When search is empty, restore original options but include selected values
       restoreOriginalOptionsWithSelected(type);
@@ -196,7 +203,13 @@ export default function OnboardingPage() {
 
     try {
       const res = await fetch(
-        getApiUrl(`/api/investment-filters?search=${encodeURIComponent(search)}&type=${type}`)
+        getApiUrl(`/api/investment-filters?search=${encodeURIComponent(search)}&type=${type}`),
+        {
+          method: 'GET',
+          headers: {
+            'ngrok-skip-browser-warning': 'true',
+          },
+        }
       );
 
       if (res.ok) {
@@ -215,7 +228,7 @@ export default function OnboardingPage() {
     } catch (err) {
       console.error('Error fetching filtered data:', err);
     }
-  };
+  }, 500);
 
   // Helper function to merge selected values with search results
   const mergeSelectedWithOptions = (
@@ -243,11 +256,11 @@ export default function OnboardingPage() {
   // Restore original options when search is cleared or dropdown is opened
   const restoreOriginalOptionsWithSelected = (type: string) => {
     if (type === 'investmentStages') {
-      // Always show all original options, with selected ones at the top
+      // Show all original options, with selected ones at the top
       const mergedOptions = mergeSelectedWithOptions(originalStages, formData.stages, originalStages);
       setStages(mergedOptions);
     } else if (type === 'investmentFocuses') {
-      // Always show all original options, with selected ones at the top
+      // Show all original options, with selected ones at the top
       const mergedOptions = mergeSelectedWithOptions(originalBusinessSectors, formData.businessSectors, originalBusinessSectors);
       setBusinessSectors(mergedOptions);
     }
@@ -255,6 +268,7 @@ export default function OnboardingPage() {
 
   // Ensure dropdowns show all options when opened
   const handleDropdownOpen = (type: string) => {
+    // Only restore options when dropdown is opened, not when options change
     restoreOriginalOptionsWithSelected(type);
   };
 
