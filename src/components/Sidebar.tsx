@@ -190,7 +190,7 @@ const Sidebar = () => {
             <span className='font-medium text-[14px]'>Settings</span>
           </div>
         </Link>
-        <SignOutButton redirectUrl="/sign-in">
+        <SignOutButton redirectUrl="/sign-up">
           <button className="ml-2.5 mr-2.5 block text-lg py-2 rounded-lg transition-colors cursor-pointer text-gray-600 hover:text-gray-900 hover:bg-gray-50 w-full text-left pl-6">
             <div className="flex items-center">
               <LogoutIcon className="h-6 w-6 mr-2" />
