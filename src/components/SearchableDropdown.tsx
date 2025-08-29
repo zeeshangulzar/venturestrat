@@ -379,7 +379,7 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
               onClick={handleApply}
               disabled={!hasChanges()}
               className={`
-                w-[236px] h-[30px] flex-shrink-0 text-sm text-white rounded-[10px] transition-colors
+                w-[-webkit-fill-available] h-[30px] flex-shrink-0 text-sm text-white rounded-[10px] transition-colors
                 ${hasChanges()
                   ? 'bg-[#2563EB] hover:bg-blue-700'
                   : 'bg-[#a5a6ac] cursor-not-allowed'

@@ -8,6 +8,7 @@ import SearchableDropdown from '@components/SearchableDropdown';
 import LogoIcon from '@components/icons/LogoWithText';
 import { getApiUrl } from '@lib/api';
 
+
 // Debounce utility function for search
 const debounceSearch = (func: (search: string, type: string) => void, wait: number) => {
   let timeout: NodeJS.Timeout;
@@ -34,8 +35,8 @@ type OnboardingData = {
 export default function OnboardingPage() {
   const { session } = useSession();
   const { user, isLoaded } = useUser();
-  const [loading, setLoading] = useState(false);
   const [nextStepLoading, setNextStepLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<OnboardingData>({
     companyName: '',
@@ -310,7 +311,15 @@ export default function OnboardingPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    setLoading(true);
+    // Set local loading state immediately to prevent button text changes
+    setIsSubmitting(true);
+    
+    // Emit event to notify AuthFlowManager that onboarding is starting
+    // The AuthFlowManager will handle the global loading state
+    window.dispatchEvent(new CustomEvent('onboarding:start'));
+    
+    // Small delay to ensure button state changes before AuthFlowManager shows loading
+    await new Promise(resolve => setTimeout(resolve, 50));
 
     try {
       const response = await fetch('/api/onboarding/complete', {
@@ -324,15 +333,19 @@ export default function OnboardingPage() {
         }),
       });
 
-              if (response.ok) {
-          // Force session reload and wait for it to complete
+      if (response.ok) {
+        // Force session reload and wait for it to complete
         await Promise.all([
           session?.reload(),
           user?.reload()
         ]);
 
         // Add a small delay to ensure session is fully synchronized
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
+        // Emit event to notify AuthFlowManager that onboarding is complete
+        // The AuthFlowManager will handle the redirect and loading state
+        window.dispatchEvent(new CustomEvent('onboarding:complete'));
         
         // Use window.location.href for a hard redirect to bypass client-side routing
         window.location.href = '/';
@@ -343,8 +356,9 @@ export default function OnboardingPage() {
     } catch (error) {
       console.error('Onboarding error:', error);
       alert('Failed to complete onboarding. Please try again.');
-    } finally {
-      setLoading(false);
+      setIsSubmitting(false);
+      // Emit event to notify AuthFlowManager that onboarding failed
+      window.dispatchEvent(new CustomEvent('onboarding:complete'));
     }
   };
 
@@ -632,10 +646,10 @@ export default function OnboardingPage() {
               ) : (
                 <button
                   type="submit"
-                  disabled={loading || loadingFilters || !isStepComplete()}
+                  disabled={isSubmitting || loadingFilters || !isStepComplete()}
                   className="px-[32px] py-[13px] bg-[#ffffff] border-[rgba(255,255,255,0.1)] text-[#0C2143] font-bold text-sm leading-[19px] tracking-[-0.02em] capitalize hover:bg-[#f2f5f9] rounded-[10px] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 cursor-pointer w-full sm:w-auto"
                 >
-                  {loading ? 'Completing...' : !isStepComplete() ? 'Complete Required Fields' : 'Complete Onboarding'}
+                  {!isStepComplete() ? 'Complete Required Fields' : 'Complete Onboarding'}
                 </button>
                 )}
               </div>

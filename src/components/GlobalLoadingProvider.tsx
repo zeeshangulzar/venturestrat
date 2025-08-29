@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useCallback } from 'react';
 import AuthLoadingOverlay from './AuthLoadingOverlay';
 
 interface LoadingContextType {
@@ -28,15 +28,16 @@ export const GlobalLoadingProvider: React.FC<GlobalLoadingProviderProps> = ({ ch
   const [isLoading, setIsLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('');
 
-  const showLoading = (message: string = 'Loading...') => {
+  const showLoading = useCallback((message: string = 'Loading...') => {
+    // Update both states simultaneously to prevent any delay
     setLoadingMessage(message);
     setIsLoading(true);
-  };
+  }, []);
 
-  const hideLoading = () => {
+  const hideLoading = useCallback(() => {
     setIsLoading(false);
     setLoadingMessage('');
-  };
+  }, []);
 
   return (
     <LoadingContext.Provider value={{

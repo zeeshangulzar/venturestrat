@@ -3,7 +3,6 @@
 import { SignedIn, SignedOut, useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import InvestorsPage from '@app/investors/page';
-import PageLoader from '@components/PageLoader';
 
 export default function Home() {
   const router = useRouter();
@@ -11,7 +10,7 @@ export default function Home() {
 
   // Show loading state while Clerk determines authentication status
   if (!isLoaded) {
-    return <PageLoader message="Checking authentication..." />;
+    return null; // Let the GlobalLoadingProvider handle loading display
   }
 
   return (
