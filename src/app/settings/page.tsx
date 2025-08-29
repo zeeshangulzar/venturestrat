@@ -451,115 +451,121 @@ export default function SettingsPage() {
 
 
         {/* Categories and Content Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Categories Sidebar */}
-          <div className="lg:col-span-1">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Categories</h3>
-            <div className="space-y-2">
-              {categories.map((category) => {
-                const Icon = category.icon;
-                const isDisabled = category.id !== 'financials';
-                
-                return (
-                  <button
-                    key={category.id}
-                    onClick={() => !isDisabled && setCurrentCategory(category.id)}
-                    className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
-                      currentCategory === category.id
-                        ? 'bg-blue-100 text-blue-700 border-l-4 border-l-blue-600'
-                        : 'text-gray-600 hover:bg-gray-100'
-                    }`}
-                  >
-                    <Icon className="h-5 w-5" />
-                    <span className="font-medium">{category.label}</span>
-                  </button>
-                );
-              })}
+        <div className='bg-[#FFFFFF] border border-[#EDEEEF] rounded-[14px]'>
+          <div className="grid grid-cols-1 lg:grid-cols-4">
+            {/* Categories Sidebar */}
+            <div className="lg:col-span-1 border-r border-[#EDEEEF]">
+              <div className='border-b border-[#EDEEEF]'>
+                <h3 className="not-italic text-[#0C2143] font-bold text-lg leading-6 pl-5 py-5">Categories</h3>
+              </div>
+              <div className="space-y-2">
+                {categories.map((category) => {
+                  const Icon = category.icon;
+                  const isDisabled = category.id !== 'financials';
+                  
+                  return (
+                    <button
+                      key={category.id}
+                      onClick={() => !isDisabled && setCurrentCategory(category.id)}
+                      className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
+                        currentCategory === category.id
+                          ? 'bg-blue-100 text-blue-700 border-l-4 border-l-blue-600'
+                          : 'text-gray-600 hover:bg-gray-100'
+                      }`}
+                    >
+                      <Icon className="h-5 w-5" />
+                      <span className="not-italic font-normal text-sm leading-[19px] text-[#0C2143]">{category.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          </div>
 
-          {/* Content Area */}
-          <div className="lg:col-span-3">
-            {currentCategory === 'financials' && (
-              <div>
-                <h2 className="text-xl font-semibold text-gray-900 mb-6">Fundraising</h2>
-                
-                <div className="space-y-6">
-                  {/* Question 1 */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      What industry or sector best describes your business?
-                    </label>
-                    <div className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-900">
-                      {formData.businessSectors.length > 0 
-                        ? formData.businessSectors.join(', ')
-                        : 'Not specified'
-                      }
-                    </div>
+            {/* Content Area */}
+            <div className="lg:col-span-3">
+              {currentCategory === 'financials' && (
+                <div>
+                  <div className='border-b border-[#EDEEEF]'>
+                    <h2 className="not-italic text-[#0C2143] font-bold text-lg leading-6 pl-5 py-5">Fundraising</h2>
                   </div>
-
-                  {/* Question 1.5 - Investment Stages */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Which investment stage best defines your business?
-                    </label>
-                    <div className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-900">
-                      {formData.stages.length > 0 
-                        ? formData.stages.join(', ')
-                        : 'Not specified'
-                      }
-                    </div>
-                  </div>
-
-                  {/* Question 2 */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      How much are you looking to raise, and in what currency?
-                    </label>
-                    <div className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-900">
-                      {formData.fundingAmount > 0 
-                        ? `$${formData.fundingAmount.toLocaleString()} USD`
-                        : 'Not specified'
-                      }
-                    </div>
-                  </div>
-
-                  {/* Question 3 */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Where is your business incorporated and where do you operate?
-                    </label>
-                    <div className="space-y-3">
-                      <div>
-                        <span className="text-sm text-gray-500">Country of Incorporation:</span>
-                        <div className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-900 mt-1">
-                          {formData.incorporationCountry || 'Not specified'}
-                        </div>
-                      </div>
-                      <div>
-                        <span className="text-sm text-gray-500">Operating Countries:</span>
-                        <div className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-900 mt-1">
-                          {formData.operationalRegions.length > 0 
-                            ? formData.operationalRegions.join(', ')
-                            : 'Not specified'
-                          }
-                        </div>
+                  
+                  <div className="space-y-6 p-5">
+                    {/* Question 1 */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        What industry or sector best describes your business?
+                      </label>
+                      <div className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-900">
+                        {formData.businessSectors.length > 0 
+                          ? formData.businessSectors.join(', ')
+                          : 'Not specified'
+                        }
                       </div>
                     </div>
-                  </div>
 
-                  {/* Question 4 */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      What is your current annual revenue or key traction metric?
-                    </label>
-                    <div className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-900 min-h-[60px]">
-                      {formData.revenue || 'Not specified'}
+                    {/* Question 1.5 - Investment Stages */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Which investment stage best defines your business?
+                      </label>
+                      <div className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-900">
+                        {formData.stages.length > 0 
+                          ? formData.stages.join(', ')
+                          : 'Not specified'
+                        }
+                      </div>
+                    </div>
+
+                    {/* Question 2 */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        How much are you looking to raise, and in what currency?
+                      </label>
+                      <div className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-900">
+                        {formData.fundingAmount > 0 
+                          ? `$${formData.fundingAmount.toLocaleString()} USD`
+                          : 'Not specified'
+                        }
+                      </div>
+                    </div>
+
+                    {/* Question 3 */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Where is your business incorporated and where do you operate?
+                      </label>
+                      <div className="space-y-3">
+                        <div>
+                          <span className="text-sm text-gray-500">Country of Incorporation:</span>
+                          <div className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-900 mt-1">
+                            {formData.incorporationCountry || 'Not specified'}
+                          </div>
+                        </div>
+                        <div>
+                          <span className="text-sm text-gray-500">Operating Countries:</span>
+                          <div className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-900 mt-1">
+                            {formData.operationalRegions.length > 0 
+                              ? formData.operationalRegions.join(', ')
+                              : 'Not specified'
+                            }
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Question 4 */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        What is your current annual revenue or key traction metric?
+                      </label>
+                      <div className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-900 min-h-[60px]">
+                        {formData.revenue || 'Not specified'}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
       </div>
