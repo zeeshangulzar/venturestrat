@@ -516,16 +516,11 @@ export default function SettingsPage() {
               </label>
             </div>
             
-            {/* Upload Status Message */}
+                          {/* Upload Status Message */}
             <div className="ml-4 flex flex-col justify-center">
               {profileUploadStatus === 'uploading' && (
                 <div className="text-blue-600 text-sm font-medium">
                   Uploading profile picture... {uploadProgress}%
-                </div>
-              )}
-              {profileUploadStatus === 'success' && (
-                <div className="text-green-600 text-sm font-medium">
-                  Profile picture updated successfully!
                 </div>
               )}
               {profileUploadStatus === 'error' && (
@@ -632,36 +627,7 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* Save Status Indicator */}
-        {saveStatus !== 'idle' && (
-          <div className="mb-4 p-3 rounded-lg text-sm font-medium">
-            {saveStatus === 'saving' && (
-              <div className="flex items-center text-blue-600 bg-blue-50 p-3 rounded-lg">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
-                Saving changes...
-              </div>
-            )}
-            {saveStatus === 'saved' && (
-              <div className="flex items-center text-green-600 bg-green-50 p-3 rounded-lg">
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                Changes saved successfully!
-              </div>
-            )}
-            {saveStatus === 'error' && (
-              <div className="flex items-center text-red-600 bg-red-50 p-3 rounded-lg">
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-                {Object.keys(fieldErrors).length > 0 
-                  ? 'Please fix the validation errors above' 
-                  : 'Failed to save changes. Please try again.'
-                }
-              </div>
-            )}
-          </div>
-        )}
+
 
         {/* Categories and Content Section */}
         <div className='bg-[#FFFFFF] border border-[#EDEEEF] rounded-[14px]'>
@@ -719,7 +685,7 @@ export default function SettingsPage() {
                         onSearch={(search) => handleSearch(search, 'investmentFocuses')}
                         searchType="investmentFocuses"
                         onOpen={() => handleDropdownOpen('investmentFocuses')}
-                        buttonClassName="bg-[#F6F6F7] border-[#EDEEEF] rounded-[10px] text-[#0C2143] hover:bg-[#EDEEEF] rounded-[10px]"
+                        buttonClassName="bborder border-[#EDEEEF] rounded-[10px] h-[46px] text-[#787F89] not-italic font-medium text-sm leading-6 hover:bg-gray-50 h-[46px] w-full px-3 py-2 bg-[#F6F6F7]"
                       />
                     </div>
 
@@ -739,7 +705,7 @@ export default function SettingsPage() {
                         onSearch={(search) => handleSearch(search, 'investmentStages')}
                         searchType="investmentStages"
                         onOpen={() => handleDropdownOpen('investmentStages')}
-                        buttonClassName="bg-[#F6F6F7] border-[#EDEEEF] rounded-[10px] text-[#0C2143] hover:bg-[#EDEEEF]"
+                        buttonClassName="bborder border-[#EDEEEF] rounded-[10px] h-[46px] text-[#787F89] not-italic font-medium text-sm leading-6 hover:bg-gray-50 h-[46px] w-full px-3 py-2 bg-[#F6F6F7]"
                       />
                     </div>
 
