@@ -389,9 +389,9 @@ export default function OnboardingPage() {
       </div>
 
       {/* Question 1 below the header */}
-      <div>
-        <label className="block text-sm font-medium text-white mb-2">
-          Company Name *
+      <div className='flex flex-col'>
+        <label className="font-semibold text-base lg:text-lg leading-[22px] tracking-[-0.02em] text-white mb-2">
+          Company Name
         </label>
         <input
           type="text"
