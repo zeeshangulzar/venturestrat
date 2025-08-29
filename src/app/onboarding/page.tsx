@@ -14,7 +14,6 @@ type FilterOption = { label: string; value: string };
 type OnboardingData = {
   // Step 1
   companyName: string;
-  siteUrl: string;
   incorporationCountry: string;
   operationalRegions: string[];
   
@@ -33,7 +32,6 @@ export default function OnboardingPage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<OnboardingData>({
     companyName: '',
-    siteUrl: '',
     incorporationCountry: '',
     operationalRegions: [],
     revenue: '',
@@ -62,16 +60,22 @@ export default function OnboardingPage() {
       if (formData.incorporationCountry) completedFields++;
       if (formData.operationalRegions.length > 0) completedFields++;
       
-      return Math.round((completedFields / totalFields) * 50); // Max 50% for step 1
-    } else {
+      return Math.round((completedFields / totalFields) * 33); // Max 33% for step 1
+    } else if (currentStep === 2) {
       let completedFields = 0;
-      const totalFields = 3; // revenue, stages, businessSectors
+      const totalFields = 2; // stages, businessSectors
       
-      if (formData.revenue.trim()) completedFields++;
       if (formData.stages.length > 0) completedFields++;
       if (formData.businessSectors.length > 0) completedFields++;
       
-      return 50 + Math.round((completedFields / totalFields) * 50); // 50% + up to 50% for step 2
+      return 33 + Math.round((completedFields / totalFields) * 33); // 33% + up to 33% for step 2
+    } else {
+      let completedFields = 0;
+      const totalFields = 1; // revenue
+      
+      if (formData.revenue.trim()) completedFields++;
+      
+      return 66 + Math.round((completedFields / totalFields) * 34); // 66% + up to 34% for step 3
     }
   };
 
@@ -84,10 +88,11 @@ export default function OnboardingPage() {
       return formData.companyName.trim() && 
              formData.incorporationCountry && 
              formData.operationalRegions.length > 0;
-    } else {
-      return formData.revenue.trim() && 
-             formData.stages.length > 0 && 
+    } else if (currentStep === 2) {
+      return formData.stages.length > 0 && 
              formData.businessSectors.length > 0;
+    } else {
+      return formData.revenue.trim();
     }
   };
 
@@ -138,7 +143,6 @@ export default function OnboardingPage() {
       if (existingData.companyName && !existingData.onboardingComplete) {
         setFormData({
           companyName: existingData.companyName as string || '',
-          siteUrl: existingData.siteUrl as string || '',
           incorporationCountry: existingData.incorporationCountry as string || '',
           operationalRegions: existingData.operationalRegions as string[] || [],
           revenue: existingData.revenue as string || '',
@@ -147,11 +151,25 @@ export default function OnboardingPage() {
         });
 
         if (existingData.companyName && existingData.incorporationCountry && Array.isArray(existingData.operationalRegions) && existingData.operationalRegions.length > 0) {
-          setCurrentStep(2);
+          if (existingData.revenue && Array.isArray(existingData.stages) && existingData.stages.length > 0) {
+            setCurrentStep(3);
+          } else {
+            setCurrentStep(2);
+          }
         }
       }
     }
   }, [isLoaded, user]);
+
+  // Ensure dropdowns show all options when data is loaded
+  useEffect(() => {
+    if (stages.length > 0) {
+      handleDropdownOpen('investmentStages');
+    }
+    if (businessSectors.length > 0) {
+      handleDropdownOpen('investmentFocuses');
+    }
+  }, [stages.length, businessSectors.length]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -235,10 +253,10 @@ export default function OnboardingPage() {
     }
   };
 
-  // Handle dropdown opening - no automatic restoration needed
-  const handleDropdownOpen = useCallback((type: string) => {
-    // No state changes needed
-  }, []);
+  // Ensure dropdowns show all options when opened
+  const handleDropdownOpen = (type: string) => {
+    restoreOriginalOptionsWithSelected(type);
+  };
 
   const saveProgress = async () => {
     try {
@@ -261,7 +279,7 @@ export default function OnboardingPage() {
     setNextStepLoading(true);
     
     try {
-      if (currentStep === 1) {
+      if (currentStep < 3) {
         // Save progress before moving to next step
         await saveProgress();
       }
@@ -328,39 +346,20 @@ export default function OnboardingPage() {
     }
 
   const renderStep1 = () => (
-    <div className="space-y-8">
-      <div>
-        <div className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-white mb-2">
-              Company Name *
-            </label>
-            <input
-              type="text"
-              name="companyName"
-              value={formData.companyName}
-              onChange={handleInputChange}
-              placeholder="Enter your company name"
-              className="bg-white/10 border border-white/10 rounded-[10px] w-full h-[40px] font-normal text-sm leading-[22px] opacity-80  text-white px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-white mb-2">
-              Site URL
-            </label>
-            <input
-              type="url"
-              name="siteUrl"
-              value={formData.siteUrl}
-              onChange={handleInputChange}
-              placeholder="https://example.com (optional)"
-              className="bg-white/10 border border-white/10 rounded-[10px] w-full h-[40px] font-normal text-sm leading-[22px] opacity-80  text-white px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            />
-          </div>
-          <h2 className="font-semibold text-lg leading-[22px] tracking-[-0.02em] text-white mb-4">
+    <div className="">
+      {/* Header + Question 2 in same div with responsive spacing */}
+      <div className="flex flex-col lg:flex-row lg:gap-[320px] gap-8">
+        <div className="flex flex-col">
+          <h1 className="font-bold text-xl lg:text-2xl leading-7 text-white mb-2">Let&apos;s Get to Know Your Business</h1>
+          <p className="text-[#a5a6ac] font-normal text-sm lg:text-base leading-[22px] mb-[18px]">Before we get started, we need a little more information about your business.</p>
+        </div>
+        
+        {/* Question 2 - Business Location */}
+        <div className="flex flex-col">
+          <h2 className="font-semibold text-base lg:text-lg leading-[22px] tracking-[-0.02em] text-white mb-4">
             Where is your business incorporated and where do you operate?
           </h2>
-          <div className='flex gap-[14px]'>
+          <div className='flex flex-col sm:flex-row gap-[14px]'>
             <SearchableDropdown
               isMulti={false}
               options={countryOptions}
@@ -388,99 +387,132 @@ export default function OnboardingPage() {
           </div>
         </div>
       </div>
+
+      {/* Question 1 below the header */}
+      <div>
+        <label className="block text-sm font-medium text-white mb-2">
+          Company Name *
+        </label>
+        <input
+          type="text"
+          name="companyName"
+          value={formData.companyName}
+          onChange={handleInputChange}
+          placeholder="Enter your company name"
+          className="w-full lg:w-[35%] bg-white/10 border border-white/10 rounded-[10px] h-[40px] font-normal text-sm leading-[22px] opacity-80  text-white px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+        />
+      </div>
     </div>
   );
 
   const renderStep2 = () => (
-    <div className="space-y-8">
-      <div>
-        <div className="space-y-6">       
-          <div>
-            <h2 className="font-semibold text-lg leading-[22px] tracking-[-0.02em] text-white mb-2">
-              What industry or sector best describes your business?
-            </h2>
-            <div className="w-fit">
-              {loadingFilters ? (
-                <div className="w-full px-3 py-2 border border-white/10 rounded-lg bg-white/5 text-white/60 text-sm">
-                  Loading sectors...
-                </div>
-              ) : (
-                <SearchableDropdown
-                  isMulti={true}
-                  options={businessSectors}
-                  value={formData.businessSectors}
-                  onChange={(value) => handleDropdownChange('businessSectors', Array.isArray(value) ? value : [])}
-                  placeholder={<span className="font-normal text-sm leading-[22px] opacity-80  text-white">Select business sectors...</span>}
-                  enableSearch={true}
-                  showApplyButton={true}
-                  onSearch={handleSearch}
-                  searchType="investmentFocuses"
-                  onOpen={() => handleDropdownOpen('investmentFocuses')}
-                  buttonClassName="bg-[rgba(255,255,255,0.1)] border-[rgba(255,255,255,0.1)] text-white hover:bg-[rgba(255,255,255,0.15)] rounded-[10px]"
-                  dropdownClassName="bg-[#1b2130] border border-[rgba(37,99,235,0.1)] rounded-[14px] shadow-2xl"
-                  isOnboarding={true}
-                />
-              )}
-            </div>
-          </div>
-          <div>
-            <h2 className="font-semibold text-lg leading-[22px] tracking-[-0.02em] text-white mb-4">
-              Which growth stage best describes your company?
-            </h2>
-            <div className="w-fit">
-              {loadingFilters ? (
-                <div className="w-full px-3 py-2 border border-white/10 rounded-lg bg-white/5 text-white/60 text-sm">
-                  Loading stages...
-                </div>
-              ) : (
-                <SearchableDropdown
-                  isMulti={true}
-                  options={stages}
-                  value={formData.stages}
-                  onChange={(value) => handleDropdownChange('stages', Array.isArray(value) ? value : [])}
-                  placeholder={<span className="font-normal text-sm leading-[22px] opacity-80  text-white">Select business stages...</span>}
-                  enableSearch={true}
-                  showApplyButton={true}
-                  onSearch={handleSearch}
-                  searchType="investmentStages"
-                  onOpen={() => handleDropdownOpen('investmentStages')}
-                  buttonClassName="bg-[rgba(255,255,255,0.1)] border-[rgba(255,255,255,0.1)] text-white hover:bg-[rgba(255,255,255,0.15)] rounded-[10px]"
-                  dropdownClassName="bg-[#1b2130] border border-[rgba(37,99,235,0.1)] rounded-[14px] shadow-2xl"
-                  isOnboarding={true}
-                />
-              )}
-            </div>
-          </div>
-          <div>
-            <h2 className="font-semibold text-lg leading-[22px] tracking-[-0.02em] text-white mb-2">
-              What is your current annual revenue or key traction metric?
-            </h2>
-            <input
-              type="text"
-              name="revenue"
-              value={formData.revenue}
-              onChange={handleInputChange}
-              placeholder="e.g. $140,000"
-              className="bg-white/10 border border-white/10 rounded-[10px] w-full h-[40px] font-normal text-sm leading-[22px] opacity-80  text-white px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            />
+    <div className="">
+      {/* Header + Question 4 in same div with responsive spacing */}
+      <div className="flex flex-col lg:flex-row lg:gap-[320px] gap-8">
+        <div className="flex flex-col">
+          <h1 className="font-bold text-xl lg:text-2xl leading-7 text-white mb-2">Let&apos;s Get to Know Your Business</h1>
+          <p className="text-[#a5a6ac] font-normal text-sm lg:text-base leading-[22px] mb-[18px]">Before we get started, we need a little more information about your business.</p>
+        </div>
+        
+        {/* Question 4 - Investment Stages */}
+        <div className="flex flex-col">
+          <h2 className="font-semibold text-base lg:text-lg leading-[22px] tracking-[-0.02em] text-white mb-4">
+            Which growth stage best describes your company?
+          </h2>
+          <div className="w-full lg:w-fit">
+            {loadingFilters ? (
+              <div className="w-full px-3 py-2 border border-white/10 rounded-lg bg-white/5 text-white/60 text-sm">
+                Loading stages...
+              </div>
+            ) : (
+              <SearchableDropdown
+                isMulti={true}
+                options={stages}
+                value={formData.stages}
+                onChange={(value) => handleDropdownChange('stages', Array.isArray(value) ? value : [])}
+                placeholder={<span className="font-normal text-sm leading-[22px] opacity-80  text-white">Select business stages...</span>}
+                enableSearch={true}
+                showApplyButton={true}
+                onSearch={handleSearch}
+                searchType="investmentStages"
+                onOpen={() => handleDropdownOpen('investmentStages')}
+                buttonClassName="bg-[rgba(255,255,255,0.1)] border-[rgba(255,255,255,0.1)] text-white hover:bg-[rgba(255,255,255,0.15)] rounded-[10px]"
+                dropdownClassName="bg-[#1b2130] border border-[rgba(37,99,235,0.1)] rounded-[14px] shadow-2xl"
+                isOnboarding={true}
+              />
+            )}
           </div>
         </div>
+      </div>
+
+      {/* Question 3 below the header */}
+      <div>
+        <h2 className="font-semibold text-base lg:text-lg leading-[22px] tracking-[-0.02em] text-white mb-4">
+          What industry or sector best describes your business?
+        </h2>
+        <div className="w-full lg:w-fit">
+          {loadingFilters ? (
+            <div className="w-full px-3 py-2 border border-white/10 rounded-lg bg-white/5 text-white/60 text-sm">
+              Loading sectors...
+            </div>
+          ) : (
+            <SearchableDropdown
+              isMulti={true}
+              options={businessSectors}
+              value={formData.businessSectors}
+              onChange={(value) => handleDropdownChange('businessSectors', Array.isArray(value) ? value : [])}
+              placeholder={<span className="font-normal text-sm leading-[22px] opacity-80  text-white">Select business sectors...</span>}
+              enableSearch={true}
+              showApplyButton={true}
+              onSearch={handleSearch}
+              searchType="investmentFocuses"
+              onOpen={() => handleDropdownOpen('investmentFocuses')}
+              buttonClassName="bg-[rgba(255,255,255,0.1)] border-[rgba(255,255,255,0.1)] text-white hover:bg-[rgba(255,255,255,0.15)] rounded-[10px]"
+              dropdownClassName="bg-[#1b2130] border border-[rgba(37,99,235,0.1)] rounded-[14px] shadow-2xl"
+              isOnboarding={true}
+            />
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderStep3 = () => (
+    <div className="space-y-8">
+      <div className="flex flex-col">
+        <h1 className="font-bold text-xl lg:text-2xl leading-7 text-white mb-2">Let&apos;s Get to Know Your Business</h1>
+        <p className="text-[#a5a6ac] font-normal text-sm lg:text-base leading-[22px] mb-[18px]">Before we get started, we need a little more information about your business.</p>
+        
+        {/* Question 5 */}
+        <div>
+        <h2 className="font-semibold text-base lg:text-lg leading-[22px] tracking-[-0.02em] text-white mb-2">
+          What is your current annual revenue or key traction metric?
+        </h2>
+        <input
+          type="text"
+          name="revenue"
+          value={formData.revenue}
+          onChange={handleInputChange}
+          placeholder="e.g. $140,000"
+          className="w-full lg:w-[35%] bg-white/10 border border-white/10 rounded-[10px] h-[40px] font-normal text-sm leading-[22px] opacity-80  text-white px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+        />
+      </div>
       </div>
     </div>
   );
 
   return (
     <main className="min-h-screen bg-[#0c2143] relative w-full">
-      {/* Top left logo */}
-      <div className="absolute top-6 left-6">
+      {/* Top left logo - responsive positioning */}
+      <div className="absolute top-4 lg:top-6 left-4 lg:left-6 z-10">
         <LogoIcon />
       </div>
       
-      {/* Center content */}
-      <div className="min-h-screen flex items-center justify-start p-6">
-        <div className="flex flex-row gap-[36px] p-[50px]">
-          {/* Progress indicator */}
-          <div className="flex top-0">
+      {/* Center content - responsive layout */}
+      <div className="min-h-screen flex items-center justify-start p-4 lg:p-6 pt-20 lg:pt-6">
+        <div className="flex flex-col lg:flex-row gap-6 lg:gap-[36px] p-4 lg:p-[50px] w-full">
+          {/* Progress indicator - hidden on mobile, shown on desktop */}
+          <div className="hidden lg:flex top-0">
             <div className="absolute">
               {/* Top dot */}
               <div className="absolute -top-2 left-1/2 transform -translate-x-1/2">
@@ -490,7 +522,7 @@ export default function OnboardingPage() {
                 </svg>
               </div>
                                              {/* Progress bar */}
-                <div className="w-2 h-[344px] bg-[linear-gradient(180deg,rgba(255,255,255,0)_0%,rgba(255,255,255,0.8)_96.28%)] rounded-[20px] overflow-hidden">
+                <div className="w-2 h-[272px] bg-[linear-gradient(180deg,rgba(255,255,255,0)_0%,rgba(255,255,255,0.8)_96.28%)] rounded-[20px] overflow-hidden">
                   <div 
                     className="w-2 rounded-full transition-all duration-500 ease-in-out"
                     style={{ 
@@ -510,16 +542,31 @@ export default function OnboardingPage() {
               </div>
             </div>
           </div>
-          <div>
-            <div className="mb-[18px]">
-              <h1 className="font-bold text-2xl leading-7 text-white mb-2">Let&apos;s Get to Know Your Business</h1>
-              <p className="text-[#a5a6ac] font-normal text-base leading-[22px]">Before we get started, we need a little more information about your business.</p>
+
+          {/* Mobile progress indicator */}
+          <div className="lg:hidden w-full mb-6">
+            <div className="flex items-center justify-between text-white text-sm mb-2">
+              <span>Step {currentStep} of 3</span>
+              <span>{progressPercentage}%</span>
+            </div>
+            <div className="w-full h-2 bg-[rgba(255,255,255,0.2)] rounded-full overflow-hidden">
+              <div 
+                className="h-2 rounded-full transition-all duration-500 ease-in-out"
+                style={{ 
+                  width: `${progressPercentage}%`, 
+                  background: backgroundColor
+                }}
+              ></div>
+            </div>
+          </div>
+
+          <div className='w-full'>
+            <div className="">
+              {currentStep === 1 ? renderStep1() : currentStep === 2 ? renderStep2() : renderStep3()}
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-8">
-              {currentStep === 1 ? renderStep1() : renderStep2()}
-
-              <div className="pt-6 flex justify-between">
+              <div className="pt-6 flex flex-col sm:flex-row gap-4 lg:gap-[296px]">
                 {currentStep > 1 && (
                   <button
                     type="button"
@@ -536,63 +583,46 @@ export default function OnboardingPage() {
                     </span>
                   </button>
                 )}
-                
-                {currentStep < 2 ? (
-                  <button
-                    type="button"
-                    onClick={() => nextStep()}
-                    disabled={nextStepLoading || !isStepComplete()}
-                    className="px-[32px] py-[13px] bg-[#ffffff] border-[rgba(255,255,255,0.1)] text-[#0C2143] hover:bg-[#f2f5f9] rounded-[10px] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 cursor-pointer"
-                  >
-                    <span className="inline-flex items-center gap-1 text-[#0C2143] font-bold text-sm leading-[19px] tracking-[-0.02em] capitalize">
-                      {nextStepLoading ? (
-                        <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#0C2143] mr-2"></div>
-                          Processing...
-                        </>
-                      ) : !isStepComplete() ? (
-                        <>
-                          Continue
-                          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <g clipPath="url(#clip0_1168_2734)">
-                            <path d="M15.832 10H4.16536" stroke="#0C2143" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                            <path d="M15.832 10L12.4987 13.3333" stroke="#0C2143" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                            <path d="M15.832 10.0001L12.4987 6.66675" stroke="#0C2143" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                            </g>
-                            <defs>
-                            <clipPath id="clip0_1168_2734">
-                            <rect width="20" height="20" fill="white" transform="matrix(-1 0 0 1 20 0)"/>
-                            </clipPath>
-                            </defs>
-                          </svg>
-                        </>
-                      ) : (
-                        <>
-                          Continue
-                          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <g clipPath="url(#clip0_1168_2734)">
-                            <path d="M15.832 10H4.16536" stroke="#0C2143" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                            <path d="M15.832 10L12.4987 13.3333" stroke="#0C2143" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                            <path d="M15.832 10.0001L12.4987 6.66675" stroke="#0C2143" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                            </g>
-                            <defs>
-                            <clipPath id="clip0_1168_2734">
-                            <rect width="20" height="20" fill="white" transform="matrix(-1 0 0 1 20 0)"/>
-                            </clipPath>
-                            </defs>
-                          </svg>
-                        </>
-                      )}
-                    </span>
-                  </button>
-                ) : (
-                  <button
-                    type="submit"
-                    disabled={loading || loadingFilters || !isStepComplete()}
-                    className="px-[32px] py-[13px] bg-[#ffffff] border-[rgba(255,255,255,0.1)] text-[#0C2143] font-bold text-sm leading-[19px] tracking-[-0.02em] capitalize hover:bg-[#f2f5f9] rounded-[10px] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 cursor-pointer"
-                  >
-                    {loading ? 'Completing...' : !isStepComplete() ? 'Complete Required Fields' : 'Complete Onboarding'}
-                  </button>
+                {currentStep < 3 ? (
+                <button
+                  type="button"
+                  onClick={() => nextStep()}
+                  disabled={nextStepLoading || !isStepComplete()}
+                  className="px-[32px] py-[13px] bg-[#ffffff] border-[rgba(255,255,255,0.1)] text-[#0C2143] hover:bg-[#f2f5f9] rounded-[10px] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 cursor-pointer order-1 sm:order-2 w-full sm:w-auto"
+                >
+                  <span className="inline-flex items-center gap-1 text-[#0C2143] font-bold text-sm leading-[19px] tracking-[-0.02em] capitalize">
+                    {nextStepLoading ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#0C2143] mr-2"></div>
+                        Processing...
+                      </>
+                    ) : (
+                      <>
+                        Continue
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <g clipPath="url(#clip0_1168_2734)">
+                          <path d="M15.832 10H4.16536" stroke="#0C2143" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M15.832 10L12.4987 13.3333" stroke="#0C2143" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M15.832 10.0001L12.4987 6.66675" stroke="#0C2143" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          </g>
+                          <defs>
+                          <clipPath id="clip0_1168_2734">
+                          <rect width="20" height="20" fill="white" transform="matrix(-1 0 0 1 20 0)"/>
+                          </clipPath>
+                          </defs>
+                        </svg>
+                      </>
+                    )}
+                  </span>
+                </button>
+              ) : (
+                <button
+                  type="submit"
+                  disabled={loading || loadingFilters || !isStepComplete()}
+                  className="px-[32px] py-[13px] bg-[#ffffff] border-[rgba(255,255,255,0.1)] text-[#0C2143] font-bold text-sm leading-[19px] tracking-[-0.02em] capitalize hover:bg-[#f2f5f9] rounded-[10px] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 cursor-pointer w-full sm:w-auto"
+                >
+                  {loading ? 'Completing...' : !isStepComplete() ? 'Complete Required Fields' : 'Complete Onboarding'}
+                </button>
                 )}
               </div>
             </form>
