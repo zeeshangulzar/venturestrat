@@ -22,6 +22,7 @@ type OnboardingData = {
   lastName: string;
   companyName: string;
   siteUrl: string;
+  userCountry: string;
   incorporationCountry: string;
   operationalRegions: string[];
   revenue: string;
@@ -44,6 +45,7 @@ export default function SettingsPage() {
     lastName: '',
     companyName: '',
     siteUrl: '',
+    userCountry: '',
     incorporationCountry: '',
     operationalRegions: [],
     revenue: '',
@@ -218,6 +220,7 @@ export default function SettingsPage() {
         lastName: user.lastName || '',
         companyName: (metadata.companyName as string) || '',
         siteUrl: (metadata.siteUrl as string) || '',
+        userCountry: (metadata.userCountry as string) || '',
         incorporationCountry: (metadata.incorporationCountry as string) || '',
         operationalRegions: (metadata.operationalRegions as string[]) || [],
         revenue: (metadata.revenue as string) || '',
@@ -616,9 +619,9 @@ export default function SettingsPage() {
               <SearchableDropdown
                 isMulti={false}
                 options={countryOptions}
-                value={formData.incorporationCountry}
-                onChange={(value) => handleDropdownChange('incorporationCountry', Array.isArray(value) ? '' : value)}
-                placeholder="Select country..."
+                value={formData.userCountry}
+                onChange={(value) => handleDropdownChange('userCountry', Array.isArray(value) ? '' : value)}
+                placeholder="Select your country"
                 enableSearch={true}
                 showApplyButton={false}
                 buttonClassName="bg-[#F6F6F7] border-[#EDEEEF] rounded-[10px] text-[#0C2143] hover:bg-[#EDEEEF] rounded-[10px]"
@@ -679,7 +682,7 @@ export default function SettingsPage() {
                         options={businessSectors}
                         value={formData.businessSectors}
                         onChange={(value) => handleDropdownChange('businessSectors', Array.isArray(value) ? value : [])}
-                        placeholder="Select business sectors..."
+                        placeholder="Select business sectors"
                         enableSearch={true}
                         showApplyButton={true}
                         onSearch={(search) => handleSearch(search, 'investmentFocuses')}
@@ -700,7 +703,7 @@ export default function SettingsPage() {
                         options={stages}
                         value={formData.stages}
                         onChange={(value) => handleDropdownChange('stages', Array.isArray(value) ? value : [])}
-                        placeholder="Select business stages..."
+                        placeholder="Select business stages"
                         enableSearch={true}
                         showApplyButton={true}
                         onSearch={(search) => handleSearch(search, 'investmentStages')}
@@ -781,7 +784,7 @@ export default function SettingsPage() {
                               options={countryOptions}
                               value={formData.incorporationCountry}
                               onChange={(value) => handleDropdownChange('incorporationCountry', Array.isArray(value) ? '' : value)}
-                              placeholder="Select country..."
+                              placeholder="Select country"
                               enableSearch={true}
                               showApplyButton={false}
                               buttonClassName="border border-[#EDEEEF] rounded-[10px] h-[46px] text-[#787F89] not-italic font-medium text-sm leading-6 hover:bg-[#EDEEEF] h-[46px] w-full px-3 py-2 bg-[#F6F6F7]"
@@ -795,7 +798,7 @@ export default function SettingsPage() {
                               options={countryOptions}
                               value={formData.operationalRegions}
                               onChange={(value) => handleDropdownChange('operationalRegions', Array.isArray(value) ? value : [])}
-                              placeholder="Select operating countries..."
+                              placeholder="Select operating countries"
                               enableSearch={true}
                               showApplyButton={true}
                               buttonClassName="border border-[#EDEEEF] rounded-[10px] h-[46px] text-[#787F89] not-italic font-medium text-sm leading-6 hover:bg-[#EDEEEF] h-[46px] w-full px-3 py-2 bg-[#F6F6F7]"
