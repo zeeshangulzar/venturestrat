@@ -686,6 +686,7 @@ export default function SettingsPage() {
                         searchType="investmentFocuses"
                         onOpen={() => handleDropdownOpen('investmentFocuses')}
                         buttonClassName="bborder border-[#EDEEEF] rounded-[10px] h-[46px] text-[#787F89] not-italic font-medium text-sm leading-6 hover:bg-[#EDEEEF] h-[46px] w-full px-3 py-2 bg-[#F6F6F7]"
+                        showSelectedValues={true}
                       />
                     </div>
 
@@ -705,7 +706,8 @@ export default function SettingsPage() {
                         onSearch={(search) => handleSearch(search, 'investmentStages')}
                         searchType="investmentStages"
                         onOpen={() => handleDropdownOpen('investmentStages')}
-                        buttonClassName="bborder border-[#EDEEEF] rounded-[10px] h-[46px] text-[#787F89] not-italic font-medium text-sm leading-6 hover:bg-[#EDEEEF] h-[46px] w-full px-3 py-2 bg-[#F6F6F7]"
+                        buttonClassName="border border-[#EDEEEF] rounded-[10px] h-[46px] text-[#787F89] not-italic font-medium text-sm leading-6 hover:bg-[#EDEEEF] h-[46px] w-full px-3 py-2 bg-[#F6F6F7]"
+                        showSelectedValues={true}
                       />
                     </div>
 
@@ -797,6 +799,7 @@ export default function SettingsPage() {
                               enableSearch={true}
                               showApplyButton={true}
                               buttonClassName="border border-[#EDEEEF] rounded-[10px] h-[46px] text-[#787F89] not-italic font-medium text-sm leading-6 hover:bg-[#EDEEEF] h-[46px] w-full px-3 py-2 bg-[#F6F6F7]"
+                              showSelectedValues={true}
                             />
                           </div>
                         </div>

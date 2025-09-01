@@ -122,6 +122,7 @@ interface SearchableDropdownProps {
   buttonClassName?: string; // New prop for custom button styling
   dropdownClassName?: string; // New prop for custom dropdown styling
   isOnboarding?: boolean; // New prop for onboarding page
+  showSelectedValues?: boolean; // New prop to show comma-separated values instead of count
 }
 
 const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
@@ -139,7 +140,8 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
   onOpen, // New onOpen callback
   buttonClassName, // New prop for custom button styling
   dropdownClassName, // New prop for custom dropdown styling
-  isOnboarding // New isOnboarding prop
+  isOnboarding, // New isOnboarding prop
+  showSelectedValues = false // New prop to show comma-separated values instead of count
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -152,22 +154,45 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
     setTempValue(value);
   }, [value]);
 
-  // Update filtered options when options change
+  // Update filtered options when options or selection change
   useEffect(() => {
-    setFilteredOptions(options);
-  }, [options]);
+    // Helper to get selected values (respects apply mode)
+    const getSelectedValues = (): string[] => {
+      const current = value;
+      if (Array.isArray(current)) return current;
+      if (typeof current === 'string' && current) return [current];
+      return [];
+    };
 
-  // Filter options based on search term
-  useEffect(() => {
+    // Helper to reorder options with selected values on top
+    const reorderWithSelectedOnTop = (
+      inputOptions: { label: string; value: string }[],
+      selectedValues: string[]
+    ) => {
+      if (!selectedValues || selectedValues.length === 0) return inputOptions;
+      const selectedSet = new Set(selectedValues);
+      const selected: { label: string; value: string }[] = [];
+      const unselected: { label: string; value: string }[] = [];
+      for (const opt of inputOptions) {
+        if (selectedSet.has(opt.value)) selected.push(opt);
+        else unselected.push(opt);
+      }
+      return [...selected, ...unselected];
+    };
+
+    const selectedValues = getSelectedValues();
+
     if (searchTerm.trim() === '') {
-      setFilteredOptions(options);
+      setFilteredOptions(reorderWithSelectedOnTop(options, selectedValues));
     } else {
       const filtered = options.filter(option =>
         option.label.toLowerCase().includes(searchTerm.toLowerCase())
       );
-      setFilteredOptions(filtered);
+      setFilteredOptions(reorderWithSelectedOnTop(filtered, selectedValues));
     }
-  }, [searchTerm, options]);
+  }, [options, value, searchTerm]);
+
+  // No-op: filtering is handled in the options/selection effect above
 
   // Handle search input change
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -265,6 +290,31 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
     if (isMulti) {
       const selectedValues = Array.isArray(displayValue) ? displayValue : [];
       if (selectedValues.length === 0) return placeholder;
+      
+      // If showSelectedValues is true, display comma-separated values with cap
+      if (showSelectedValues && selectedValues.length > 0) {
+        const selectedLabels = selectedValues.map(value => {
+          const option = options.find(opt => opt.value === value);
+          return option ? option.label : value;
+        });
+
+        const MAX_TO_DISPLAY = 5;
+        const visible = selectedLabels.slice(0, MAX_TO_DISPLAY);
+        const hiddenCount = selectedLabels.length - visible.length;
+        const displayText = hiddenCount > 0
+          ? `${visible.join(', ')} +${hiddenCount} more`
+          : visible.join(', ');
+
+        return (
+          <div className="flex items-center text-[14px] font-manrope font-medium whitespace-nowrap overflow-hidden text-ellipsis">
+            {typeof placeholder === 'object' && React.isValidElement(placeholder)
+              ? React.cloneElement(placeholder as React.ReactElement, {}, displayText)
+              : displayText}
+          </div>
+        );
+      }
+      
+      // Default behavior: show count for multiple selections
       if (selectedValues.length === 1) {
         const option = options.find(opt => opt.value === selectedValues[0]);
         return option ? (
