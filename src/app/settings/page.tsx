@@ -2,6 +2,7 @@
 
 import { useUser } from '@clerk/nextjs';
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
 import { Country } from 'country-state-city';
 import Loader from '@components/Loader';
 import SearchableDropdown from '@components/SearchableDropdown';
@@ -35,6 +36,7 @@ type OnboardingData = {
 
 export default function SettingsPage() {
   const { user, isLoaded } = useUser();
+  const router = useRouter();
   const [currentCategory, setCurrentCategory] = useState('financials');
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [profileUploadStatus, setProfileUploadStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
@@ -129,6 +131,10 @@ export default function SettingsPage() {
 
       const result = await response.json();
       console.log('Auto-save result:', result); // Debug log
+
+      // Update original form data to reflect the saved state
+      setOriginalFormData(data);
+      setHasUnsavedChanges(false);
 
       setSaveStatus('saved');
       setTimeout(() => setSaveStatus('idle'), 2000);
@@ -232,6 +238,8 @@ export default function SettingsPage() {
       };
       console.log('Setting form data:', newFormData); // Debug log
       setFormData(newFormData);
+      setOriginalFormData(newFormData);
+      setHasUnsavedChanges(false);
     }
   }, [isLoaded, user]);
 
@@ -418,14 +426,189 @@ export default function SettingsPage() {
     restoreOriginalOptionsWithSelected(type);
   };
 
-  // Cleanup timeout on component unmount
+  // Track if there are unsaved changes
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [originalFormData, setOriginalFormData] = useState<OnboardingData | null>(null);
+  const pathname = usePathname();
+
+  // Prevent navigation away while saving
   useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (saveStatus === 'saving') {
+        e.preventDefault();
+        e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+        return 'You have unsaved changes. Are you sure you want to leave?';
+      }
+    };
+
+    // Add event listener for browser navigation
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    // Cleanup event listener on component unmount
     return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
       if (autoSaveTimeoutRef.current) {
         clearTimeout(autoSaveTimeoutRef.current);
       }
     };
-  }, []);
+  }, [saveStatus]);
+
+  // Function to check if there are unsaved changes
+  const checkForUnsavedChanges = useCallback(() => {
+    if (!originalFormData) return false;
+    
+    // Deep comparison of form data
+    const hasChanges = 
+      formData.firstName !== originalFormData.firstName ||
+      formData.lastName !== originalFormData.lastName ||
+      formData.companyName !== originalFormData.companyName ||
+      formData.siteUrl !== originalFormData.siteUrl ||
+      formData.userCountry !== originalFormData.userCountry ||
+      formData.incorporationCountry !== originalFormData.incorporationCountry ||
+      formData.revenue !== originalFormData.revenue ||
+      formData.fundingAmount !== originalFormData.fundingAmount ||
+      formData.fundingCurrency !== originalFormData.fundingCurrency ||
+      formData.currency !== originalFormData.currency ||
+      JSON.stringify(formData.operationalRegions) !== JSON.stringify(originalFormData.operationalRegions) ||
+      JSON.stringify(formData.stages) !== JSON.stringify(originalFormData.stages) ||
+      JSON.stringify(formData.businessSectors) !== JSON.stringify(originalFormData.businessSectors);
+    
+    console.log('Checking unsaved changes:', {
+      hasChanges,
+      saveStatus,
+      formData: formData.userCountry,
+      originalData: originalFormData.userCountry
+    });
+    
+    setHasUnsavedChanges(hasChanges);
+    return hasChanges;
+  }, [formData, originalFormData, saveStatus]);
+
+  // Check for unsaved changes whenever form data changes
+  useEffect(() => {
+    checkForUnsavedChanges();
+  }, [checkForUnsavedChanges]);
+
+  // Block navigation during save or when there are unsaved changes
+  useEffect(() => {
+    let isBlocking = false;
+    
+    // Function to check if navigation should be blocked
+    const shouldBlockNavigation = () => {
+      const shouldBlock = saveStatus === 'saving' || checkForUnsavedChanges();
+      console.log('Navigation check:', {
+        shouldBlock,
+        saveStatus,
+        hasUnsavedChanges: checkForUnsavedChanges()
+      });
+      return shouldBlock;
+    };
+    
+    // Function to show confirmation dialog
+    const showConfirmation = () => {
+      if (isBlocking) return false;
+      isBlocking = true;
+      
+      let message = 'You have unsaved changes. Are you sure you want to leave?';
+      if (saveStatus === 'saving') {
+        message = 'Your changes are currently being saved. Are you sure you want to leave?';
+      }
+      
+      const confirmed = confirm(message);
+      isBlocking = false;
+      return confirmed;
+    };
+
+    // Block all navigation attempts
+    const handleClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      const link = target.closest('a');
+      
+      if (link) {
+        const href = link.getAttribute('href');
+        // Check if it's an internal navigation link
+        if (href && href.startsWith('/') && href !== pathname) {
+          if (shouldBlockNavigation()) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            if (showConfirmation()) {
+              // Use router.push for proper Next.js navigation
+              router.push(href);
+            }
+            return false;
+          }
+        }
+      }
+    };
+
+    // Block programmatic navigation
+    const originalPush = router.push;
+    const originalReplace = router.replace;
+    
+    router.push = (href: string, options?: any) => {
+      if (shouldBlockNavigation()) {
+        if (showConfirmation()) {
+          return originalPush(href, options);
+        }
+        return;
+      }
+      return originalPush(href, options);
+    };
+    
+    router.replace = (href: string, options?: any) => {
+      if (shouldBlockNavigation()) {
+        if (showConfirmation()) {
+          return originalReplace(href, options);
+        }
+        return;
+      }
+      return originalReplace(href, options);
+    };
+
+    // Block browser navigation
+    const handlePopState = (e: PopStateEvent) => {
+      if (shouldBlockNavigation()) {
+        e.preventDefault();
+        if (!showConfirmation()) {
+          // Push current state back to prevent navigation
+          window.history.pushState(null, '', window.location.href);
+        }
+      }
+    };
+
+    // Add event listeners with proper capture
+    document.addEventListener('click', handleClick, true);
+    window.addEventListener('popstate', handlePopState);
+    
+    // Override history methods
+    const originalPushState = history.pushState;
+    const originalReplaceState = history.replaceState;
+    
+    history.pushState = function(...args) {
+      if (shouldBlockNavigation() && !showConfirmation()) {
+        return;
+      }
+      return originalPushState.apply(this, args);
+    };
+    
+    history.replaceState = function(...args) {
+      if (shouldBlockNavigation() && !showConfirmation()) {
+        return;
+      }
+      return originalReplaceState.apply(this, args);
+    };
+
+    // Cleanup function
+    return () => {
+      document.removeEventListener('click', handleClick, true);
+      window.removeEventListener('popstate', handlePopState);
+      router.push = originalPush;
+      router.replace = originalReplace;
+      history.pushState = originalPushState;
+      history.replaceState = originalReplaceState;
+    };
+  }, [saveStatus, pathname, router, checkForUnsavedChanges]);
 
   const categories = [
     { id: 'home', label: 'Home', icon: HomeIcon },
@@ -454,7 +637,31 @@ export default function SettingsPage() {
       <div className="px-4 py-5 bg-[#F4F6FB]">
         {/* Profile Section */}
         <div className="bg-[#FFFFFF] rounded-xl p-6 mb-8 border border-[#EDEEEF]">
-          <h2 className="not-italic font-bold text-[18px] leading-[24px] tracking-[-0.02em] text-[#0C2143] mb-3">Profile</h2>
+          <div className="flex items-center mb-3 gap-10">
+            <h2 className="not-italic font-bold text-[18px] leading-[24px] tracking-[-0.02em] text-[#0C2143]">Profile</h2>
+            {saveStatus === 'saving' && (
+              <div className="flex items-center gap-2 text-blue-600 text-sm">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                <span>Saving...</span>
+              </div>
+            )}
+            {saveStatus === 'saved' && (
+              <div className="flex items-center gap-2 text-green-600 text-sm">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                <span>Saved!</span>
+              </div>
+            )}
+            {saveStatus === 'error' && (
+              <div className="flex items-center gap-2 text-red-600 text-sm">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                <span>Save failed</span>
+              </div>
+            )}
+          </div>
 
           {/* Profile Image */}
           <div className="flex mb-8">
@@ -668,7 +875,17 @@ export default function SettingsPage() {
               {currentCategory === 'financials' && (
                 <div>
                   <div className='border-b border-[#EDEEEF]'>
-                    <h2 className="not-italic text-[#0C2143] font-bold text-lg leading-6 pl-5 py-5">Fundraising</h2>
+                    <div className="flex items-center justify-between pl-5 py-5">
+                      <h2 className="not-italic text-[#0C2143] font-bold text-lg leading-6">Fundraising</h2>
+                      {saveStatus === 'error' && (
+                        <div className="flex items-center gap-2 text-red-600 text-sm pr-5">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                          <span>Save failed</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                   
                   <div className="space-y-6 p-5">
