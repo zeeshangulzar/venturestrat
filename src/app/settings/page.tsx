@@ -134,7 +134,6 @@ export default function SettingsPage() {
 
       // Update original form data to reflect the saved state
       setOriginalFormData(data);
-      setHasUnsavedChanges(false);
 
       setSaveStatus('saved');
       setTimeout(() => setSaveStatus('idle'), 2000);
@@ -239,7 +238,6 @@ export default function SettingsPage() {
       console.log('Setting form data:', newFormData); // Debug log
       setFormData(newFormData);
       setOriginalFormData(newFormData);
-      setHasUnsavedChanges(false);
     }
   }, [isLoaded, user]);
 
@@ -426,8 +424,7 @@ export default function SettingsPage() {
     restoreOriginalOptionsWithSelected(type);
   };
 
-  // Track if there are unsaved changes
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  // Track original form data for comparison
   const [originalFormData, setOriginalFormData] = useState<OnboardingData | null>(null);
   const pathname = usePathname();
 
@@ -480,7 +477,6 @@ export default function SettingsPage() {
       originalData: originalFormData.userCountry
     });
     
-    setHasUnsavedChanges(hasChanges);
     return hasChanges;
   }, [formData, originalFormData, saveStatus]);
 
@@ -546,7 +542,7 @@ export default function SettingsPage() {
     const originalPush = router.push;
     const originalReplace = router.replace;
     
-    router.push = (href: string, options?: any) => {
+    router.push = (href: string, options?: { scroll?: boolean }) => {
       if (shouldBlockNavigation()) {
         if (showConfirmation()) {
           return originalPush(href, options);
@@ -556,7 +552,7 @@ export default function SettingsPage() {
       return originalPush(href, options);
     };
     
-    router.replace = (href: string, options?: any) => {
+    router.replace = (href: string, options?: { scroll?: boolean }) => {
       if (shouldBlockNavigation()) {
         if (showConfirmation()) {
           return originalReplace(href, options);
