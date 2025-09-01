@@ -8,6 +8,7 @@ interface OnboardingMetadata {
   lastName: string;
   companyName: string;
   siteUrl: string;
+  userCountry: string;
   incorporationCountry: string;
   operationalRegions: string[];
   revenue: string;
@@ -31,6 +32,7 @@ export async function POST(request: Request) {
       lastName,
       companyName, 
       siteUrl,
+      userCountry,
       incorporationCountry, 
       operationalRegions, 
       revenue, 
@@ -54,6 +56,7 @@ export async function POST(request: Request) {
       lastName: lastName ?? '',
       companyName: companyName ?? '',
       siteUrl: siteUrl ?? '',
+      userCountry: userCountry ?? '',
       incorporationCountry: incorporationCountry ?? '',
       operationalRegions: operationalRegions ?? [],
       revenue: revenue ?? '',
