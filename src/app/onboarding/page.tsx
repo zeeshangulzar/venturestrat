@@ -393,7 +393,7 @@ export default function OnboardingPage() {
               options={countryOptions}
               value={formData.incorporationCountry}
               onChange={(value) => handleDropdownChange('incorporationCountry', Array.isArray(value) ? '' : value)}
-              placeholder={<span className="font-normal text-sm leading-[22px] opacity-80  text-white ">Select incorporation country...</span>}
+              placeholder={<span className="font-normal text-sm leading-[22px] opacity-80  text-white ">Select incorporation country</span>}
               enableSearch={true}
               showApplyButton={false}
               buttonClassName="bg-[rgba(255,255,255,0.1)] border-[rgba(255,255,255,0.1)] text-white hover:bg-[rgba(255,255,255,0.15)] rounded-[10px]"
@@ -405,12 +405,13 @@ export default function OnboardingPage() {
               options={countryOptions}
               value={formData.operationalRegions}
               onChange={(value) => handleDropdownChange('operationalRegions', Array.isArray(value) ? value : [])}
-              placeholder={<span className="font-normal text-sm leading-[22px] opacity-80  text-white">Select operational regions...</span>}
+              placeholder={<span className="font-normal text-sm leading-[22px] opacity-80  text-white">Select operational regions</span>}
               enableSearch={true}
               showApplyButton={true}
               buttonClassName="bg-[rgba(255,255,255,0.1)] border-[rgba(255,255,255,0.1)] text-white hover:bg-[rgba(255,255,255,0.15)] rounded-[10px]"
               dropdownClassName="bg-[#1b2130] border border-[rgba(37,99,235,0.1)] rounded-[14px] shadow-2xl"
               isOnboarding={true}
+              showSelectedValues={true}
             />
           </div>
         </div>
@@ -458,7 +459,7 @@ export default function OnboardingPage() {
                 options={stages}
                 value={formData.stages}
                 onChange={(value) => handleDropdownChange('stages', Array.isArray(value) ? value : [])}
-                placeholder={<span className="font-normal text-sm leading-[22px] opacity-80  text-white">Select business stages...</span>}
+                placeholder={<span className="font-normal text-sm leading-[22px] opacity-80  text-white">Select business stage</span>}
                 enableSearch={true}
                 showApplyButton={true}
                 onSearch={handleSearch}
@@ -467,6 +468,7 @@ export default function OnboardingPage() {
                 buttonClassName="bg-[rgba(255,255,255,0.1)] border-[rgba(255,255,255,0.1)] text-white hover:bg-[rgba(255,255,255,0.15)] rounded-[10px]"
                 dropdownClassName="bg-[#1b2130] border border-[rgba(37,99,235,0.1)] rounded-[14px] shadow-2xl"
                 isOnboarding={true}
+                showSelectedValues={true}
               />
             )}
           </div>
@@ -489,7 +491,7 @@ export default function OnboardingPage() {
               options={businessSectors}
               value={formData.businessSectors}
               onChange={(value) => handleDropdownChange('businessSectors', Array.isArray(value) ? value : [])}
-              placeholder={<span className="font-normal text-sm leading-[22px] opacity-80  text-white">Select business sectors...</span>}
+              placeholder={<span className="font-normal text-sm leading-[22px] opacity-80  text-white">Select business sector</span>}
               enableSearch={true}
               showApplyButton={true}
               onSearch={handleSearch}
@@ -498,6 +500,7 @@ export default function OnboardingPage() {
               buttonClassName="bg-[rgba(255,255,255,0.1)] border-[rgba(255,255,255,0.1)] text-white hover:bg-[rgba(255,255,255,0.15)] rounded-[10px]"
               dropdownClassName="bg-[#1b2130] border border-[rgba(37,99,235,0.1)] rounded-[14px] shadow-2xl"
               isOnboarding={true}
+              showSelectedValues={true}
             />
           )}
         </div>
@@ -521,7 +524,7 @@ export default function OnboardingPage() {
           name="revenue"
           value={formData.revenue}
           onChange={handleInputChange}
-          placeholder="e.g. $140,000"
+          placeholder="e.g. $140,000 in revenue and $3.6 CA"
           className="w-full lg:w-[35%] bg-white/10 border border-white/10 rounded-[10px] h-[40px] font-normal text-sm leading-[22px] opacity-80  text-white px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
         />
       </div>
@@ -594,7 +597,7 @@ export default function OnboardingPage() {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-8">
-              <div className="pt-6 flex flex-col sm:flex-row gap-4 lg:gap-[296px]">
+              <div className="pt-6 flex flex-col sm:flex-row gap-5">
                 {currentStep > 1 && (
                   <button
                     type="button"

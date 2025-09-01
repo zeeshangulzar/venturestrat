@@ -158,7 +158,7 @@ export default function UserShortlist({ userId, basePath = '/investors' }: { use
   return (
     <section className="mt-8">
       <div className="mb-3 flex items-end justify-between">
-        <h2 className="text-lg font-semibold">Shortlisted Investors</h2>
+        <h2 className="text-lg font-semibold">Targeted Investors</h2>
         {data && (
           <span className="text-sm text-slate-600">
             Total: <strong>{data.totalShortlisted}</strong>
@@ -168,7 +168,7 @@ export default function UserShortlist({ userId, basePath = '/investors' }: { use
 
       {loading && (
         <div className="rounded-lg border border-slate-200 bg-white p-4 text-slate-600">
-          Loading shortlisted investors…
+          Loading targeted investors…
         </div>
       )}
 
@@ -180,7 +180,7 @@ export default function UserShortlist({ userId, basePath = '/investors' }: { use
 
       {!loading && !error && data && shortlist.length === 0 && (
         <div className="rounded-lg border border-slate-200 bg-white p-4 text-slate-600">
-          No shortlisted investors yet.
+          No targeted investors yet.
         </div>
       )}
 
@@ -188,7 +188,7 @@ export default function UserShortlist({ userId, basePath = '/investors' }: { use
         <ul className="space-y-3">
           {shortlist.map((inv) => (
             <li key={inv.id}>
-              <InvestorCard investor={inv} basePath={basePath} />
+              <InvestorCard investor={inv} basePath={basePath} hideTargetButton={true} />
             </li>
           ))}
         </ul>
