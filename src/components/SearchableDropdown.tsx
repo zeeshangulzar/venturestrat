@@ -107,7 +107,7 @@ const Checkbox = ({ checked, isDarkTheme = false, isOnboarding = false }: { chec
 
 // Searchable Dropdown Component
 interface SearchableDropdownProps {
-  options: { label: string; value: string }[];
+  options: { label: string; value: string; disabled?: boolean; key?: string }[];
   value: string | string[];
   onChange: (value: string | string[]) => void;
   placeholder: ReactNode;
@@ -205,7 +205,11 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
   };
 
   // Handle option selection
-  const handleOptionSelect = (selectedOption: { label: string; value: string }) => {
+  const handleOptionSelect = (selectedOption: { label: string; value: string; disabled?: boolean }) => {
+    // Don't allow selection of disabled options
+    if (selectedOption.disabled) {
+      return;
+    }
     if (showApplyButton) {
       // In apply button mode, update temp value instead of actual value
       if (isMulti) {
@@ -429,10 +433,14 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
           ) : (
             filteredOptions.map((option) => (
               <div
-                key={option.value}
-                onClick={() => handleOptionSelect(option)}
+                key={option.key ?? option.value}
+                onClick={() => !option.disabled && handleOptionSelect(option)}
                 className={`
-                  px-3 py-2 text-sm cursor-pointer rounded mb-1
+                  px-3 py-2 text-sm rounded mb-1
+                  ${option.disabled 
+                    ? 'cursor-default opacity-50' 
+                    : 'cursor-pointer'
+                  }
                   ${isOptionSelected(option.value) 
                     ? 'bg-[#2563EB] text-white hover:bg-[#1d4ed8]' 
                     : dropdownClassName 
@@ -443,7 +451,7 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
               >
                 <div className="flex items-center">
                   {/* Show checkbox for multi-select, nothing for single-select */}
-                  {isMulti && (
+                  {isMulti && !option.disabled && (
                     <Checkbox checked={isOptionSelected(option.value)} isDarkTheme={!!dropdownClassName} isOnboarding={isOnboarding} />
                   )}
                   <span className="flex-1">{option.label}</span>
