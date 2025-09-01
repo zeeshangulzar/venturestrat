@@ -524,7 +524,7 @@ export default function OnboardingPage() {
           name="revenue"
           value={formData.revenue}
           onChange={handleInputChange}
-          placeholder="e.g. $140,000 in revenue and $3.6 CA"
+          placeholder="e.g. $140,000 in revenue and $3.6 CAC"
           className="w-full lg:w-[35%] bg-white/10 border border-white/10 rounded-[10px] h-[40px] font-normal text-sm leading-[22px] opacity-80  text-white px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
         />
       </div>
