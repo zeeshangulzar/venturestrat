@@ -73,6 +73,11 @@ const AuthFlowManager: React.FC<AuthFlowManagerProps> = ({ children }) => {
 
   useEffect(() => {
     if (!isLoaded) {
+      // Don't show loading on auth routes (sign-in, sign-up, sso-callback)
+      if (isAuthRoute) {
+        return;
+      }
+      
       if (!hasShownLoading) {
         showLoading('Checking authentication...');
         setHasShownLoading(true);
@@ -127,7 +132,7 @@ const AuthFlowManager: React.FC<AuthFlowManagerProps> = ({ children }) => {
     }
 
     setIsProcessingAuth(false);
-  }, [user, isLoaded, router, showLoading, hideLoading, isOnboardingRoute, hasShownLoading, isCompletingOnboarding, isRedirecting, onboardingStatus]);
+  }, [user, isLoaded, router, showLoading, hideLoading, isOnboardingRoute, isAuthRoute, hasShownLoading, isCompletingOnboarding, isRedirecting, onboardingStatus]);
 
   // Show loading screen only when processing authentication or redirecting
   if (!isLoaded || isProcessingAuth || isRedirecting) {

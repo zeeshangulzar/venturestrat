@@ -49,9 +49,18 @@ export default function SignUpPage() {
     }
   }, [user, router])
 
-  // Show loading state while Clerk determines authentication status
+  // Show loading state only when Clerk is determining authentication status
+  // Don't show loading if we're already on the sign-up page and user is not authenticated
   if (!isLoaded || !userLoaded) {
-    return <PageLoader message="Loading sign-up page..." />;
+    // Only show loading if we're not sure about the user state
+    // If userLoaded is false but we're on sign-up page, don't show loading
+    if (!userLoaded && !user) {
+      return <PageLoader message="Loading sign-up page..." />;
+    }
+    // If isLoaded is false, show minimal loading
+    if (!isLoaded) {
+      return <PageLoader message="Initializing..." />;
+    }
   }
 
   // Don't render if user is already signed in
