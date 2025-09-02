@@ -1034,7 +1034,7 @@ export default function SettingsPage() {
                         name="revenue"
                         value={formData.revenue}
                         onChange={handleInputChange}
-                        placeholder="e.g. $140,000"
+                        placeholder="e.g. $140,000 in revenue and $3.6 CAC"
                         className="w-full px-3 py-2 border border-[#EDEEEF] rounded-[10px] h-[46px] text-[#787F89] not-italic font-medium text-sm leading-6 hover:bg-[#EDEEEF] bg-[#F6F6F7]"
                       />
                     </div>
