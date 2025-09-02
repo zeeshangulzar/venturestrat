@@ -4,6 +4,7 @@ import { useUser } from '@clerk/nextjs';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { Country } from 'country-state-city';
+import { buildRegionCountryOptions } from '@lib/regions';
 import Loader from '@components/Loader';
 import SearchableDropdown from '@components/SearchableDropdown';
 import LogoIcon from '@components/icons/LogoWithText';
@@ -16,7 +17,7 @@ import PresentationsIcon from '@components/icons/PresentationsIcon';
 import BusinessPlanningIcon from '@components/icons/BusinessPlanningIcon';
 import MarketingIcon from '@components/icons/MarketingIcon';
 
-type FilterOption = { label: string; value: string };
+type FilterOption = { label: string; value: string; disabled?: boolean };
 
 type OnboardingData = {
   firstName: string;
@@ -158,7 +159,7 @@ export default function SettingsPage() {
 
   // Get countries for dropdowns
   const countries = Country.getAllCountries();
-  const countryOptions = countries.map((c) => ({ label: c.name, value: c.name }));
+  const countryOptions = buildRegionCountryOptions(countries);
 
   // Currency options
   const currencyOptions = [

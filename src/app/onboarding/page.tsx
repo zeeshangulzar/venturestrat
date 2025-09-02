@@ -3,6 +3,7 @@
 import { useUser, useSession } from '@clerk/nextjs';
 import { useState, useEffect } from 'react';
 import { Country } from 'country-state-city';
+import { buildRegionCountryOptions } from '@lib/regions';
 import Loader from '@components/Loader';
 import SearchableDropdown from '@components/SearchableDropdown';
 import LogoIcon from '@components/icons/LogoWithText';
@@ -18,7 +19,7 @@ const debounceSearch = (func: (search: string, type: string) => void, wait: numb
   };
 };
 
-type FilterOption = { label: string; value: string };
+type FilterOption = { label: string; value: string; disabled?: boolean };
 
 type OnboardingData = {
   // Step 1
@@ -56,7 +57,9 @@ export default function OnboardingPage() {
 
   // Get countries for dropdowns
   const countries = Country.getAllCountries();
-  const countryOptions = countries.map((c) => ({ label: c.name, value: c.name }));
+  
+  // Regions + separator + countries
+  const countryOptions = buildRegionCountryOptions(countries);
 
   // Calculate progress percentage based on completed fields
   const calculateProgress = () => {
