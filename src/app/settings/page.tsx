@@ -8,6 +8,7 @@ import { buildRegionCountryOptions, buildCountryOptions } from '@lib/regions';
 
 import SearchableDropdown from '@components/SearchableDropdown';
 import { getApiUrl, updateUserData, fetchUserData } from '@lib/api';
+import PageLoader from '@components/PageLoader';
 import HomeIcon from '@components/icons/HomeIcon';
 import TaskManagerIcon from '@components/icons/TaskManagerIcon';
 import LegalIcon from '@components/icons/LegalIcon';
@@ -46,6 +47,7 @@ export default function SettingsPage() {
   const { user, isLoaded } = useUser();
   const router = useRouter();
   const [currentCategory, setCurrentCategory] = useState('financials');
+  const [isUserDataLoaded, setIsUserDataLoaded] = useState(false);
 
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [profileUploadStatus, setProfileUploadStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
@@ -306,6 +308,7 @@ export default function SettingsPage() {
             currency: ''
           };
           setFormData(emptyFormData);
+          setIsUserDataLoaded(true);
           return;
         }
         
@@ -331,6 +334,7 @@ export default function SettingsPage() {
           };
           console.log('Setting form data:', newFormData);
           setFormData(newFormData);
+          setIsUserDataLoaded(true);
         } catch (error) {
           console.error('Failed to load user data from backend:', error);
           // Fallback to Clerk metadata if backend fails
@@ -351,6 +355,7 @@ export default function SettingsPage() {
             currency: (metadata.currency as string) || ''
           };
           setFormData(fallbackFormData);
+          setIsUserDataLoaded(true);
         }
       };
       
@@ -530,15 +535,8 @@ export default function SettingsPage() {
   ];
 
   // Show loading state while user data is loading
-  if (!isLoaded || !user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading settings...</p>
-        </div>
-      </div>
-    );
+  if (!isLoaded || !user || !isUserDataLoaded) {
+    return <PageLoader message="Loading your settings..." />;
   }
 
   return (
