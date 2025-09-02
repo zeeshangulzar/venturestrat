@@ -16,6 +16,10 @@ export const fetchUserData = async (userId: string): Promise<unknown> => {
   });
 console.log('Fetch user response:', response);
   if (!response.ok) {
+    if (response.status === 404) {
+      // User doesn't exist in backend yet (new user), return null instead of throwing
+      return null;
+    }
     throw new Error(`Failed to fetch user: ${response.status}`);
   }
 
@@ -40,7 +44,8 @@ export const updateUserData = async (userId: string, userData: Record<string, un
   
   console.log('Sending to backend:', requestBody);
 
-  const response = await fetch(getApiUrl(`/api/user/${userId}`), {
+  // First try to update the user (PUT request)
+  let response = await fetch(getApiUrl(`/api/user/${userId}`), {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
@@ -48,8 +53,20 @@ export const updateUserData = async (userId: string, userData: Record<string, un
     body: JSON.stringify(requestBody),
   });
 
+  // If user doesn't exist (404), try to create them (POST request)
+  if (!response.ok && response.status === 404) {
+    console.log('User not found, creating new user...');
+    response = await fetch(getApiUrl(`/api/user/${userId}`), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestBody),
+    });
+  }
+
   if (!response.ok) {
-    throw new Error(`Failed to update user: ${response.status}`);
+    throw new Error(`Failed to update/create user: ${response.status}`);
   }
 
   return response.json();
