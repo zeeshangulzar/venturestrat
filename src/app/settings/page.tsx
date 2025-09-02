@@ -4,7 +4,7 @@ import { useUser } from '@clerk/nextjs';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { Country } from 'country-state-city';
-import { buildRegionCountryOptions } from '@lib/regions';
+import { buildRegionCountryOptions, buildCountryOptions } from '@lib/regions';
 import Loader from '@components/Loader';
 import SearchableDropdown from '@components/SearchableDropdown';
 import LogoIcon from '@components/icons/LogoWithText';
@@ -160,6 +160,7 @@ export default function SettingsPage() {
   // Get countries for dropdowns
   const countries = Country.getAllCountries();
   const countryOptions = buildRegionCountryOptions(countries);
+  const countryOptionsOnly = buildCountryOptions(countries);
 
   // Currency options
   const currencyOptions = [
@@ -995,7 +996,7 @@ export default function SettingsPage() {
                           <div className="mt-1">
                             <SearchableDropdown
                               isMulti={false}
-                              options={countryOptions}
+                              options={countryOptionsOnly}
                               value={formData.incorporationCountry}
                               onChange={(value) => handleDropdownChange('incorporationCountry', Array.isArray(value) ? '' : value)}
                               placeholder="Select country"

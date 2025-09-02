@@ -3,7 +3,7 @@
 import { useUser, useSession } from '@clerk/nextjs';
 import { useState, useEffect } from 'react';
 import { Country } from 'country-state-city';
-import { buildRegionCountryOptions } from '@lib/regions';
+import { buildRegionCountryOptions, buildCountryOptions } from '@lib/regions';
 import Loader from '@components/Loader';
 import SearchableDropdown from '@components/SearchableDropdown';
 import LogoIcon from '@components/icons/LogoWithText';
@@ -60,8 +60,11 @@ export default function OnboardingPage() {
   // Get countries for dropdowns
   const countries = Country.getAllCountries();
   
-  // Regions + separator + countries
-  const countryOptions = buildRegionCountryOptions(countries);
+  // Countries only for incorporation
+  const countryOptions = buildCountryOptions(countries);
+  
+  // Regions + separator + countries for operational regions
+  const regionCountryOptions = buildRegionCountryOptions(countries);
 
   // Calculate progress percentage based on completed fields
   const calculateProgress = () => {
@@ -82,16 +85,16 @@ export default function OnboardingPage() {
       return 20 + Math.round((completedFields / totalFields) * 20); // 20% + up to 20% for step 2
     } else if (currentStep === 3) {
       let completedFields = 0;
-      const totalFields = 1; // stages
+      const totalFields = 1; // businessSectors
       
-      if (formData.stages.length > 0) completedFields++;
+      if (formData.businessSectors.length > 0) completedFields++;
       
       return 40 + Math.round((completedFields / totalFields) * 20); // 40% + up to 20% for step 3
     } else if (currentStep === 4) {
       let completedFields = 0;
-      const totalFields = 1; // businessSectors
+      const totalFields = 1; // stages
       
-      if (formData.businessSectors.length > 0) completedFields++;
+      if (formData.stages.length > 0) completedFields++;
       
       return 60 + Math.round((completedFields / totalFields) * 20); // 60% + up to 20% for step 4
     } else {
@@ -115,9 +118,9 @@ export default function OnboardingPage() {
       case 2:
         return formData.incorporationCountry !== '' && formData.operationalRegions.length > 0;
       case 3:
-        return formData.stages.length > 0;
-      case 4:
         return formData.businessSectors.length > 0;
+      case 4:
+        return formData.stages.length > 0;
       case 5:
         return formData.revenue.trim() !== '';
       default:
@@ -181,18 +184,18 @@ export default function OnboardingPage() {
         // Determine which step to show based on completed data
         if (existingData.companyName && existingData.incorporationCountry && 
             Array.isArray(existingData.operationalRegions) && existingData.operationalRegions.length > 0 &&
-            Array.isArray(existingData.stages) && existingData.stages.length > 0 &&
             Array.isArray(existingData.businessSectors) && existingData.businessSectors.length > 0 &&
+            Array.isArray(existingData.stages) && existingData.stages.length > 0 &&
             existingData.revenue) {
           setCurrentStep(5);
         } else if (existingData.companyName && existingData.incorporationCountry && 
                    Array.isArray(existingData.operationalRegions) && existingData.operationalRegions.length > 0 &&
-                   Array.isArray(existingData.stages) && existingData.stages.length > 0 &&
-                   Array.isArray(existingData.businessSectors) && existingData.businessSectors.length > 0) {
+                   Array.isArray(existingData.businessSectors) && existingData.businessSectors.length > 0 &&
+                   Array.isArray(existingData.stages) && existingData.stages.length > 0) {
           setCurrentStep(4);
         } else if (existingData.companyName && existingData.incorporationCountry && 
                    Array.isArray(existingData.operationalRegions) && existingData.operationalRegions.length > 0 &&
-                   Array.isArray(existingData.stages) && existingData.stages.length > 0) {
+                   Array.isArray(existingData.businessSectors) && existingData.businessSectors.length > 0) {
           setCurrentStep(3);
         } else if (existingData.companyName && existingData.incorporationCountry && 
                    Array.isArray(existingData.operationalRegions) && existingData.operationalRegions.length > 0) {
@@ -466,7 +469,7 @@ export default function OnboardingPage() {
                 <div className="w-full lg:w-fit">
                   <SearchableDropdown
                     isMulti={true}
-                    options={countryOptions}
+                    options={regionCountryOptions}
                     value={formData.operationalRegions}
                     onChange={(value) => handleDropdownChange('operationalRegions', Array.isArray(value) ? value : [])}
                     placeholder={<span className="font-normal text-sm leading-[22px] opacity-80 text-white">Select operational regions</span>}
@@ -484,43 +487,6 @@ export default function OnboardingPage() {
         );
 
       case 3:
-        return (
-          <div className="">
-            {renderHeader()}
-            
-            <div className="flex flex-col">
-              <h2 className="font-semibold text-base lg:text-lg leading-[22px] tracking-[-0.02em] text-white mb-4">
-                Which growth stage best describes your company?
-              </h2>
-              <div className="w-full lg:w-fit">
-                {loadingFilters ? (
-                  <div className="w-full px-3 py-2 border border-white/10 rounded-lg bg-white/5 text-white/60 text-sm">
-                    Loading stages...
-                  </div>
-                ) : (
-                  <SearchableDropdown
-                    isMulti={true}
-                    options={stages}
-                    value={formData.stages}
-                    onChange={(value) => handleDropdownChange('stages', Array.isArray(value) ? value : [])}
-                    placeholder={<span className="font-normal text-sm leading-[22px] opacity-80 text-white">Select business stage</span>}
-                    enableSearch={true}
-                    showApplyButton={true}
-                    onSearch={handleSearch}
-                    searchType="investmentStages"
-                    onOpen={() => handleDropdownOpen('investmentStages')}
-                    buttonClassName="bg-[rgba(255,255,255,0.1)] border-[rgba(255,255,255,0.1)] text-white hover:bg-[rgba(255,255,255,0.15)] rounded-[10px]"
-                    dropdownClassName="bg-[#1b2130] border border-[rgba(37,99,235,0.1)] rounded-[14px] shadow-2xl"
-                    isOnboarding={true}
-                    showSelectedValues={true}
-                  />
-                )}
-              </div>
-            </div>
-          </div>
-        );
-
-      case 4:
         return (
           <div className="">
             {renderHeader()}
@@ -546,6 +512,43 @@ export default function OnboardingPage() {
                     onSearch={handleSearch}
                     searchType="investmentFocuses"
                     onOpen={() => handleDropdownOpen('investmentFocuses')}
+                    buttonClassName="bg-[rgba(255,255,255,0.1)] border-[rgba(255,255,255,0.1)] text-white hover:bg-[rgba(255,255,255,0.15)] rounded-[10px]"
+                    dropdownClassName="bg-[#1b2130] border border-[rgba(37,99,235,0.1)] rounded-[14px] shadow-2xl"
+                    isOnboarding={true}
+                    showSelectedValues={true}
+                  />
+                )}
+              </div>
+            </div>
+          </div>
+        );
+
+      case 4:
+        return (
+          <div className="">
+            {renderHeader()}
+            
+            <div className="flex flex-col">
+              <h2 className="font-semibold text-base lg:text-lg leading-[22px] tracking-[-0.02em] text-white mb-4">
+                Which growth stage best describes your company?
+              </h2>
+              <div className="w-full lg:w-fit">
+                {loadingFilters ? (
+                  <div className="w-full px-3 py-2 border border-white/10 rounded-lg bg-white/5 text-white/60 text-sm">
+                    Loading stages...
+                  </div>
+                ) : (
+                  <SearchableDropdown
+                    isMulti={true}
+                    options={stages}
+                    value={formData.stages}
+                    onChange={(value) => handleDropdownChange('stages', Array.isArray(value) ? value : [])}
+                    placeholder={<span className="font-normal text-sm leading-[22px] opacity-80 text-white">Select business stage</span>}
+                    enableSearch={true}
+                    showApplyButton={true}
+                    onSearch={handleSearch}
+                    searchType="investmentStages"
+                    onOpen={() => handleDropdownOpen('investmentStages')}
                     buttonClassName="bg-[rgba(255,255,255,0.1)] border-[rgba(255,255,255,0.1)] text-white hover:bg-[rgba(255,255,255,0.15)] rounded-[10px]"
                     dropdownClassName="bg-[#1b2130] border border-[rgba(37,99,235,0.1)] rounded-[14px] shadow-2xl"
                     isOnboarding={true}

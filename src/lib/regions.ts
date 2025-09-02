@@ -71,4 +71,20 @@ export const buildRegionCountryOptions = (
   ];
 };
 
+export const buildCountryOptions = (
+  countries: { name: string }[]
+): RegionOption[] => {
+  // Filter out Antarctica (continent/region, not a sovereign country)
+  const filteredCountries = countries.filter(c => c.name !== 'Antarctica');
+  
+  // Create country options only
+  const countryOptions = filteredCountries.map(c => ({ 
+    label: c.name, 
+    value: c.name, 
+    key: `country:${c.name}` 
+  }));
+  
+  return countryOptions;
+};
+
 
