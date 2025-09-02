@@ -302,7 +302,7 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
           return option ? option.label : value;
         });
 
-        const MAX_TO_DISPLAY = 5;
+        const MAX_TO_DISPLAY = 4;
         const visible = selectedLabels.slice(0, MAX_TO_DISPLAY);
         const hiddenCount = selectedLabels.length - visible.length;
         const displayText = hiddenCount > 0
