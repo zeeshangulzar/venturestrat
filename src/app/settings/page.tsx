@@ -18,6 +18,14 @@ import MarketingIcon from '@components/icons/MarketingIcon';
 
 type FilterOption = { label: string; value: string; disabled?: boolean };
 
+const debounceSearch = (func: (search: string, type: string) => void, wait: number) => {
+  let timeout: NodeJS.Timeout;
+  return (search: string, type: string) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func(search, type), wait);
+  };
+};
+
 type OnboardingData = {
   firstName: string;
   lastName: string;
@@ -64,6 +72,41 @@ export default function SettingsPage() {
   const [stages, setStages] = useState<FilterOption[]>([]);
   const [businessSectors, setBusinessSectors] = useState<FilterOption[]>([]);
   const [loadingFilters, setLoadingFilters] = useState(false);
+  const handleSearch = debounceSearch(async (search: string, type: string) => {
+      if (typeof search !== 'string' || !search.trim()) {
+        // When search is empty, restore original options but include selected values
+        restoreOriginalOptionsWithSelected(type);
+        return;
+      }
+  
+      try {
+        const res = await fetch(
+          getApiUrl(`/api/investment-filters?search=${encodeURIComponent(search)}&type=${type}`),
+          {
+            method: 'GET',
+            headers: {
+              'ngrok-skip-browser-warning': 'true',
+            },
+          }
+        );
+  
+        if (res.ok) {
+          const data = await res.json();
+          
+          if (type === 'investmentStages') {
+            const searchResults = (data.stages ?? []).map((v: string) => ({ label: v, value: v }));
+            const mergedOptions = mergeSelectedWithOptions(searchResults, formData.stages, originalStages);
+            setStages(mergedOptions);
+          } else if (type === 'investmentFocuses') {
+            const searchResults = (data.investmentFocuses ?? []).map((v: string) => ({ label: v, value: v }));
+            const mergedOptions = mergeSelectedWithOptions(searchResults, formData.businessSectors, originalBusinessSectors);
+            setBusinessSectors(mergedOptions);
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching filtered data:', err);
+      }
+    }, 500);
 
   // Debounced auto-save functionality
   const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -293,15 +336,15 @@ export default function SettingsPage() {
     }
   }, [isLoaded, user]);
 
-  // Ensure dropdowns show all options when data is loaded
+  // Initialize dropdowns with all options when data is first loaded
   useEffect(() => {
-    if (stages.length > 0) {
-      handleDropdownOpen('investmentStages');
+    if (originalStages.length > 0 && stages.length === 0) {
+      setStages(originalStages);
     }
-    if (businessSectors.length > 0) {
-      handleDropdownOpen('investmentFocuses');
+    if (originalBusinessSectors.length > 0 && businessSectors.length === 0) {
+      setBusinessSectors(originalBusinessSectors);
     }
-  }, [stages.length, businessSectors.length]);
+  }, [originalStages.length, originalBusinessSectors.length, stages.length, businessSectors.length]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -401,39 +444,6 @@ export default function SettingsPage() {
       console.error('Profile picture upload error:', error);
       setProfileUploadStatus('error');
       setTimeout(() => setProfileUploadStatus('idle'), 5000);
-    }
-  };
-
-
-
-  // Search functionality for dropdowns
-  const handleSearch = async (search: string, type: string) => {
-    if (typeof search !== 'string' || !search.trim()) {
-      // When search is empty, restore original options but include selected values
-      restoreOriginalOptionsWithSelected(type);
-      return;
-    }
-
-    try {
-      const res = await fetch(
-        getApiUrl(`/api/investment-filters?search=${encodeURIComponent(search)}&type=${type}`)
-      );
-
-      if (res.ok) {
-        const data = await res.json();
-        
-        if (type === 'investmentStages') {
-          const searchResults = (data.stages ?? []).map((v: string) => ({ label: v, value: v }));
-          const mergedOptions = mergeSelectedWithOptions(searchResults, formData.stages, originalStages);
-          setStages(mergedOptions);
-        } else if (type === 'investmentFocuses') {
-          const searchResults = (data.investmentFocuses ?? []).map((v: string) => ({ label: v, value: v }));
-          const mergedOptions = mergeSelectedWithOptions(searchResults, formData.businessSectors, originalBusinessSectors);
-          setBusinessSectors(mergedOptions);
-        }
-      }
-    } catch (err) {
-      console.error('Error fetching filtered data:', err);
     }
   };
 
@@ -750,13 +760,13 @@ export default function SettingsPage() {
                         options={businessSectors}
                         value={formData.businessSectors}
                         onChange={(value) => handleDropdownChange('businessSectors', Array.isArray(value) ? value : [])}
-                        placeholder="Select business sectors"
+                        placeholder="Select business sector"
                         enableSearch={true}
                         showApplyButton={true}
-                        onSearch={(search) => handleSearch(search, 'investmentFocuses')}
+                        onSearch={handleSearch}
                         searchType="investmentFocuses"
                         onOpen={() => handleDropdownOpen('investmentFocuses')}
-                        buttonClassName="bborder border-[#EDEEEF] rounded-[10px] h-[46px] text-[#787F89] not-italic font-medium text-sm leading-6 hover:bg-[#EDEEEF] h-[46px] w-full px-3 py-2 bg-[#F6F6F7]"
+                        buttonClassName="border border-[#EDEEEF] rounded-[10px] h-[46px] text-[#787F89] not-italic font-medium text-sm leading-6 hover:bg-[#EDEEEF] h-[46px] w-full px-3 py-2 bg-[#F6F6F7]"
                         showSelectedValues={true}
                       />
                     </div>
@@ -774,7 +784,7 @@ export default function SettingsPage() {
                         placeholder="Select business stages"
                         enableSearch={true}
                         showApplyButton={true}
-                        onSearch={(search) => handleSearch(search, 'investmentStages')}
+                        onSearch={handleSearch}
                         searchType="investmentStages"
                         onOpen={() => handleDropdownOpen('investmentStages')}
                         buttonClassName="border border-[#EDEEEF] rounded-[10px] h-[46px] text-[#787F89] not-italic font-medium text-sm leading-6 hover:bg-[#EDEEEF] h-[46px] w-full px-3 py-2 bg-[#F6F6F7]"
