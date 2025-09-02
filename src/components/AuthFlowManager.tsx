@@ -30,15 +30,21 @@ const AuthFlowManager: React.FC<AuthFlowManagerProps> = ({ children }) => {
     if (isLoaded && user?.id) {
       const checkOnboardingStatus = async () => {
         try {
-          const userData = await fetchUserData(user.id) as { user?: { onboardingComplete?: boolean }; onboardingComplete?: boolean };
+          const userData = await fetchUserData(user.id) as { user?: { onboardingComplete?: boolean }; onboardingComplete?: boolean } | null;
+          
+          if (userData === null) {
+            // User doesn't exist in backend yet (new user), needs onboarding
+            setOnboardingStatus(false);
+            return;
+          }
+          
           const actualUserData = userData.user || userData;
           const isComplete = actualUserData.onboardingComplete === true;
           setOnboardingStatus(isComplete);
         } catch (error) {
           console.error('Failed to check onboarding status from backend:', error);
-          // Fallback to Clerk metadata if backend fails
-          const fallbackStatus = false; // Fallback to false since we're not using Clerk metadata anymore
-          setOnboardingStatus(fallbackStatus);
+          // Fallback to false (needs onboarding) if backend fails
+          setOnboardingStatus(false);
         }
       };
       
@@ -91,8 +97,13 @@ const AuthFlowManager: React.FC<AuthFlowManagerProps> = ({ children }) => {
       return;
     }
 
-    // Wait for onboarding status to be fetched from backend
-    if (onboardingStatus === null) {
+    // Show loading while checking onboarding status from backend
+    if (user && onboardingStatus === null) {
+      if (!hasShownLoading) {
+        showLoading('Checking onboarding status...');
+        setHasShownLoading(true);
+      }
+      setIsProcessingAuth(true);
       return;
     }
 
@@ -134,8 +145,8 @@ const AuthFlowManager: React.FC<AuthFlowManagerProps> = ({ children }) => {
     setIsProcessingAuth(false);
   }, [user, isLoaded, router, showLoading, hideLoading, isOnboardingRoute, isAuthRoute, hasShownLoading, isCompletingOnboarding, isRedirecting, onboardingStatus]);
 
-  // Show loading screen only when processing authentication or redirecting
-  if (!isLoaded || isProcessingAuth || isRedirecting) {
+  // Show loading screen only when processing authentication, checking onboarding status, or redirecting
+  if (!isLoaded || isProcessingAuth || isRedirecting || (user && onboardingStatus === null)) {
     return null; // Let the GlobalLoadingProvider handle the loading display
   }
 

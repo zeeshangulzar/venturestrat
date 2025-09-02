@@ -193,8 +193,14 @@ export default function OnboardingPage() {
               revenue?: string; 
             }; 
             onboardingComplete?: boolean 
-          };
+          } | null;
           console.log('Loaded user data from backend:', userData);
+          
+          if (userData === null) {
+            // User doesn't exist in backend yet (new user), start fresh
+            console.log('New user - no existing data in backend');
+            return;
+          }
           
           // Handle nested user object structure from backend
           const actualUserData = userData.user || userData;
@@ -401,8 +407,15 @@ export default function OnboardingPage() {
     try {
       if (!user?.id) return;
       
+      // Include user's first and last name from Clerk along with onboarding data
+      const dataToSave = {
+        ...formData,
+        firstName: user.firstName || '',
+        lastName: user.lastName || ''
+      };
+      
       // Save to backend API on every continue with publicMetaData structure
-      await updateUserData(user.id, formData, false);
+      await updateUserData(user.id, dataToSave, false);
     } catch (error) {
       console.error('Error saving progress:', error);
     }
@@ -444,8 +457,15 @@ export default function OnboardingPage() {
         throw new Error('User not found');
       }
 
+      // Include user's first and last name from Clerk along with onboarding data
+      const dataToSave = {
+        ...formData,
+        firstName: user.firstName || '',
+        lastName: user.lastName || ''
+      };
+
       // Save to backend API with publicMetaData structure and mark as complete
-      const result = await updateUserData(user.id, formData, true) as { success?: boolean; error?: string; message?: string };
+      const result = await updateUserData(user.id, dataToSave, true) as { success?: boolean; error?: string; message?: string };
 
       // Check if the backend save was successful
       if (result && result.success !== false) {

@@ -284,8 +284,30 @@ export default function SettingsPage() {
             currency?: string; 
           }; 
           onboardingComplete?: boolean 
-        };
+        } | null;
         console.log('Loaded user data from backend:', userData);
+        
+        if (userData === null) {
+          // User doesn't exist in backend yet, use empty form data
+          console.log('User not found in backend, using empty form data');
+          const emptyFormData = {
+            firstName: user.firstName || '',
+            lastName: user.lastName || '',
+            companyName: '',
+            siteUrl: '',
+            userCountry: '',
+            incorporationCountry: '',
+            operationalRegions: [],
+            revenue: '',
+            stages: [],
+            businessSectors: [],
+            fundingAmount: 0,
+            fundingCurrency: '',
+            currency: ''
+          };
+          setFormData(emptyFormData);
+          return;
+        }
         
         // Handle nested user object structure from backend
         const actualUserData = userData.user || userData;
