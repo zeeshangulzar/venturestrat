@@ -7,7 +7,7 @@ import { buildRegionCountryOptions, buildCountryOptions } from '@lib/regions';
 import Loader from '@components/Loader';
 import SearchableDropdown from '@components/SearchableDropdown';
 import LogoIcon from '@components/icons/LogoWithText';
-import { getApiUrl } from '@lib/api';
+import { getApiUrl, updateUserData, fetchUserData } from '@lib/api';
 
 
 // Debounce utility function for search
@@ -40,6 +40,7 @@ export default function OnboardingPage() {
   const { user, isLoaded } = useUser();
   const [nextStepLoading, setNextStepLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<OnboardingData>({
     companyName: '',
@@ -167,43 +168,128 @@ export default function OnboardingPage() {
 
   // Check for existing onboarding data and restore step
   useEffect(() => {
-    if (isLoaded && user) {
-      const existingData = user.publicMetadata;
-      
-      // If user has started onboarding but not completed it, restore their data
-      if (existingData.companyName && !existingData.onboardingComplete) {
-        setFormData({
-          companyName: existingData.companyName as string || '',
-          incorporationCountry: existingData.incorporationCountry as string || '',
-          operationalRegions: existingData.operationalRegions as string[] || [],
-          stages: existingData.stages as string[] || [],
-          businessSectors: existingData.businessSectors as string[] || [],
-          revenue: existingData.revenue as string || ''
-        });
+    if (isLoaded && user?.id) {
+      const loadExistingData = async () => {
+        try {
+          // Try to load data from backend first
+          const userData = await fetchUserData(user.id) as { 
+            user?: { 
+              publicMetaData?: { 
+                companyName?: string; 
+                incorporationCountry?: string; 
+                operationalRegions?: string[]; 
+                stages?: string[]; 
+                businessSectors?: string[]; 
+                revenue?: string; 
+              }; 
+              onboardingComplete?: boolean 
+            }; 
+            publicMetaData?: { 
+              companyName?: string; 
+              incorporationCountry?: string; 
+              operationalRegions?: string[]; 
+              stages?: string[]; 
+              businessSectors?: string[]; 
+              revenue?: string; 
+            }; 
+            onboardingComplete?: boolean 
+          };
+          console.log('Loaded user data from backend:', userData);
+          
+          // Handle nested user object structure from backend
+          const actualUserData = userData.user || userData;
+          
+          // Check if user has already completed onboarding
+          if (actualUserData.onboardingComplete) {
+            console.log('User has completed onboarding, redirecting to home');
+            setIsRedirecting(true);
+            // Emit event to notify AuthFlowManager that onboarding is complete
+            window.dispatchEvent(new CustomEvent('onboarding:complete'));
+            // Use window.location.href for a hard redirect to bypass client-side routing
+            window.location.href = '/';
+            return;
+          }
+          
+          // If user has started onboarding but not completed it, restore their data
+          if (actualUserData.publicMetaData?.companyName) {
+            const backendData = actualUserData.publicMetaData;
+            console.log('Restoring onboarding data from backend:', backendData);
+            setFormData({
+              companyName: backendData.companyName || '',
+              incorporationCountry: backendData.incorporationCountry || '',
+              operationalRegions: backendData.operationalRegions || [],
+              stages: backendData.stages || [],
+              businessSectors: backendData.businessSectors || [],
+              revenue: backendData.revenue || ''
+            });
 
-        // Determine which step to show based on completed data
-        if (existingData.companyName && existingData.incorporationCountry && 
-            Array.isArray(existingData.operationalRegions) && existingData.operationalRegions.length > 0 &&
-            Array.isArray(existingData.businessSectors) && existingData.businessSectors.length > 0 &&
-            Array.isArray(existingData.stages) && existingData.stages.length > 0 &&
-            existingData.revenue) {
-          setCurrentStep(5);
-        } else if (existingData.companyName && existingData.incorporationCountry && 
-                   Array.isArray(existingData.operationalRegions) && existingData.operationalRegions.length > 0 &&
-                   Array.isArray(existingData.businessSectors) && existingData.businessSectors.length > 0 &&
-                   Array.isArray(existingData.stages) && existingData.stages.length > 0) {
-          setCurrentStep(4);
-        } else if (existingData.companyName && existingData.incorporationCountry && 
-                   Array.isArray(existingData.operationalRegions) && existingData.operationalRegions.length > 0 &&
-                   Array.isArray(existingData.businessSectors) && existingData.businessSectors.length > 0) {
-          setCurrentStep(3);
-        } else if (existingData.companyName && existingData.incorporationCountry && 
-                   Array.isArray(existingData.operationalRegions) && existingData.operationalRegions.length > 0) {
-          setCurrentStep(2);
-        } else if (existingData.companyName) {
-          setCurrentStep(1);
+            // Determine which step to show based on completed data from backend
+            if (backendData.companyName && backendData.incorporationCountry && 
+                Array.isArray(backendData.operationalRegions) && backendData.operationalRegions.length > 0 &&
+                Array.isArray(backendData.businessSectors) && backendData.businessSectors.length > 0 &&
+                Array.isArray(backendData.stages) && backendData.stages.length > 0 &&
+                backendData.revenue) {
+              setCurrentStep(5);
+            } else if (backendData.companyName && backendData.incorporationCountry && 
+                       Array.isArray(backendData.operationalRegions) && backendData.operationalRegions.length > 0 &&
+                       Array.isArray(backendData.businessSectors) && backendData.businessSectors.length > 0 &&
+                       Array.isArray(backendData.stages) && backendData.stages.length > 0) {
+              setCurrentStep(4);
+            } else if (backendData.companyName && backendData.incorporationCountry && 
+                       Array.isArray(backendData.operationalRegions) && backendData.operationalRegions.length > 0 &&
+                       Array.isArray(backendData.businessSectors) && backendData.businessSectors.length > 0) {
+              setCurrentStep(3);
+            } else if (backendData.companyName && backendData.incorporationCountry && 
+                       Array.isArray(backendData.operationalRegions) && backendData.operationalRegions.length > 0) {
+              setCurrentStep(2);
+            } else if (backendData.companyName) {
+              setCurrentStep(1);
+            }
+          } else {
+            console.log('No existing onboarding data found in backend');
+          }
+        } catch (error) {
+          console.error('Failed to load user data from backend:', error);
+          // Fallback to Clerk metadata if backend fails
+          const existingData = user.publicMetadata;
+          
+          if (existingData.companyName && !existingData.onboardingComplete) {
+            setFormData({
+              companyName: existingData.companyName as string || '',
+              incorporationCountry: existingData.incorporationCountry as string || '',
+              operationalRegions: existingData.operationalRegions as string[] || [],
+              stages: existingData.stages as string[] || [],
+              businessSectors: existingData.businessSectors as string[] || [],
+              revenue: existingData.revenue as string || ''
+            });
+
+            // Determine which step to show based on completed data
+            if (existingData.companyName && existingData.incorporationCountry && 
+                Array.isArray(existingData.operationalRegions) && existingData.operationalRegions.length > 0 &&
+                Array.isArray(existingData.businessSectors) && existingData.businessSectors.length > 0 &&
+                Array.isArray(existingData.stages) && existingData.stages.length > 0 &&
+                existingData.revenue) {
+              setCurrentStep(5);
+            } else if (existingData.companyName && existingData.incorporationCountry && 
+                       Array.isArray(existingData.operationalRegions) && existingData.operationalRegions.length > 0 &&
+                       Array.isArray(existingData.businessSectors) && existingData.businessSectors.length > 0 &&
+                       Array.isArray(existingData.stages) && existingData.stages.length > 0) {
+              setCurrentStep(4);
+            } else if (existingData.companyName && existingData.incorporationCountry && 
+                       Array.isArray(existingData.operationalRegions) && existingData.operationalRegions.length > 0 &&
+                       Array.isArray(existingData.businessSectors) && existingData.businessSectors.length > 0) {
+              setCurrentStep(3);
+            } else if (existingData.companyName && existingData.incorporationCountry && 
+                       Array.isArray(existingData.operationalRegions) && existingData.operationalRegions.length > 0) {
+              setCurrentStep(2);
+            } else if (existingData.companyName) {
+              setCurrentStep(1);
+            }
+          }
         }
-      }
+      };
+      
+      loadExistingData();
     }
   }, [isLoaded, user]);
 
@@ -313,16 +399,10 @@ export default function OnboardingPage() {
 
   const saveProgress = async () => {
     try {
-      await fetch('/api/onboarding/complete', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...formData,
-          isComplete: false
-        }),
-      });
+      if (!user?.id) return;
+      
+      // Save to backend API on every continue with publicMetaData structure
+      await updateUserData(user.id, formData, false);
     } catch (error) {
       console.error('Error saving progress:', error);
     }
@@ -360,18 +440,15 @@ export default function OnboardingPage() {
     await new Promise(resolve => setTimeout(resolve, 50));
 
     try {
-      const response = await fetch('/api/onboarding/complete', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...formData,
-          isComplete: true
-        }),
-      });
+      if (!user?.id) {
+        throw new Error('User not found');
+      }
 
-      if (response.ok) {
+      // Save to backend API with publicMetaData structure and mark as complete
+      const result = await updateUserData(user.id, formData, true) as { success?: boolean; error?: string; message?: string };
+
+      // Check if the backend save was successful
+      if (result && result.success !== false) {
         // Force session reload and wait for it to complete
         await Promise.all([
           session?.reload(),
@@ -381,6 +458,9 @@ export default function OnboardingPage() {
         // Add a small delay to ensure session is fully synchronized
         await new Promise(resolve => setTimeout(resolve, 300));
         
+        // Set redirecting state to prevent UI from showing
+        setIsRedirecting(true);
+        
         // Emit event to notify AuthFlowManager that onboarding is complete
         // The AuthFlowManager will handle the redirect and loading state
         window.dispatchEvent(new CustomEvent('onboarding:complete'));
@@ -389,7 +469,9 @@ export default function OnboardingPage() {
         window.location.href = '/';
         return;
       } else {
-        throw new Error('Failed to complete onboarding');
+        // Backend save failed
+        const errorMessage = result?.error || result?.message || 'Backend save failed';
+        throw new Error(errorMessage);
       }
     } catch (error) {
       console.error('Onboarding error:', error);
@@ -406,6 +488,17 @@ export default function OnboardingPage() {
       <div className="min-h-screen bg-[#0c2143] flex items-center justify-center">
         <div className="bg-[#1b2130] rounded-[14px] border border-[rgba(37,99,235,0.1)] p-8 shadow-2xl max-w-sm w-full">
           <Loader size="lg" text="Loading onboarding..." textColor="text-[#FFFFFF]" spinnerColor="border-[#2563EB]" />
+        </div>
+      </div>
+    );
+  }
+
+  // Show loading state when redirecting
+  if (isRedirecting) {
+    return (
+      <div className="min-h-screen bg-[#0c2143] flex items-center justify-center">
+        <div className="bg-[#1b2130] rounded-[14px] border border-[rgba(37,99,235,0.1)] p-8 shadow-2xl max-w-sm w-full">
+          <Loader size="lg" text="Redirecting to dashboard..." textColor="text-[#FFFFFF]" spinnerColor="border-[#2563EB]" />
         </div>
       </div>
     );
@@ -472,7 +565,7 @@ export default function OnboardingPage() {
                     options={regionCountryOptions}
                     value={formData.operationalRegions}
                     onChange={(value) => handleDropdownChange('operationalRegions', Array.isArray(value) ? value : [])}
-                    placeholder={<span className="font-normal text-sm leading-[22px] opacity-80 text-white">Select operational regions</span>}
+                    placeholder={<span className="text-[#a5a6ac] font-normal text-sm leading-[22px] opacity-80 text-white">Select operational regions</span>}
                     enableSearch={true}
                     showApplyButton={true}
                     buttonClassName="bg-[rgba(255,255,255,0.1)] border-[rgba(255,255,255,0.1)] text-white hover:bg-[rgba(255,255,255,0.15)] rounded-[10px]"
@@ -506,7 +599,7 @@ export default function OnboardingPage() {
                     options={businessSectors}
                     value={formData.businessSectors}
                     onChange={(value) => handleDropdownChange('businessSectors', Array.isArray(value) ? value : [])}
-                    placeholder={<span className="font-normal text-sm leading-[22px] opacity-80 text-white">Select business sector</span>}
+                    placeholder={<span className="text-[#a5a6ac] font-normal text-sm leading-[22px] opacity-80 text-white">Select business sector</span>}
                     enableSearch={true}
                     showApplyButton={true}
                     onSearch={handleSearch}
@@ -543,7 +636,7 @@ export default function OnboardingPage() {
                     options={stages}
                     value={formData.stages}
                     onChange={(value) => handleDropdownChange('stages', Array.isArray(value) ? value : [])}
-                    placeholder={<span className="font-normal text-sm leading-[22px] opacity-80 text-white">Select business stage</span>}
+                    placeholder={<span className="text-[#a5a6ac] font-normal text-sm leading-[22px] opacity-80 text-white">Select business stage</span>}
                     enableSearch={true}
                     showApplyButton={true}
                     onSearch={handleSearch}

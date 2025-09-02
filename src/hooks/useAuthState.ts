@@ -1,10 +1,33 @@
 import { useState, useEffect } from 'react';
 import { useUser } from '@clerk/nextjs';
+import { fetchUserData } from '@lib/api';
 
 export const useAuthState = () => {
   const { user, isLoaded } = useUser();
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [authMessage, setAuthMessage] = useState('');
+  const [onboardingStatus, setOnboardingStatus] = useState<boolean | null>(null);
+
+  // Fetch onboarding status from backend
+  useEffect(() => {
+    if (isLoaded && user?.id) {
+      const checkOnboardingStatus = async () => {
+        try {
+          const userData = await fetchUserData(user.id) as { user?: { onboardingComplete?: boolean }; onboardingComplete?: boolean };
+          const actualUserData = userData.user || userData;
+          const isComplete = actualUserData.onboardingComplete === true;
+          setOnboardingStatus(isComplete);
+        } catch (error) {
+          console.error('Failed to check onboarding status from backend:', error);
+          // Fallback to Clerk metadata if backend fails
+          const fallbackStatus = false; // Fallback to false since we're not using Clerk metadata anymore
+          setOnboardingStatus(fallbackStatus);
+        }
+      };
+      
+      checkOnboardingStatus();
+    }
+  }, [isLoaded, user]);
 
   useEffect(() => {
     // Show loading when user state is changing
@@ -12,10 +35,12 @@ export const useAuthState = () => {
       setIsAuthenticating(true);
       setAuthMessage('Loading authentication...');
     } else if (user) {
-      // User is authenticated, check onboarding status
-      const onboardingComplete = (user.publicMetadata as { onboardingComplete?: boolean })?.onboardingComplete === true;
-      
-      if (!onboardingComplete) {
+      // User is authenticated, check onboarding status from backend
+      if (onboardingStatus === null) {
+        // Still loading onboarding status
+        setIsAuthenticating(true);
+        setAuthMessage('Checking account status...');
+      } else if (!onboardingStatus) {
         setIsAuthenticating(true);
         setAuthMessage('Setting up your account...');
         // This will be handled by the middleware redirect
@@ -26,7 +51,7 @@ export const useAuthState = () => {
       // User is not authenticated
       setIsAuthenticating(false);
     }
-  }, [user, isLoaded]);
+  }, [user, isLoaded, onboardingStatus]);
 
   return {
     isAuthenticating,
