@@ -159,7 +159,7 @@ export default function SettingsPage() {
 
   // Get countries for dropdowns
   const countries = Country.getAllCountries();
-  const countryOptions = buildRegionCountryOptions(countries);
+  const countryRegionOptions = buildRegionCountryOptions(countries);
   const countryOptionsOnly = buildCountryOptions(countries);
 
   // Currency options
@@ -823,7 +823,7 @@ export default function SettingsPage() {
               <label className="not-italic font-medium text-sm leading-6 text-[#525A68] mb-2">Country</label>
               <SearchableDropdown
                 isMulti={false}
-                options={countryOptions}
+                options={countryOptionsOnly}
                 value={formData.userCountry}
                 onChange={(value) => handleDropdownChange('userCountry', Array.isArray(value) ? '' : value)}
                 placeholder="Select your country"
@@ -1010,7 +1010,7 @@ export default function SettingsPage() {
                           <div className="mt-1">
                             <SearchableDropdown
                               isMulti={true}
-                              options={countryOptions}
+                              options={countryRegionOptions}
                               value={formData.operationalRegions}
                               onChange={(value) => handleDropdownChange('operationalRegions', Array.isArray(value) ? value : [])}
                               placeholder="Select operating countries"
