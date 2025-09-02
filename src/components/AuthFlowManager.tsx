@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { useRouter, usePathname } from 'next/navigation';
 import { useGlobalLoading } from './GlobalLoadingProvider';
+import { fetchUserData } from '@lib/api';
 
 interface AuthFlowManagerProps {
   children: React.ReactNode;
@@ -17,10 +18,33 @@ const AuthFlowManager: React.FC<AuthFlowManagerProps> = ({ children }) => {
   const [isProcessingAuth, setIsProcessingAuth] = useState(false);
   const [hasShownLoading, setHasShownLoading] = useState(false);
   const [isCompletingOnboarding, setIsCompletingOnboarding] = useState(false);
+  const [onboardingStatus, setOnboardingStatus] = useState<boolean | null>(null);
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   // Check if current route is onboarding or auth-related
   const isOnboardingRoute = pathname === '/onboarding';
   const isAuthRoute = pathname === '/sign-in' || pathname === '/sign-up' || pathname === '/sso-callback';
+
+  // Fetch onboarding status from backend
+  useEffect(() => {
+    if (isLoaded && user?.id) {
+      const checkOnboardingStatus = async () => {
+        try {
+          const userData = await fetchUserData(user.id) as { user?: { onboardingComplete?: boolean }; onboardingComplete?: boolean };
+          const actualUserData = userData.user || userData;
+          const isComplete = actualUserData.onboardingComplete === true;
+          setOnboardingStatus(isComplete);
+        } catch (error) {
+          console.error('Failed to check onboarding status from backend:', error);
+          // Fallback to Clerk metadata if backend fails
+          const fallbackStatus = false; // Fallback to false since we're not using Clerk metadata anymore
+          setOnboardingStatus(fallbackStatus);
+        }
+      };
+      
+      checkOnboardingStatus();
+    }
+  }, [isLoaded, user]);
 
   // Listen for onboarding completion events
   useEffect(() => {
@@ -31,13 +55,10 @@ const AuthFlowManager: React.FC<AuthFlowManagerProps> = ({ children }) => {
     };
     
     const handleOnboardingComplete = () => {
-      // Keep loading state active during redirect
+      setIsRedirecting(true);
+      // Keep loading state active during redirect with appropriate message
       showLoading('Redirecting to dashboard...');
-      // Add a delay to ensure smooth transition
-      setTimeout(() => {
-        setIsCompletingOnboarding(false);
-        // Don't hide loading here - let the redirect complete naturally
-      }, 1000);
+      // Don't hide loading here - let the redirect complete naturally
     };
 
     // Listen for custom events from onboarding page
@@ -60,15 +81,18 @@ const AuthFlowManager: React.FC<AuthFlowManagerProps> = ({ children }) => {
       return;
     }
 
-    // Don't process auth changes while onboarding is being completed
-    if (isCompletingOnboarding) {
+    // Don't process auth changes while onboarding is being completed or redirecting
+    if (isCompletingOnboarding || isRedirecting) {
+      return;
+    }
+
+    // Wait for onboarding status to be fetched from backend
+    if (onboardingStatus === null) {
       return;
     }
 
     if (user) {
-      const onboardingComplete = (user.publicMetadata as { onboardingComplete?: boolean })?.onboardingComplete === true;
-      
-      if (!onboardingComplete && !isOnboardingRoute) {
+      if (!onboardingStatus && !isOnboardingRoute) {
         // User needs onboarding but not on onboarding page
         if (!hasShownLoading) {
           showLoading('Redirecting to onboarding...');
@@ -76,13 +100,14 @@ const AuthFlowManager: React.FC<AuthFlowManagerProps> = ({ children }) => {
         }
         setIsProcessingAuth(true);
         router.push('/onboarding');
-      } else if (onboardingComplete && isOnboardingRoute) {
+      } else if (onboardingStatus && isOnboardingRoute) {
         // User completed onboarding but on onboarding page
         if (!hasShownLoading) {
           showLoading('Redirecting to dashboard...');
           setHasShownLoading(true);
         }
         setIsProcessingAuth(true);
+        setIsRedirecting(true);
         router.push('/');
       } else {
         // User is in the right place, hide loading with a delay to ensure smooth transition
@@ -102,14 +127,19 @@ const AuthFlowManager: React.FC<AuthFlowManagerProps> = ({ children }) => {
     }
 
     setIsProcessingAuth(false);
-  }, [user, isLoaded, router, showLoading, hideLoading, isOnboardingRoute, hasShownLoading, isCompletingOnboarding]);
+  }, [user, isLoaded, router, showLoading, hideLoading, isOnboardingRoute, hasShownLoading, isCompletingOnboarding, isRedirecting, onboardingStatus]);
 
   // Show loading screen only when processing authentication or redirecting
-  if (!isLoaded || isProcessingAuth) {
+  if (!isLoaded || isProcessingAuth || isRedirecting) {
+    return null; // Let the GlobalLoadingProvider handle the loading display
+  }
+
+  // If user has completed onboarding and is on onboarding page, show loading until redirect completes
+  if (user && onboardingStatus === true && isOnboardingRoute) {
     return null; // Let the GlobalLoadingProvider handle the loading display
   }
 
   return <>{children}</>;
 };
-
 export default AuthFlowManager;
+

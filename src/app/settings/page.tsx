@@ -2,13 +2,12 @@
 
 import { useUser } from '@clerk/nextjs';
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { Country } from 'country-state-city';
 import { buildRegionCountryOptions, buildCountryOptions } from '@lib/regions';
-import Loader from '@components/Loader';
+
 import SearchableDropdown from '@components/SearchableDropdown';
-import LogoIcon from '@components/icons/LogoWithText';
-import { getApiUrl } from '@lib/api';
+import { getApiUrl, updateUserData, fetchUserData } from '@lib/api';
 import HomeIcon from '@components/icons/HomeIcon';
 import TaskManagerIcon from '@components/icons/TaskManagerIcon';
 import LegalIcon from '@components/icons/LegalIcon';
@@ -39,10 +38,10 @@ export default function SettingsPage() {
   const { user, isLoaded } = useUser();
   const router = useRouter();
   const [currentCategory, setCurrentCategory] = useState('financials');
-  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [profileUploadStatus, setProfileUploadStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [formData, setFormData] = useState<OnboardingData>({
     firstName: '',
     lastName: '',
@@ -89,12 +88,8 @@ export default function SettingsPage() {
     // If there are validation errors, don't save and show errors
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
-      setSaveStatus('error');
-      setTimeout(() => setSaveStatus('idle'), 3000);
       return;
     }
-    
-    setSaveStatus('saving');
     try {
       console.log('Auto-saving data:', data); // Debug log
       
@@ -112,36 +107,28 @@ export default function SettingsPage() {
         }
       }
       
-      // Save to API endpoint
-      const response = await fetch('/api/onboarding/complete', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...data,
-          isComplete: false
-        }),
-      });
+      if (!user?.id) {
+        throw new Error('User not found');
+      }
+      
+      // Save to backend API - this will preserve all existing data
+      const result = await updateUserData(user.id, data, true) as { success?: boolean; error?: string; message?: string };
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('API response error:', errorData);
-        throw new Error(`API error: ${response.status}`);
+      console.log('Backend response:', result);
+
+              // Check if the backend save was successful
+        if (result && result.success !== false) {
+          console.log('Auto-save result:', result);
+        } else {
+        // Backend save failed
+        const errorMessage = result?.error || result?.message || 'Backend save failed';
+        throw new Error(errorMessage);
       }
 
-      const result = await response.json();
-      console.log('Auto-save result:', result); // Debug log
 
-      // Update original form data to reflect the saved state
-      setOriginalFormData(data);
 
-      setSaveStatus('saved');
-      setTimeout(() => setSaveStatus('idle'), 2000);
     } catch (error) {
       console.error('Auto-save error:', error);
-      setSaveStatus('error');
-      setTimeout(() => setSaveStatus('idle'), 3000);
     }
   }, [user]);
   
@@ -217,29 +204,92 @@ export default function SettingsPage() {
     fetchFilters();
   }, []);
 
-  // Load user data from public metadata
+  // Load user data from backend and Clerk profile
   useEffect(() => {
-    if (isLoaded && user) {
-      const metadata = user.publicMetadata;
-      console.log('Loading user metadata:', metadata); // Debug log
-      const newFormData = {
-        firstName: user.firstName || '',
-        lastName: user.lastName || '',
-        companyName: (metadata.companyName as string) || '',
-        siteUrl: (metadata.siteUrl as string) || '',
-        userCountry: (metadata.userCountry as string) || '',
-        incorporationCountry: (metadata.incorporationCountry as string) || '',
-        operationalRegions: (metadata.operationalRegions as string[]) || [],
-        revenue: (metadata.revenue as string) || '',
-        stages: (metadata.stages as string[]) || [],
-        businessSectors: (metadata.businessSectors as string[]) || [],
-        fundingAmount: (metadata.fundingAmount as number) || 0,
-        fundingCurrency: (metadata.fundingCurrency as string) || '',
-        currency: (metadata.currency as string) || ''
+    if (isLoaded && user?.id) {
+      const loadUserData = async () => {
+        try {
+                  // Load data from backend
+        const userData = await fetchUserData(user.id) as { 
+          user?: { 
+            publicMetaData?: { 
+              companyName?: string; 
+              siteUrl?: string; 
+              userCountry?: string; 
+              incorporationCountry?: string; 
+              operationalRegions?: string[]; 
+              revenue?: string; 
+              stages?: string[]; 
+              businessSectors?: string[]; 
+              fundingAmount?: number; 
+              fundingCurrency?: string; 
+              currency?: string; 
+            }; 
+            onboardingComplete?: boolean 
+          }; 
+          publicMetaData?: { 
+            companyName?: string; 
+            siteUrl?: string; 
+            userCountry?: string; 
+            incorporationCountry?: string; 
+            operationalRegions?: string[]; 
+            revenue?: string; 
+            stages?: string[]; 
+            businessSectors?: string[]; 
+            fundingAmount?: number; 
+            fundingCurrency?: string; 
+            currency?: string; 
+          }; 
+          onboardingComplete?: boolean 
+        };
+        console.log('Loaded user data from backend:', userData);
+        
+        // Handle nested user object structure from backend
+        const actualUserData = userData.user || userData;
+          
+          const newFormData = {
+            // User profile from Clerk
+            firstName: user.firstName || '',
+            lastName: user.lastName || '',
+            // All other data from backend
+            companyName: actualUserData.publicMetaData?.companyName || '',
+            siteUrl: actualUserData.publicMetaData?.siteUrl || '',
+            userCountry: actualUserData.publicMetaData?.userCountry || '',
+            incorporationCountry: actualUserData.publicMetaData?.incorporationCountry || '',
+            operationalRegions: actualUserData.publicMetaData?.operationalRegions || [],
+            revenue: actualUserData.publicMetaData?.revenue || '',
+            stages: actualUserData.publicMetaData?.stages || [],
+            businessSectors: actualUserData.publicMetaData?.businessSectors || [],
+            fundingAmount: actualUserData.publicMetaData?.fundingAmount || 0,
+            fundingCurrency: actualUserData.publicMetaData?.fundingCurrency || '',
+            currency: actualUserData.publicMetaData?.currency || ''
+          };
+          console.log('Setting form data:', newFormData);
+          setFormData(newFormData);
+        } catch (error) {
+          console.error('Failed to load user data from backend:', error);
+          // Fallback to Clerk metadata if backend fails
+          const metadata = user.publicMetadata;
+          const fallbackFormData = {
+            firstName: user.firstName || '',
+            lastName: user.lastName || '',
+            companyName: (metadata.companyName as string) || '',
+            siteUrl: (metadata.siteUrl as string) || '',
+            userCountry: (metadata.userCountry as string) || '',
+            incorporationCountry: (metadata.incorporationCountry as string) || '',
+            operationalRegions: (metadata.operationalRegions as string[]) || [],
+            revenue: (metadata.revenue as string) || '',
+            stages: (metadata.stages as string[]) || [],
+            businessSectors: (metadata.businessSectors as string[]) || [],
+            fundingAmount: (metadata.fundingCurrency as number) || 0,
+            fundingCurrency: (metadata.fundingCurrency as string) || '',
+            currency: (metadata.currency as string) || ''
+          };
+          setFormData(fallbackFormData);
+        }
       };
-      console.log('Setting form data:', newFormData); // Debug log
-      setFormData(newFormData);
-      setOriginalFormData(newFormData);
+      
+      loadUserData();
     }
   }, [isLoaded, user]);
 
@@ -354,6 +404,8 @@ export default function SettingsPage() {
     }
   };
 
+
+
   // Search functionality for dropdowns
   const handleSearch = async (search: string, type: string) => {
     if (typeof search !== 'string' || !search.trim()) {
@@ -426,187 +478,14 @@ export default function SettingsPage() {
     restoreOriginalOptionsWithSelected(type);
   };
 
-  // Track original form data for comparison
-  const [originalFormData, setOriginalFormData] = useState<OnboardingData | null>(null);
-  const pathname = usePathname();
 
-  // Prevent navigation away while saving
-  useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (saveStatus === 'saving') {
-        e.preventDefault();
-        e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
-        return 'You have unsaved changes. Are you sure you want to leave?';
-      }
-    };
 
-    // Add event listener for browser navigation
-    window.addEventListener('beforeunload', handleBeforeUnload);
 
-    // Cleanup event listener on component unmount
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-      if (autoSaveTimeoutRef.current) {
-        clearTimeout(autoSaveTimeoutRef.current);
-      }
-    };
-  }, [saveStatus]);
 
-  // Function to check if there are unsaved changes
-  const checkForUnsavedChanges = useCallback(() => {
-    if (!originalFormData) return false;
-    
-    // Deep comparison of form data
-    const hasChanges = 
-      formData.firstName !== originalFormData.firstName ||
-      formData.lastName !== originalFormData.lastName ||
-      formData.companyName !== originalFormData.companyName ||
-      formData.siteUrl !== originalFormData.siteUrl ||
-      formData.userCountry !== originalFormData.userCountry ||
-      formData.incorporationCountry !== originalFormData.incorporationCountry ||
-      formData.revenue !== originalFormData.revenue ||
-      formData.fundingAmount !== originalFormData.fundingAmount ||
-      formData.fundingCurrency !== originalFormData.fundingCurrency ||
-      formData.currency !== originalFormData.currency ||
-      JSON.stringify(formData.operationalRegions) !== JSON.stringify(originalFormData.operationalRegions) ||
-      JSON.stringify(formData.stages) !== JSON.stringify(originalFormData.stages) ||
-      JSON.stringify(formData.businessSectors) !== JSON.stringify(originalFormData.businessSectors);
-    
-    console.log('Checking unsaved changes:', {
-      hasChanges,
-      saveStatus,
-      formData: formData.userCountry,
-      originalData: originalFormData.userCountry
-    });
-    
-    return hasChanges;
-  }, [formData, originalFormData, saveStatus]);
 
-  // Check for unsaved changes whenever form data changes
-  useEffect(() => {
-    checkForUnsavedChanges();
-  }, [checkForUnsavedChanges]);
 
-  // Block navigation during save or when there are unsaved changes
-  useEffect(() => {
-    let isBlocking = false;
-    
-    // Function to check if navigation should be blocked
-    const shouldBlockNavigation = () => {
-      const shouldBlock = saveStatus === 'saving' || checkForUnsavedChanges();
-      console.log('Navigation check:', {
-        shouldBlock,
-        saveStatus,
-        hasUnsavedChanges: checkForUnsavedChanges()
-      });
-      return shouldBlock;
-    };
-    
-    // Function to show confirmation dialog
-    const showConfirmation = () => {
-      if (isBlocking) return false;
-      isBlocking = true;
-      
-      let message = 'You have unsaved changes. Are you sure you want to leave?';
-      if (saveStatus === 'saving') {
-        message = 'Your changes are currently being saved. Are you sure you want to leave?';
-      }
-      
-      const confirmed = confirm(message);
-      isBlocking = false;
-      return confirmed;
-    };
 
-    // Block all navigation attempts
-    const handleClick = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      const link = target.closest('a');
-      
-      if (link) {
-        const href = link.getAttribute('href');
-        // Check if it's an internal navigation link
-        if (href && href.startsWith('/') && href !== pathname) {
-          if (shouldBlockNavigation()) {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            if (showConfirmation()) {
-              // Use router.push for proper Next.js navigation
-              router.push(href);
-            }
-            return false;
-          }
-        }
-      }
-    };
 
-    // Block programmatic navigation
-    const originalPush = router.push;
-    const originalReplace = router.replace;
-    
-    router.push = (href: string, options?: { scroll?: boolean }) => {
-      if (shouldBlockNavigation()) {
-        if (showConfirmation()) {
-          return originalPush(href, options);
-        }
-        return;
-      }
-      return originalPush(href, options);
-    };
-    
-    router.replace = (href: string, options?: { scroll?: boolean }) => {
-      if (shouldBlockNavigation()) {
-        if (showConfirmation()) {
-          return originalReplace(href, options);
-        }
-        return;
-      }
-      return originalReplace(href, options);
-    };
-
-    // Block browser navigation
-    const handlePopState = (e: PopStateEvent) => {
-      if (shouldBlockNavigation()) {
-        e.preventDefault();
-        if (!showConfirmation()) {
-          // Push current state back to prevent navigation
-          window.history.pushState(null, '', window.location.href);
-        }
-      }
-    };
-
-    // Add event listeners with proper capture
-    document.addEventListener('click', handleClick, true);
-    window.addEventListener('popstate', handlePopState);
-    
-    // Override history methods
-    const originalPushState = history.pushState;
-    const originalReplaceState = history.replaceState;
-    
-    history.pushState = function(...args) {
-      if (shouldBlockNavigation() && !showConfirmation()) {
-        return;
-      }
-      return originalPushState.apply(this, args);
-    };
-    
-    history.replaceState = function(...args) {
-      if (shouldBlockNavigation() && !showConfirmation()) {
-        return;
-      }
-      return originalReplaceState.apply(this, args);
-    };
-
-    // Cleanup function
-    return () => {
-      document.removeEventListener('click', handleClick, true);
-      window.removeEventListener('popstate', handlePopState);
-      router.push = originalPush;
-      router.replace = originalReplace;
-      history.pushState = originalPushState;
-      history.replaceState = originalReplaceState;
-    };
-  }, [saveStatus, pathname, router, checkForUnsavedChanges]);
 
   const categories = [
     { id: 'home', label: 'Home', icon: HomeIcon },
@@ -622,7 +501,10 @@ export default function SettingsPage() {
   if (!isLoaded || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader size="lg" text="Loading settings..." />
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading settings...</p>
+        </div>
       </div>
     );
   }
@@ -637,28 +519,6 @@ export default function SettingsPage() {
         <div className="bg-[#FFFFFF] rounded-xl p-6 mb-8 border border-[#EDEEEF]">
           <div className="flex items-center mb-3 gap-10">
             <h2 className="not-italic font-bold text-[18px] leading-[24px] tracking-[-0.02em] text-[#0C2143]">Profile</h2>
-            {saveStatus === 'saving' && (
-              <div className="flex items-center gap-2 text-blue-600 text-sm">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                <span>Saving...</span>
-              </div>
-            )}
-            {saveStatus === 'saved' && (
-              <div className="flex items-center gap-2 text-green-600 text-sm">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span>Saved!</span>
-              </div>
-            )}
-            {saveStatus === 'error' && (
-              <div className="flex items-center gap-2 text-red-600 text-sm">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-                <span>Save failed</span>
-              </div>
-            )}
           </div>
 
           {/* Profile Image */}
@@ -670,7 +530,7 @@ export default function SettingsPage() {
                 className={`w-[80px] h-[80px] rounded-full object-cover ${
                   profileUploadStatus === 'uploading' ? 'opacity-50' : ''
                 }`}
-              />
+                            />
               
               {/* Upload Progress Overlay */}
               {profileUploadStatus === 'uploading' && (
@@ -722,9 +582,10 @@ export default function SettingsPage() {
                   disabled={profileUploadStatus === 'uploading'}
                 />
               </label>
+
             </div>
             
-                          {/* Upload Status Message */}
+            {/* Upload Status Message */}
             <div className="ml-4 flex flex-col justify-center">
               {profileUploadStatus === 'uploading' && (
                 <div className="text-blue-600 text-sm font-medium">
@@ -875,14 +736,6 @@ export default function SettingsPage() {
                   <div className='border-b border-[#EDEEEF]'>
                     <div className="flex items-center justify-between pl-5 py-5">
                       <h2 className="not-italic text-[#0C2143] font-bold text-lg leading-6">Fundraising</h2>
-                      {saveStatus === 'error' && (
-                        <div className="flex items-center gap-2 text-red-600 text-sm pr-5">
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                          <span>Save failed</span>
-                        </div>
-                      )}
                     </div>
                   </div>
                   
@@ -1038,25 +891,6 @@ export default function SettingsPage() {
                         className="w-full px-3 py-2 border border-[#EDEEEF] rounded-[10px] h-[46px] text-[#787F89] not-italic font-medium text-sm leading-6 hover:bg-[#EDEEEF] bg-[#F6F6F7]"
                       />
                     </div>
-
-                    {/* Question 5 - Business Currency */}
-                    {/* <div>
-                      <label className="not-italic font-semibold text-base leading-6 tracking-[-0.02em] text-[#0C2143] mb-2">
-                        What currency do you use for your business operations and financial reporting?
-                      </label>
-                      <SearchableDropdown
-                        isMulti={false}
-                        options={currencyOptions}
-                        value={formData.currency}
-                        onChange={(value) => handleDropdownChange('currency', Array.isArray(value) ? '' : value)}
-                        placeholder="Select business currency..."
-                        enableSearch={true}
-                        showApplyButton={false}
-                        buttonClassName="w-full bg-[#F6F6F7] border border-[#EDEEEF] rounded-[10px] text-[#0C2143] hover:bg-[#EDEEEF] h-[46px]"
-                      />
-                    </div> */}
-
-
                   </div>
                 </div>
               )}
