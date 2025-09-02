@@ -24,13 +24,15 @@ type FilterOption = { label: string; value: string; disabled?: boolean };
 type OnboardingData = {
   // Step 1
   companyName: string;
+  // Step 2
   incorporationCountry: string;
   operationalRegions: string[];
-  
-  // Step 2
-  revenue: string;
+  // Step 3
   stages: string[];
+  // Step 4
   businessSectors: string[];
+  // Step 5
+  revenue: string;
 };
 
 export default function OnboardingPage() {
@@ -43,9 +45,9 @@ export default function OnboardingPage() {
     companyName: '',
     incorporationCountry: '',
     operationalRegions: [],
-    revenue: '',
     stages: [],
-    businessSectors: []
+    businessSectors: [],
+    revenue: ''
   });
 
   // API data state
@@ -65,45 +67,61 @@ export default function OnboardingPage() {
   const calculateProgress = () => {
     if (currentStep === 1) {
       let completedFields = 0;
-      const totalFields = 3; // companyName, incorporationCountry, operationalRegions
+      const totalFields = 1; // companyName
       
       if (formData.companyName.trim()) completedFields++;
+      
+      return Math.round((completedFields / totalFields) * 20); // Max 20% for step 1
+    } else if (currentStep === 2) {
+      let completedFields = 0;
+      const totalFields = 2; // incorporationCountry, operationalRegions
+      
       if (formData.incorporationCountry) completedFields++;
       if (formData.operationalRegions.length > 0) completedFields++;
       
-      return Math.round((completedFields / totalFields) * 33); // Max 33% for step 1
-    } else if (currentStep === 2) {
+      return 20 + Math.round((completedFields / totalFields) * 20); // 20% + up to 20% for step 2
+    } else if (currentStep === 3) {
       let completedFields = 0;
-      const totalFields = 2; // stages, businessSectors
+      const totalFields = 1; // stages
       
       if (formData.stages.length > 0) completedFields++;
+      
+      return 40 + Math.round((completedFields / totalFields) * 20); // 40% + up to 20% for step 3
+    } else if (currentStep === 4) {
+      let completedFields = 0;
+      const totalFields = 1; // businessSectors
+      
       if (formData.businessSectors.length > 0) completedFields++;
       
-      return 33 + Math.round((completedFields / totalFields) * 33); // 33% + up to 33% for step 2
+      return 60 + Math.round((completedFields / totalFields) * 20); // 60% + up to 20% for step 4
     } else {
       let completedFields = 0;
       const totalFields = 1; // revenue
       
       if (formData.revenue.trim()) completedFields++;
       
-      return 66 + Math.round((completedFields / totalFields) * 34); // 66% + up to 34% for step 3
+      return 80 + Math.round((completedFields / totalFields) * 20); // 80% + up to 20% for step 5
     }
   };
 
   const progressPercentage = calculateProgress();
   const backgroundColor = `linear-gradient(180deg, #2563EB 0%, #90AFF2 100%)`;
 
-  // Check if all required fields are completed for current step
+  // Check if current step is complete
   const isStepComplete = () => {
-    if (currentStep === 1) {
-      return formData.companyName.trim() && 
-             formData.incorporationCountry && 
-             formData.operationalRegions.length > 0;
-    } else if (currentStep === 2) {
-      return formData.stages.length > 0 && 
-             formData.businessSectors.length > 0;
-    } else {
-      return formData.revenue.trim();
+    switch (currentStep) {
+      case 1:
+        return formData.companyName.trim() !== '';
+      case 2:
+        return formData.incorporationCountry !== '' && formData.operationalRegions.length > 0;
+      case 3:
+        return formData.stages.length > 0;
+      case 4:
+        return formData.businessSectors.length > 0;
+      case 5:
+        return formData.revenue.trim() !== '';
+      default:
+        return false;
     }
   };
 
@@ -130,14 +148,13 @@ export default function OnboardingPage() {
         const businessSectorsData = data.investmentFocuses?.map((v: string) => ({ label: v, value: v })) || [];
         
         // Set both original and current options
-        
         setOriginalStages(stagesData);
         setOriginalBusinessSectors(businessSectorsData);
         setStages(stagesData);
         setBusinessSectors(businessSectorsData);
-              } catch {
-          // Error handling without logging
-        } finally {
+      } catch {
+        // Error handling without logging
+      } finally {
         setLoadingFilters(false);
       }
     };
@@ -156,17 +173,32 @@ export default function OnboardingPage() {
           companyName: existingData.companyName as string || '',
           incorporationCountry: existingData.incorporationCountry as string || '',
           operationalRegions: existingData.operationalRegions as string[] || [],
-          revenue: existingData.revenue as string || '',
           stages: existingData.stages as string[] || [],
-          businessSectors: existingData.businessSectors as string[] || []
+          businessSectors: existingData.businessSectors as string[] || [],
+          revenue: existingData.revenue as string || ''
         });
 
-        if (existingData.companyName && existingData.incorporationCountry && Array.isArray(existingData.operationalRegions) && existingData.operationalRegions.length > 0) {
-          if (existingData.revenue && Array.isArray(existingData.stages) && existingData.stages.length > 0) {
-            setCurrentStep(3);
-          } else {
-            setCurrentStep(2);
-          }
+        // Determine which step to show based on completed data
+        if (existingData.companyName && existingData.incorporationCountry && 
+            Array.isArray(existingData.operationalRegions) && existingData.operationalRegions.length > 0 &&
+            Array.isArray(existingData.stages) && existingData.stages.length > 0 &&
+            Array.isArray(existingData.businessSectors) && existingData.businessSectors.length > 0 &&
+            existingData.revenue) {
+          setCurrentStep(5);
+        } else if (existingData.companyName && existingData.incorporationCountry && 
+                   Array.isArray(existingData.operationalRegions) && existingData.operationalRegions.length > 0 &&
+                   Array.isArray(existingData.stages) && existingData.stages.length > 0 &&
+                   Array.isArray(existingData.businessSectors) && existingData.businessSectors.length > 0) {
+          setCurrentStep(4);
+        } else if (existingData.companyName && existingData.incorporationCountry && 
+                   Array.isArray(existingData.operationalRegions) && existingData.operationalRegions.length > 0 &&
+                   Array.isArray(existingData.stages) && existingData.stages.length > 0) {
+          setCurrentStep(3);
+        } else if (existingData.companyName && existingData.incorporationCountry && 
+                   Array.isArray(existingData.operationalRegions) && existingData.operationalRegions.length > 0) {
+          setCurrentStep(2);
+        } else if (existingData.companyName) {
+          setCurrentStep(1);
         }
       }
     }
@@ -297,7 +329,7 @@ export default function OnboardingPage() {
     setNextStepLoading(true);
     
     try {
-      if (currentStep < 3) {
+      if (currentStep < 5) {
         // Save progress before moving to next step
         await saveProgress();
       }
@@ -365,175 +397,191 @@ export default function OnboardingPage() {
     }
   };
 
-      // Show loading state while user data is loading
-    if (!isLoaded) {
-      return (
-        <div className="min-h-screen bg-[#0c2143] flex items-center justify-center">
-          <div className="bg-[#1b2130] rounded-[14px] border border-[rgba(37,99,235,0.1)] p-8 shadow-2xl max-w-sm w-full">
-            <Loader size="lg" text="Loading onboarding..." textColor="text-[#FFFFFF]" spinnerColor="border-[#2563EB]" />
-          </div>
-        </div>
-      );
-    }
-
-  const renderStep1 = () => (
-    <div className="">
-      {/* Header + Question 2 in same div with responsive spacing */}
-      <div className="flex flex-col lg:flex-row lg:gap-[320px] gap-8">
-        <div className="flex flex-col">
-          <h1 className="font-bold text-xl lg:text-2xl leading-7 text-white mb-2">Let&apos;s Get to Know Your Business</h1>
-          <p className="text-[#a5a6ac] font-normal text-sm lg:text-base leading-[22px] mb-[18px]">Before we get started, we need a little more information about your business.</p>
-        </div>
-        
-        {/* Question 2 - Business Location */}
-        <div className="flex flex-col">
-          <h2 className="font-semibold text-base lg:text-lg leading-[22px] tracking-[-0.02em] text-white mb-4">
-            Where is your business incorporated and where do you operate?
-          </h2>
-          <div className='flex flex-col sm:flex-row gap-[14px]'>
-            <SearchableDropdown
-              isMulti={false}
-              options={countryOptions}
-              value={formData.incorporationCountry}
-              onChange={(value) => handleDropdownChange('incorporationCountry', Array.isArray(value) ? '' : value)}
-              placeholder={<span className="font-normal text-sm leading-[22px] opacity-80  text-white ">Select incorporation country</span>}
-              enableSearch={true}
-              showApplyButton={false}
-              buttonClassName="bg-[rgba(255,255,255,0.1)] border-[rgba(255,255,255,0.1)] text-white hover:bg-[rgba(255,255,255,0.15)] rounded-[10px]"
-              dropdownClassName="bg-[#1b2130] border border-[rgba(37,99,235,0.1)] rounded-[14px] shadow-2xl"
-              isOnboarding={true}
-            />
-            <SearchableDropdown
-              isMulti={true}
-              options={countryOptions}
-              value={formData.operationalRegions}
-              onChange={(value) => handleDropdownChange('operationalRegions', Array.isArray(value) ? value : [])}
-              placeholder={<span className="font-normal text-sm leading-[22px] opacity-80  text-white">Select operational regions</span>}
-              enableSearch={true}
-              showApplyButton={true}
-              buttonClassName="bg-[rgba(255,255,255,0.1)] border-[rgba(255,255,255,0.1)] text-white hover:bg-[rgba(255,255,255,0.15)] rounded-[10px]"
-              dropdownClassName="bg-[#1b2130] border border-[rgba(37,99,235,0.1)] rounded-[14px] shadow-2xl"
-              isOnboarding={true}
-              showSelectedValues={true}
-            />
-          </div>
+  // Show loading state while user data is loading
+  if (!isLoaded) {
+    return (
+      <div className="min-h-screen bg-[#0c2143] flex items-center justify-center">
+        <div className="bg-[#1b2130] rounded-[14px] border border-[rgba(37,99,235,0.1)] p-8 shadow-2xl max-w-sm w-full">
+          <Loader size="lg" text="Loading onboarding..." textColor="text-[#FFFFFF]" spinnerColor="border-[#2563EB]" />
         </div>
       </div>
+    );
+  }
 
-      {/* Question 1 below the header */}
-      <div className='flex flex-col'>
-        <label className="font-semibold text-base lg:text-lg leading-[22px] tracking-[-0.02em] text-white mb-2">
-          Company Name
-        </label>
-        <input
-          type="text"
-          name="companyName"
-          value={formData.companyName}
-          onChange={handleInputChange}
-          placeholder="Enter your company name"
-          className="w-full lg:w-[35%] bg-white/10 border border-white/10 rounded-[10px] h-[40px] font-normal text-sm leading-[22px] opacity-80  text-white px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-        />
-      </div>
-    </div>
-  );
-
-  const renderStep2 = () => (
-    <div className="">
-      {/* Header + Question 4 in same div with responsive spacing */}
-      <div className="flex flex-col lg:flex-row lg:gap-[320px] gap-8">
-        <div className="flex flex-col">
-          <h1 className="font-bold text-xl lg:text-2xl leading-7 text-white mb-2">Let&apos;s Get to Know Your Business</h1>
-          <p className="text-[#a5a6ac] font-normal text-sm lg:text-base leading-[22px] mb-[18px]">Before we get started, we need a little more information about your business.</p>
-        </div>
-        
-        {/* Question 4 - Investment Stages */}
-        <div className="flex flex-col">
-          <h2 className="font-semibold text-base lg:text-lg leading-[22px] tracking-[-0.02em] text-white mb-4">
-            Which growth stage best describes your company?
-          </h2>
-          <div className="w-full lg:w-fit">
-            {loadingFilters ? (
-              <div className="w-full px-3 py-2 border border-white/10 rounded-lg bg-white/5 text-white/60 text-sm">
-                Loading stages...
-              </div>
-            ) : (
-              <SearchableDropdown
-                isMulti={true}
-                options={stages}
-                value={formData.stages}
-                onChange={(value) => handleDropdownChange('stages', Array.isArray(value) ? value : [])}
-                placeholder={<span className="font-normal text-sm leading-[22px] opacity-80  text-white">Select business stage</span>}
-                enableSearch={true}
-                showApplyButton={true}
-                onSearch={handleSearch}
-                searchType="investmentStages"
-                onOpen={() => handleDropdownOpen('investmentStages')}
-                buttonClassName="bg-[rgba(255,255,255,0.1)] border-[rgba(255,255,255,0.1)] text-white hover:bg-[rgba(255,255,255,0.15)] rounded-[10px]"
-                dropdownClassName="bg-[#1b2130] border border-[rgba(37,99,235,0.1)] rounded-[14px] shadow-2xl"
-                isOnboarding={true}
-                showSelectedValues={true}
-              />
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Question 3 below the header */}
-      <div>
-        <h2 className="font-semibold text-base lg:text-lg leading-[22px] tracking-[-0.02em] text-white mb-4">
-          What industry or sector best describes your business?
-        </h2>
-        <div className="w-full lg:w-fit">
-          {loadingFilters ? (
-            <div className="w-full px-3 py-2 border border-white/10 rounded-lg bg-white/5 text-white/60 text-sm">
-              Loading sectors...
-            </div>
-          ) : (
-            <SearchableDropdown
-              isMulti={true}
-              options={businessSectors}
-              value={formData.businessSectors}
-              onChange={(value) => handleDropdownChange('businessSectors', Array.isArray(value) ? value : [])}
-              placeholder={<span className="font-normal text-sm leading-[22px] opacity-80  text-white">Select business sector</span>}
-              enableSearch={true}
-              showApplyButton={true}
-              onSearch={handleSearch}
-              searchType="investmentFocuses"
-              onOpen={() => handleDropdownOpen('investmentFocuses')}
-              buttonClassName="bg-[rgba(255,255,255,0.1)] border-[rgba(255,255,255,0.1)] text-white hover:bg-[rgba(255,255,255,0.15)] rounded-[10px]"
-              dropdownClassName="bg-[#1b2130] border border-[rgba(37,99,235,0.1)] rounded-[14px] shadow-2xl"
-              isOnboarding={true}
-              showSelectedValues={true}
-            />
-          )}
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderStep3 = () => (
-    <div className="space-y-8">
+  // Render step content based on current step
+  const renderStepContent = () => {
+    const renderHeader = () => (
       <div className="flex flex-col">
         <h1 className="font-bold text-xl lg:text-2xl leading-7 text-white mb-2">Let&apos;s Get to Know Your Business</h1>
         <p className="text-[#a5a6ac] font-normal text-sm lg:text-base leading-[22px] mb-[18px]">Before we get started, we need a little more information about your business.</p>
-        
-        {/* Question 5 */}
-        <div>
-        <h2 className="font-semibold text-base lg:text-lg leading-[22px] tracking-[-0.02em] text-white mb-2">
-          What is your current annual revenue or key traction metric?
-        </h2>
-        <input
-          type="text"
-          name="revenue"
-          value={formData.revenue}
-          onChange={handleInputChange}
-          placeholder="e.g. $140,000 in revenue and $3.6 CAC"
-          className="w-full lg:w-[35%] bg-white/10 border border-white/10 rounded-[10px] h-[40px] font-normal text-sm leading-[22px] opacity-80  text-white px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-        />
       </div>
-      </div>
-    </div>
-  );
+    );
+
+    switch (currentStep) {
+      case 1:
+        return (
+          <div className="">
+            {renderHeader()}
+            
+            <div className="flex flex-col">
+              <h2 className="font-semibold text-base lg:text-lg leading-[22px] tracking-[-0.02em] text-white mb-4">
+                What is your company name?
+              </h2>
+              <input
+                type="text"
+                name="companyName"
+                value={formData.companyName}
+                onChange={handleInputChange}
+                placeholder="Enter your company name"
+                className="w-full lg:w-[35%] bg-white/10 border border-white/10 rounded-[10px] h-[40px] font-normal text-sm leading-[22px] opacity-80 text-white px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+        );
+
+      case 2:
+        return (
+          <div className="">
+            {renderHeader()}
+            
+            <div className="flex flex-col">
+              <h2 className="font-semibold text-base lg:text-lg leading-[22px] tracking-[-0.02em] text-white mb-4">
+                Where is your business incorporated and where do you operate?
+              </h2>
+              <div className="space-y-4 flex gap-5">
+                <div className="w-full lg:w-fit">
+                  <SearchableDropdown
+                    isMulti={false}
+                    options={countryOptions}
+                    value={formData.incorporationCountry}
+                    onChange={(value) => handleDropdownChange('incorporationCountry', Array.isArray(value) ? '' : value)}
+                    placeholder={<span className="font-normal text-sm leading-[22px] opacity-80 text-white">Select incorporation country</span>}
+                    enableSearch={true}
+                    showApplyButton={false}
+                    buttonClassName="bg-[rgba(255,255,255,0.1)] border-[rgba(255,255,255,0.1)] text-white hover:bg-[rgba(255,255,255,0.15)] rounded-[10px]"
+                    dropdownClassName="bg-[#1b2130] border border-[rgba(37,99,235,0.1)] rounded-[14px] shadow-2xl"
+                    isOnboarding={true}
+                  />
+                </div>
+                <div className="w-full lg:w-fit">
+                  <SearchableDropdown
+                    isMulti={true}
+                    options={countryOptions}
+                    value={formData.operationalRegions}
+                    onChange={(value) => handleDropdownChange('operationalRegions', Array.isArray(value) ? value : [])}
+                    placeholder={<span className="font-normal text-sm leading-[22px] opacity-80 text-white">Select operational regions</span>}
+                    enableSearch={true}
+                    showApplyButton={true}
+                    buttonClassName="bg-[rgba(255,255,255,0.1)] border-[rgba(255,255,255,0.1)] text-white hover:bg-[rgba(255,255,255,0.15)] rounded-[10px]"
+                    dropdownClassName="bg-[#1b2130] border border-[rgba(37,99,235,0.1)] rounded-[14px] shadow-2xl"
+                    isOnboarding={true}
+                    showSelectedValues={true}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 3:
+        return (
+          <div className="">
+            {renderHeader()}
+            
+            <div className="flex flex-col">
+              <h2 className="font-semibold text-base lg:text-lg leading-[22px] tracking-[-0.02em] text-white mb-4">
+                Which growth stage best describes your company?
+              </h2>
+              <div className="w-full lg:w-fit">
+                {loadingFilters ? (
+                  <div className="w-full px-3 py-2 border border-white/10 rounded-lg bg-white/5 text-white/60 text-sm">
+                    Loading stages...
+                  </div>
+                ) : (
+                  <SearchableDropdown
+                    isMulti={true}
+                    options={stages}
+                    value={formData.stages}
+                    onChange={(value) => handleDropdownChange('stages', Array.isArray(value) ? value : [])}
+                    placeholder={<span className="font-normal text-sm leading-[22px] opacity-80 text-white">Select business stage</span>}
+                    enableSearch={true}
+                    showApplyButton={true}
+                    onSearch={handleSearch}
+                    searchType="investmentStages"
+                    onOpen={() => handleDropdownOpen('investmentStages')}
+                    buttonClassName="bg-[rgba(255,255,255,0.1)] border-[rgba(255,255,255,0.1)] text-white hover:bg-[rgba(255,255,255,0.15)] rounded-[10px]"
+                    dropdownClassName="bg-[#1b2130] border border-[rgba(37,99,235,0.1)] rounded-[14px] shadow-2xl"
+                    isOnboarding={true}
+                    showSelectedValues={true}
+                  />
+                )}
+              </div>
+            </div>
+          </div>
+        );
+
+      case 4:
+        return (
+          <div className="">
+            {renderHeader()}
+            
+            <div className="flex flex-col">
+              <h2 className="font-semibold text-base lg:text-lg leading-[22px] tracking-[-0.02em] text-white mb-4">
+                What industry or sector best describes your business?
+              </h2>
+              <div className="w-full lg:w-fit">
+                {loadingFilters ? (
+                  <div className="w-full px-3 py-2 border border-white/10 rounded-lg bg-white/5 text-white/60 text-sm">
+                    Loading sectors...
+                  </div>
+                ) : (
+                  <SearchableDropdown
+                    isMulti={true}
+                    options={businessSectors}
+                    value={formData.businessSectors}
+                    onChange={(value) => handleDropdownChange('businessSectors', Array.isArray(value) ? value : [])}
+                    placeholder={<span className="font-normal text-sm leading-[22px] opacity-80 text-white">Select business sector</span>}
+                    enableSearch={true}
+                    showApplyButton={true}
+                    onSearch={handleSearch}
+                    searchType="investmentFocuses"
+                    onOpen={() => handleDropdownOpen('investmentFocuses')}
+                    buttonClassName="bg-[rgba(255,255,255,0.1)] border-[rgba(255,255,255,0.1)] text-white hover:bg-[rgba(255,255,255,0.15)] rounded-[10px]"
+                    dropdownClassName="bg-[#1b2130] border border-[rgba(37,99,235,0.1)] rounded-[14px] shadow-2xl"
+                    isOnboarding={true}
+                    showSelectedValues={true}
+                  />
+                )}
+              </div>
+            </div>
+          </div>
+        );
+
+      case 5:
+        return (
+          <div className="">
+            {renderHeader()}
+            
+            <div className="flex flex-col">
+              <h2 className="font-semibold text-base lg:text-lg leading-[22px] tracking-[-0.02em] text-white mb-4">
+                What is your current annual revenue or key traction metric?
+              </h2>
+              <input
+                type="text"
+                name="revenue"
+                value={formData.revenue}
+                onChange={handleInputChange}
+                placeholder="e.g. $140,000 in revenue and $3.6 CAC"
+                className="w-full lg:w-[35%] bg-white/10 border border-white/10 rounded-[10px] h-[40px] font-normal text-sm leading-[22px] opacity-80 text-white px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
 
   return (
     <main className="min-h-screen bg-[#0c2143] relative w-full">
@@ -555,17 +603,17 @@ export default function OnboardingPage() {
                   <circle cx="8" cy="8" r="6" fill="#2563EB"/>
                 </svg>
               </div>
-                                             {/* Progress bar */}
-                <div className="w-2 h-[272px] bg-[linear-gradient(180deg,rgba(255,255,255,0)_0%,rgba(255,255,255,0.8)_96.28%)] rounded-[20px] overflow-hidden">
-                  <div 
-                    className="w-2 rounded-full transition-all duration-500 ease-in-out"
-                    style={{ 
-                      height: `${progressPercentage}%`, 
-                      background: backgroundColor,
-                      transformOrigin: 'bottom'
-                    }}
-                  ></div>
-                </div>
+              {/* Progress bar */}
+              <div className="w-2 h-[272px] bg-[linear-gradient(180deg,rgba(255,255,255,0)_0%,rgba(255,255,255,0.8)_96.28%)] rounded-[20px] overflow-hidden">
+                <div 
+                  className="w-2 rounded-full transition-all duration-500 ease-in-out"
+                  style={{ 
+                    height: `${progressPercentage}%`, 
+                    background: backgroundColor,
+                    transformOrigin: 'bottom'
+                  }}
+                ></div>
+              </div>
               
               {/* Bottom dot */}
               <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2">
@@ -580,7 +628,7 @@ export default function OnboardingPage() {
           {/* Mobile progress indicator */}
           <div className="lg:hidden w-full mb-6">
             <div className="flex items-center justify-between text-white text-sm mb-2">
-              <span>Step {currentStep} of 3</span>
+              <span>Step {currentStep} of 5</span>
               <span>{progressPercentage}%</span>
             </div>
             <div className="w-full h-2 bg-[rgba(255,255,255,0.2)] rounded-full overflow-hidden">
@@ -596,7 +644,7 @@ export default function OnboardingPage() {
 
           <div className='w-full'>
             <div className="">
-              {currentStep === 1 ? renderStep1() : currentStep === 2 ? renderStep2() : renderStep3()}
+              {renderStepContent()}
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-8">
@@ -617,46 +665,46 @@ export default function OnboardingPage() {
                     </span>
                   </button>
                 )}
-                {currentStep < 3 ? (
-                <button
-                  type="button"
-                  onClick={() => nextStep()}
-                  disabled={nextStepLoading || !isStepComplete()}
-                  className="px-[32px] py-[13px] bg-[#ffffff] border-[rgba(255,255,255,0.1)] text-[#0C2143] hover:bg-[#f2f5f9] rounded-[10px] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 cursor-pointer order-1 sm:order-2 w-full sm:w-auto"
-                >
-                  <span className="inline-flex items-center gap-1 text-[#0C2143] font-bold text-sm leading-[19px] tracking-[-0.02em] capitalize">
-                    {nextStepLoading ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#0C2143] mr-2"></div>
-                        Processing...
-                      </>
-                    ) : (
-                      <>
-                        Continue
-                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <g clipPath="url(#clip0_1168_2734)">
-                          <path d="M15.832 10H4.16536" stroke="#0C2143" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                          <path d="M15.832 10L12.4987 13.3333" stroke="#0C2143" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                          <path d="M15.832 10.0001L12.4987 6.66675" stroke="#0C2143" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                          </g>
-                          <defs>
-                          <clipPath id="clip0_1168_2734">
-                          <rect width="20" height="20" fill="white" transform="matrix(-1 0 0 1 20 0)"/>
-                          </clipPath>
-                          </defs>
-                        </svg>
-                      </>
-                    )}
-                  </span>
-                </button>
-              ) : (
-                <button
-                  type="submit"
-                  disabled={isSubmitting || loadingFilters || !isStepComplete()}
-                  className="px-[32px] py-[13px] bg-[#ffffff] border-[rgba(255,255,255,0.1)] text-[#0C2143] font-bold text-sm leading-[19px] tracking-[-0.02em] capitalize hover:bg-[#f2f5f9] rounded-[10px] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 cursor-pointer w-full sm:w-auto"
-                >
-                  {!isStepComplete() ? 'Complete Required Fields' : 'Complete Onboarding'}
-                </button>
+                {currentStep < 5 ? (
+                  <button
+                    type="button"
+                    onClick={() => nextStep()}
+                    disabled={nextStepLoading || !isStepComplete()}
+                    className="px-[32px] py-[13px] bg-[#ffffff] border-[rgba(255,255,255,0.1)] text-[#0C2143] hover:bg-[#f2f5f9] rounded-[10px] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 cursor-pointer order-1 sm:order-2 w-full sm:w-auto"
+                  >
+                    <span className="inline-flex items-center gap-1 text-[#0C2143] font-bold text-sm leading-[19px] tracking-[-0.02em] capitalize">
+                      {nextStepLoading ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#0C2143] mr-2"></div>
+                          Processing...
+                        </>
+                      ) : (
+                        <>
+                          Continue
+                          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <g clipPath="url(#clip0_1168_2734)">
+                            <path d="M15.832 10H4.16536" stroke="#0C2143" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M15.832 10L12.4987 13.3333" stroke="#0C2143" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M15.832 10.0001L12.4987 6.66675" stroke="#0C2143" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                            </g>
+                            <defs>
+                            <clipPath id="clip0_1168_2734">
+                            <rect width="20" height="20" fill="white" transform="matrix(-1 0 0 1 20 0)"/>
+                            </clipPath>
+                            </defs>
+                          </svg>
+                        </>
+                      )}
+                    </span>
+                  </button>
+                ) : (
+                  <button
+                    type="submit"
+                    disabled={isSubmitting || loadingFilters || !isStepComplete()}
+                    className="px-[32px] py-[13px] bg-[#ffffff] border-[rgba(255,255,255,0.1)] text-[#0C2143] font-bold text-sm leading-[19px] tracking-[-0.02em] capitalize hover:bg-[#f2f5f9] rounded-[10px] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 cursor-pointer w-full sm:w-auto"
+                  >
+                    {!isStepComplete() ? 'Complete Required Fields' : 'Complete Onboarding'}
+                  </button>
                 )}
               </div>
             </form>
