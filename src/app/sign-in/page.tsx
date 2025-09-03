@@ -10,6 +10,7 @@ import LogoIcon from '@components/icons/LogoWithText';
 import Logo from '@components/icons/logoIcon';
 import SignInLogo from '@components/icons/SignInLogo';
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline'
+import { setDefaultRole } from '@components/_actions'
 
 
 export default function SignInPage() {
