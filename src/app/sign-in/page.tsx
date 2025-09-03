@@ -27,10 +27,12 @@ export default function SignInPage() {
 
   React.useEffect(() => {
     if (user) {
-      // For sign-in page, we'll let the AuthFlowManager handle the onboarding check
-      // This prevents conflicts between different onboarding status checks
-      // Just redirect to home and let the AuthFlowManager determine the correct flow
-      window.location.href = '/'
+      const onboardingComplete = (user.publicMetadata as { onboardingComplete?: boolean })?.onboardingComplete === true
+      if (onboardingComplete) {
+        window.location.href = '/'
+      } else {
+        router.replace('/onboarding')
+      }
     }
   }, [user, router])
 

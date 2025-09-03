@@ -48,19 +48,9 @@ const AuthFlowManager: React.FC<AuthFlowManagerProps> = ({ children }) => {
         }
       };
       
-      // Add a timeout to prevent infinite loading
-      const timeoutId = setTimeout(() => {
-        if (onboardingStatus === null) {
-          console.warn('Onboarding status check timed out, defaulting to needs onboarding');
-          setOnboardingStatus(false);
-        }
-      }, 15000); // 15 second timeout
-      
       checkOnboardingStatus();
-      
-      return () => clearTimeout(timeoutId);
     }
-  }, [isLoaded, user, onboardingStatus]);
+  }, [isLoaded, user]);
 
   // Listen for onboarding completion events
   useEffect(() => {
