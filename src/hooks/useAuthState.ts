@@ -25,9 +25,19 @@ export const useAuthState = () => {
         }
       };
       
+      // Add a timeout to prevent infinite loading
+      const timeoutId = setTimeout(() => {
+        if (onboardingStatus === null) {
+          console.warn('useAuthState: Onboarding status check timed out, defaulting to needs onboarding');
+          setOnboardingStatus(false);
+        }
+      }, 15000); // 15 second timeout
+      
       checkOnboardingStatus();
+      
+      return () => clearTimeout(timeoutId);
     }
-  }, [isLoaded, user]);
+  }, [isLoaded, user, onboardingStatus]);
 
   useEffect(() => {
     // Show loading when user state is changing
