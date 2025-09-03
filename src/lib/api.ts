@@ -8,22 +8,41 @@ export const getApiUrl = (path: string): string => {
 
 // Function to fetch user data from the backend
 export const fetchUserData = async (userId: string): Promise<unknown> => {
-  const response = await fetch(getApiUrl(`/api/user/${userId}`), {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
-console.log('Fetch user response:', response);
-  if (!response.ok) {
-    if (response.status === 404) {
-      // User doesn't exist in backend yet (new user), return null instead of throwing
+  try {
+    // Add timeout to prevent hanging requests
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+    
+    const response = await fetch(getApiUrl(`/api/user/${userId}`), {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      signal: controller.signal,
+    });
+    
+    clearTimeout(timeoutId);
+    console.log('Fetch user response:', response);
+    
+    if (!response.ok) {
+      if (response.status === 404) {
+        // User doesn't exist in backend yet (new user), return null instead of throwing
+        return null;
+      }
+      throw new Error(`Failed to fetch user: ${response.status}`);
+    }
+
+    return response.json();
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      console.error('Fetch user data timeout:', error);
+      // Return null on timeout to allow the app to continue
       return null;
     }
-    throw new Error(`Failed to fetch user: ${response.status}`);
+    console.error('Fetch user data error:', error);
+    // Return null on any error to prevent the app from hanging
+    return null;
   }
-
-  return response.json();
 };
 
 // Function to update user data on the backend
