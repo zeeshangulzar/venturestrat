@@ -2,7 +2,7 @@
 'use client'
 
 import * as React from 'react'
-import { useSignIn, useUser } from '@clerk/nextjs'
+import { useSignUp, useSignIn, useUser } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import PageLoader from '@components/PageLoader'
@@ -15,7 +15,8 @@ import { setDefaultRole } from '@components/_actions'
 
 export default function SignInPage() {
   const router = useRouter()
-  const { isLoaded, signIn, setActive } = useSignIn()
+  const { isLoaded, signUp, setActive } = useSignUp()
+  const { signIn } = useSignIn()
   const { user, isLoaded: userLoaded } = useUser()
 
   const [email, setEmail] = React.useState('')
@@ -27,12 +28,9 @@ export default function SignInPage() {
 
   React.useEffect(() => {
     if (user) {
-      const onboardingComplete = (user.publicMetadata as { onboardingComplete?: boolean })?.onboardingComplete === true
-      if (onboardingComplete) {
-        window.location.href = '/'
-      } else {
-        router.replace('/onboarding')
-      }
+      // Let AuthFlowManager handle the redirect logic
+      // It will check onboarding status from backend and redirect appropriately
+      router.replace('/')
     }
   }, [user, router])
 
@@ -68,8 +66,8 @@ export default function SignInPage() {
 
       if (res.status === 'complete') {
         await setActive!({ session: res.createdSessionId })
-        // Use window.location.href for a hard redirect to ensure page reloads like sign-up
-        window.location.href = '/'
+        // Redirect to home page, AuthFlowManager will handle onboarding check
+        router.replace('/')
       } else {
         // e.g. needs second factor; handle other statuses if you enabled them
         setError('Additional verification required')
@@ -91,22 +89,23 @@ export default function SignInPage() {
   }
 
   const onGoogle = async () => {
-    if (!isLoaded || !signIn) return
-    setError(null)
-    setGoogleLoading(true)
+    if (!isLoaded || !signUp) return;
+    setError(null);
+    setGoogleLoading(true);
     
     try {
-      // Redirect-based OAuth
-      await signIn.authenticateWithRedirect({
+      // Note: Google OAuth users will also get the default moderator role
+      // The role is set via the setDefaultRole server action when they complete the flow
+      await signUp.authenticateWithRedirect({
         strategy: 'oauth_google',
-        redirectUrl: '/sso-callback',      // where Clerk returns to
-        redirectUrlComplete: '/' // after Clerk finishes, land here (middleware handles onboarding)
-      })
+        redirectUrl: '/sso-callback',
+        redirectUrlComplete: '/sso-callback', // Let AuthFlowManager handle the final redirect
+      });
     } catch (err) {
-      setError('Google sign-in failed. Please try again.')
-      setGoogleLoading(false)
+      setError('Google sign-in failed. Please try again.');
+      setGoogleLoading(false);
     }
-  }
+  };
 
   return (
     <main className="min-h-screen bg-[#0c2143] relative w-full">
@@ -176,6 +175,9 @@ export default function SignInPage() {
             )}
             </button>
           </div>
+
+          {/* Clerk CAPTCHA Widget */}
+          <div id="clerk-captcha" className="flex justify-center"></div>
 
           <div className='mt-[72px] mb-5'>
             <button 
