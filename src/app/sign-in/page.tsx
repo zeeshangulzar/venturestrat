@@ -29,7 +29,7 @@ export default function SignInPage() {
     if (user) {
       const onboardingComplete = (user.publicMetadata as { onboardingComplete?: boolean })?.onboardingComplete === true
       if (onboardingComplete) {
-        router.replace('/')
+        window.location.href = '/'
       } else {
         router.replace('/onboarding')
       }
@@ -68,8 +68,8 @@ export default function SignInPage() {
 
       if (res.status === 'complete') {
         await setActive!({ session: res.createdSessionId })
-        // The middleware will handle redirecting to onboarding if needed
-        router.replace('/')
+        // Use window.location.href for a hard redirect to ensure page reloads like sign-up
+        window.location.href = '/'
       } else {
         // e.g. needs second factor; handle other statuses if you enabled them
         setError('Additional verification required')
