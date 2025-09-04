@@ -42,7 +42,7 @@ export async function GET(request: Request) {
     const backendData = await backendResponse.json();
 
     // Transform backend data to match frontend expectations
-    const users = backendData.map((user: any) => ({
+    const users = backendData.map((user: Record<string, unknown>) => ({
       id: user.id,
       firstName: user.firstname,
       lastName: user.lastname,
@@ -50,7 +50,7 @@ export async function GET(request: Request) {
       role: user.role,
       onboardingComplete: user.onboardingComplete,
       publicMetaData: user.publicMetaData,
-      createdAt: new Date(user.createdAt).getTime(), // Convert to timestamp for compatibility
+      createdAt: new Date(user.createdAt as string).getTime(), // Convert to timestamp for compatibility
       banned: false, // Backend doesn't have banned status
       locked: false, // Backend doesn't have locked status
     }));

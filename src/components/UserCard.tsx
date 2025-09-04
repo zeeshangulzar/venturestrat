@@ -10,7 +10,7 @@ type SerializedUser = {
   email: string;
   role: string;
   onboardingComplete: boolean;
-  publicMetaData: any;
+  publicMetaData: Record<string, unknown>;
   createdAt: number | Date;
   banned: boolean;
   locked: boolean;

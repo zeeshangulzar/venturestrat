@@ -5,6 +5,26 @@ import Link from 'next/link'
 import UserShortlist from '@components/UserShortlist'
 import { fetchUserData } from '@lib/api'
 
+type UserData = {
+  id: string;
+  email: string;
+  firstname?: string;
+  lastname?: string;
+  role: string;
+  onboardingComplete: boolean;
+  createdAt: string;
+  publicMetaData?: {
+    companyName?: string;
+    userCountry?: string;
+    revenue?: string;
+    stages?: string[];
+    businessSectors?: string[];
+    operationalRegions?: string[];
+    incorporationCountry?: string;
+    [key: string]: unknown;
+  };
+};
+
 export default async function UserShowPage({
   params,
 }: {
@@ -28,8 +48,7 @@ export default async function UserShowPage({
       )
     }
 
-    const data = userData as any
-    const user = data.user
+    const user = (userData as { user: UserData }).user
     const primaryEmail = user.email
 
     if (!primaryEmail) {

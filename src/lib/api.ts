@@ -27,7 +27,7 @@ console.log('Fetch user response:', response);
 };
 
 // Function to fetch users list from the backend
-export const fetchUsersList = async (search?: string, page: number = 1, pageSize: number = 20): Promise<{ users: any[], total: number }> => {
+export const fetchUsersList = async (search?: string, page: number = 1, pageSize: number = 20): Promise<{ users: Record<string, unknown>[], total: number }> => {
   const params = new URLSearchParams({
     page: page.toString(),
     pageSize: pageSize.toString(),

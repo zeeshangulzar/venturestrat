@@ -4,6 +4,13 @@ import { setRole } from '@components/_actions'
 import { useEffect, useState, useTransition } from 'react'
 import { getApiUrl } from '@lib/api';
 
+type PublicMetaData = {
+  companyName?: string;
+  userCountry?: string;
+  incorporationCountry?: string;
+  [key: string]: unknown;
+};
+
 type BackendUser = {
   id: string;
   firstName: string | null;
@@ -11,7 +18,7 @@ type BackendUser = {
   email: string;
   role: string;
   onboardingComplete: boolean;
-  publicMetaData: any;
+  publicMetaData: PublicMetaData;
   createdAt: number;
   banned: boolean;
   locked: boolean;
