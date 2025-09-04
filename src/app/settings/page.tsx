@@ -80,16 +80,6 @@ export default function SettingsPage() {
         restoreOriginalOptionsWithSelected(type);
         return;
       }
-
-      // For investment focus, do frontend-only filtering
-      if (type === 'investmentFocuses') {
-        const filteredOptions = originalBusinessSectors.filter(option =>
-          option.label.toLowerCase().includes(search.toLowerCase())
-        );
-        const mergedOptions = mergeSelectedWithOptions(filteredOptions, formData.businessSectors, originalBusinessSectors);
-        setBusinessSectors(mergedOptions);
-        return;
-      }
   
       try {
         const res = await fetch(
@@ -109,6 +99,10 @@ export default function SettingsPage() {
             const searchResults = (data.stages ?? []).map((v: string) => ({ label: v, value: v }));
             const mergedOptions = mergeSelectedWithOptions(searchResults, formData.stages, originalStages);
             setStages(mergedOptions);
+          } else if (type === 'investmentFocuses') {
+            const searchResults = (data.investmentFocuses ?? []).map((v: string) => ({ label: v, value: v }));
+            const mergedOptions = mergeSelectedWithOptions(searchResults, formData.businessSectors, originalBusinessSectors);
+            setBusinessSectors(mergedOptions);
           }
         }
       } catch (err) {
