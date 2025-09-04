@@ -120,7 +120,7 @@ export default function AdminInvestorShowPage() {
 
       <div className="mb-4">
         <Link href={backUrl} className="text-sm text-slate-600 hover:underline">
-          ← Back to admin users
+          ← Back to investors
         </Link>
       </div>
 
