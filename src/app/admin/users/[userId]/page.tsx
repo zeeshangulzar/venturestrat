@@ -64,6 +64,7 @@ export default async function UserShowPage({
     const role = user.role ?? ''
     const titleizedRole = role.charAt(0).toUpperCase() + role.slice(1).toLowerCase()
     const created = user.createdAt ? new Date(user.createdAt).toLocaleDateString() : '—'
+    const location = user.publicMetaData?.userCountry ? user.publicMetaData?.userCountry : '—'
 
     return (
       <div className="space-y-6 p-6">
@@ -125,14 +126,10 @@ export default async function UserShowPage({
                   <p className="text-slate-900">{created}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-slate-700">Onboarding Status</label>
-                  <span
-                    className={`ml-2 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                      user.onboardingComplete ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                    }`}
-                  >
-                    {user.onboardingComplete ? 'Complete' : 'Incomplete'}
-                  </span>
+                  <label className="text-sm font-medium text-slate-700">Location</label>
+                  <div className='text-slate-900'>
+                    {location}
+                  </div>
                 </div>
               </div>
             </div>
@@ -152,16 +149,36 @@ export default async function UserShowPage({
                   <p className="text-slate-900">{user.publicMetaData.companyName}</p>
                 </div>
               )}
-              {user.publicMetaData.userCountry && (
+              <div className='flex flex-row gap-4'>
+                {user.publicMetaData.incorporationCountry && (
+                  <div>
+                    <label className="text-sm font-medium text-slate-700">Incorporation Country</label>
+                    <p className="text-slate-900">{user.publicMetaData.incorporationCountry}</p>
+                  </div>
+                )}
+                {user.publicMetaData.operationalRegions && user.publicMetaData.operationalRegions.length > 0 && (
+                  <div>
+                    <label className="text-sm font-medium text-slate-700">Operational Regions</label>
+                    <div className="flex flex-wrap gap-2 mt-1">
+                      {user.publicMetaData.operationalRegions.map((region: string, index: number) => (
+                        <span key={index} className="inline-flex items-center rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-medium text-purple-800">
+                          {region}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+              {user.publicMetaData.businessSectors && user.publicMetaData.businessSectors.length > 0 && (
                 <div>
-                  <label className="text-sm font-medium text-slate-700">Location</label>
-                  <p className="text-slate-900">{user.publicMetaData.userCountry}</p>
-                </div>
-              )}
-              {user.publicMetaData.revenue && (
-                <div>
-                  <label className="text-sm font-medium text-slate-700">Revenue</label>
-                  <p className="text-slate-900">{user.publicMetaData.revenue}</p>
+                  <label className="text-sm font-medium text-slate-700">Business Sectors</label>
+                  <div className="flex flex-wrap gap-2 mt-1">
+                    {user.publicMetaData.businessSectors.map((sector: string, index: number) => (
+                      <span key={index} className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+                        {sector}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               )}
               {user.publicMetaData.stages && user.publicMetaData.stages.length > 0 && (
@@ -176,34 +193,10 @@ export default async function UserShowPage({
                   </div>
                 </div>
               )}
-              {user.publicMetaData.businessSectors && user.publicMetaData.businessSectors.length > 0 && (
+              {user.publicMetaData.revenue && (
                 <div>
-                  <label className="text-sm font-medium text-slate-700">Business Sectors</label>
-                  <div className="flex flex-wrap gap-2 mt-1">
-                    {user.publicMetaData.businessSectors.map((sector: string, index: number) => (
-                      <span key={index} className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
-                        {sector}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {user.publicMetaData.operationalRegions && user.publicMetaData.operationalRegions.length > 0 && (
-                <div>
-                  <label className="text-sm font-medium text-slate-700">Operational Regions</label>
-                  <div className="flex flex-wrap gap-2 mt-1">
-                    {user.publicMetaData.operationalRegions.map((region: string, index: number) => (
-                      <span key={index} className="inline-flex items-center rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-medium text-purple-800">
-                        {region}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {user.publicMetaData.incorporationCountry && (
-                <div>
-                  <label className="text-sm font-medium text-slate-700">Incorporation Country</label>
-                  <p className="text-slate-900">{user.publicMetaData.incorporationCountry}</p>
+                  <label className="text-sm font-medium text-slate-700">Revenue</label>
+                  <p className="text-slate-900">{user.publicMetaData.revenue}</p>
                 </div>
               )}
             </div>
