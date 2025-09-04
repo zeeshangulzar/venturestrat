@@ -26,6 +26,35 @@ console.log('Fetch user response:', response);
   return response.json();
 };
 
+// Function to fetch users list from the backend
+export const fetchUsersList = async (search?: string, page: number = 1, pageSize: number = 20): Promise<{ users: Record<string, unknown>[], total: number }> => {
+  const params = new URLSearchParams({
+    page: page.toString(),
+    pageSize: pageSize.toString(),
+  });
+  
+  if (search) {
+    params.append('search', search);
+  }
+
+  const response = await fetch(getApiUrl(`/api/users?${params}`), {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch users: ${response.status}`);
+  }
+
+  const users = await response.json();
+  return {
+    users,
+    total: users.length // Backend might not return total count
+  };
+};
+
 // Function to update user data on the backend
 export const updateUserData = async (userId: string, userData: Record<string, unknown>, isComplete: boolean = false): Promise<unknown> => {
   // Extract profile fields and business data
