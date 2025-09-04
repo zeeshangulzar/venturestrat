@@ -192,51 +192,64 @@ export default function InvestorFilter({ filters, setFilters }: Props) {
       return;
     }
 
-    abortControllerRef.current?.abort();
-    abortControllerRef.current = new AbortController();
+    // For pastInvestments, continue using API search
+    if (type === 'pastInvestments') {
+      abortControllerRef.current?.abort();
+      abortControllerRef.current = new AbortController();
 
-    setLoading(true);
-    try {
-      const res = await fetch(
-        getApiUrl(`/api/investment-filters?search=${encodeURIComponent(search)}&type=${type}`
-      ),
-        { signal: abortControllerRef.current.signal,
-        method: 'GET',
-        headers: {
-          'ngrok-skip-browser-warning': 'true',
-        },
-      }
-      );
+      setLoading(true);
+      try {
+        const res = await fetch(
+          getApiUrl(`/api/investment-filters?search=${encodeURIComponent(search)}&type=${type}`
+        ),
+          { signal: abortControllerRef.current.signal,
+          method: 'GET',
+          headers: {
+            'ngrok-skip-browser-warning': 'true',
+          },
+        }
+        );
 
-      if (res.ok) {
-        const data = await res.json();
-        
-        if (type === 'pastInvestments') {
+        if (res.ok) {
+          const data = await res.json();
           const searchResults = (data.pastInvestments ?? []).map((v: string) => ({ label: v, value: v }));
           const mergedOptions = mergeSelectedWithOptions(searchResults, filters.pastInvestment, originalPastInvestments);
           setPastInvestments(mergedOptions);
-        } else if (type === 'investmentStages') {
-          const searchResults = (data.stages ?? []).map((v: string) => ({ label: v, value: v }));
-          const mergedOptions = mergeSelectedWithOptions(searchResults, filters.investmentStage, originalInvestmentStages);
-          setInvestmentStages(mergedOptions);
-        } else if (type === 'investmentFocuses') {
-          const searchResults = (data.investmentFocuses ?? []).map((v: string) => ({ label: v, value: v }));
-          const mergedOptions = mergeSelectedWithOptions(searchResults, filters.investmentFocus, originalInvestmentFocuses);
-          setInvestmentFocuses(mergedOptions);
-        } else if (type === 'investmentTypes') {
-          const searchResults = (data.investmentTypes ?? []).map((v: string) => ({ label: v, value: v }));
-          const mergedOptions = mergeSelectedWithOptions(searchResults, filters.investmentType, originalInvestmentTypes);
-          setInvestmentTypes(mergedOptions);
         }
+      } catch (err) {
+        if (err instanceof Error && err.name !== 'AbortError') {
+          console.error('Error fetching filtered data:', err);
+        }
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      if (err instanceof Error && err.name !== 'AbortError') {
-        console.error('Error fetching filtered data:', err);
-      }
-    } finally {
-      setLoading(false);
+      return;
     }
-  }, 500);
+
+    // For all other types, use local search
+    const searchLower = search.toLowerCase();
+    let filteredOptions: FilterOption[] = [];
+
+    if (type === 'investmentStages') {
+      filteredOptions = originalInvestmentStages.filter(option =>
+        option.label.toLowerCase().includes(searchLower)
+      );
+      const mergedOptions = mergeSelectedWithOptions(filteredOptions, filters.investmentStage, originalInvestmentStages);
+      setInvestmentStages(mergedOptions);
+    } else if (type === 'investmentFocuses') {
+      filteredOptions = originalInvestmentFocuses.filter(option =>
+        option.label.toLowerCase().includes(searchLower)
+      );
+      const mergedOptions = mergeSelectedWithOptions(filteredOptions, filters.investmentFocus, originalInvestmentFocuses);
+      setInvestmentFocuses(mergedOptions);
+    } else if (type === 'investmentTypes') {
+      filteredOptions = originalInvestmentTypes.filter(option =>
+        option.label.toLowerCase().includes(searchLower)
+      );
+      const mergedOptions = mergeSelectedWithOptions(filteredOptions, filters.investmentType, originalInvestmentTypes);
+      setInvestmentTypes(mergedOptions);
+    }
+  }, 300);
 
   // Restore original options when search is cleared or dropdown is opened
   const restoreOriginalOptions = (type: string) => {
