@@ -192,6 +192,17 @@ export default function InvestorFilter({ filters, setFilters }: Props) {
       return;
     }
 
+    // For investment focus, do frontend-only filtering
+    if (type === 'investmentFocuses') {
+      const filteredOptions = originalInvestmentFocuses.filter(option =>
+        option.label.toLowerCase().includes(search.toLowerCase())
+      );
+      const mergedOptions = mergeSelectedWithOptions(filteredOptions, filters.investmentFocus, originalInvestmentFocuses);
+      setInvestmentFocuses(mergedOptions);
+      return;
+    }
+
+    // For other types, continue with backend search
     abortControllerRef.current?.abort();
     abortControllerRef.current = new AbortController();
 
@@ -219,10 +230,6 @@ export default function InvestorFilter({ filters, setFilters }: Props) {
           const searchResults = (data.stages ?? []).map((v: string) => ({ label: v, value: v }));
           const mergedOptions = mergeSelectedWithOptions(searchResults, filters.investmentStage, originalInvestmentStages);
           setInvestmentStages(mergedOptions);
-        } else if (type === 'investmentFocuses') {
-          const searchResults = (data.investmentFocuses ?? []).map((v: string) => ({ label: v, value: v }));
-          const mergedOptions = mergeSelectedWithOptions(searchResults, filters.investmentFocus, originalInvestmentFocuses);
-          setInvestmentFocuses(mergedOptions);
         } else if (type === 'investmentTypes') {
           const searchResults = (data.investmentTypes ?? []).map((v: string) => ({ label: v, value: v }));
           const mergedOptions = mergeSelectedWithOptions(searchResults, filters.investmentType, originalInvestmentTypes);

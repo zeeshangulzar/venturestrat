@@ -151,10 +151,13 @@ export default function InvestorsPage() {
     setError(null);
 
     try {
+      // Separate investment focus from other filters for backend
+      const { investmentFocus, ...backendFilters } = filters;
+      
       const url = getApiUrl(
         `/api/investors?page=${currentPage}&itemsPerPage=${itemsPerPage}&search=${encodeURIComponent(
           searchQuery
-        )}&filters=${encodeURIComponent(JSON.stringify(filters))}`
+        )}&filters=${encodeURIComponent(JSON.stringify(backendFilters))}`
       );
 
       const res = await fetch(url, {
@@ -165,7 +168,19 @@ export default function InvestorsPage() {
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
 
       const data: ApiResponse = await res.json();
-      setInvestors(data.investors || []);
+      let filteredInvestors = data.investors || [];
+
+      // Apply investment focus filter on frontend
+      if (investmentFocus.length > 0) {
+        filteredInvestors = filteredInvestors.filter((investor: Investor) => {
+          // Check if investor has any of the selected investment focuses (market titles)
+          return investmentFocus.some(focus => 
+            investor.markets && investor.markets.some(market => market.market.title === focus)
+          );
+        });
+      }
+
+      setInvestors(filteredInvestors);
       setPagination(data.pagination);
     } catch (err) {
       console.error('Error fetching investors:', err);
