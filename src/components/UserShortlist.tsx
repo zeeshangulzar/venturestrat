@@ -2,8 +2,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { getApiUrl } from '@lib/api'
+import InvestorCard from '@components/InvestorCard'
 
 // Final shape your card expects
 type Investor = {
@@ -54,7 +54,6 @@ type ApiResponse = {
 }
 
 export default function UserShortlist({ userId, basePath = '/investors' }: { userId: string; basePath?: string }) {
-  const router = useRouter()
   const [data, setData] = useState<ApiResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -156,10 +155,6 @@ export default function UserShortlist({ userId, basePath = '/investors' }: { use
 
   const shortlist: Investor[] = (data?.shortlistedInvestors ?? []).map(normalizeInvestor)
 
-  const handleInvestorClick = (investorId: string) => {
-    router.push(`/admin/investors/${investorId}`)
-  }
-
   return (
     <section className="mt-8">
       <div className="mb-3 flex items-end justify-between">
@@ -190,73 +185,13 @@ export default function UserShortlist({ userId, basePath = '/investors' }: { use
       )}
 
       {!loading && !error && data && shortlist.length > 0 && (
-        <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
-          <table className="min-w-full divide-y divide-slate-200">
-            <thead className="bg-slate-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                  Name
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                  Company
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                  Location
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                  Investor Types
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                  Stages
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-slate-200">
-              {shortlist.map((inv) => (
-                <tr 
-                  key={inv.id} 
-                  className="hover:bg-slate-50 cursor-pointer transition-colors duration-150"
-                  onClick={() => handleInvestorClick(inv.id)}
-                >
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <div>
-                        <div className="text-sm font-medium text-slate-900">
-                          {inv.name || '—'}
-                        </div>
-                        {inv.title && (
-                          <div className="text-sm text-slate-500">
-                            {inv.title}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-slate-900">
-                      {inv.companyName || '—'}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-slate-900">
-                      {[inv.city, inv.state, inv.country].filter(Boolean).join(', ') || '—'}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-slate-900">
-                      {inv.investorTypes.length > 0 ? inv.investorTypes.join(', ') : '—'}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-slate-900">
-                      {inv.stages.length > 0 ? inv.stages.join(', ') : '—'}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <ul className="space-y-3">
+          {shortlist.map((inv) => (
+            <li key={inv.id}>
+              <InvestorCard investor={inv} basePath={basePath} hideTargetButton={true} />
+            </li>
+          ))}
+        </ul>
       )}
     </section>
   )
