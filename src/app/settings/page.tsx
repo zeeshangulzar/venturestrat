@@ -74,41 +74,30 @@ export default function SettingsPage() {
   const [stages, setStages] = useState<FilterOption[]>([]);
   const [businessSectors, setBusinessSectors] = useState<FilterOption[]>([]);
   const [loadingFilters, setLoadingFilters] = useState(false);
-  const handleSearch = debounceSearch(async (search: string, type: string) => {
+  const handleSearch = debounceSearch((search: string, type: string) => {
       if (typeof search !== 'string' || !search.trim()) {
         // When search is empty, restore original options but include selected values
         restoreOriginalOptionsWithSelected(type);
         return;
       }
   
-      try {
-        const res = await fetch(
-          getApiUrl(`/api/investment-filters?search=${encodeURIComponent(search)}&type=${type}`),
-          {
-            method: 'GET',
-            headers: {
-              'ngrok-skip-browser-warning': 'true',
-            },
-          }
+      // Use local search instead of API calls
+      const searchLower = search.toLowerCase();
+
+      if (type === 'investmentStages') {
+        const filteredOptions = originalStages.filter(option =>
+          option.label.toLowerCase().includes(searchLower)
         );
-  
-        if (res.ok) {
-          const data = await res.json();
-          
-          if (type === 'investmentStages') {
-            const searchResults = (data.stages ?? []).map((v: string) => ({ label: v, value: v }));
-            const mergedOptions = mergeSelectedWithOptions(searchResults, formData.stages, originalStages);
-            setStages(mergedOptions);
-          } else if (type === 'investmentFocuses') {
-            const searchResults = (data.investmentFocuses ?? []).map((v: string) => ({ label: v, value: v }));
-            const mergedOptions = mergeSelectedWithOptions(searchResults, formData.businessSectors, originalBusinessSectors);
-            setBusinessSectors(mergedOptions);
-          }
-        }
-      } catch (err) {
-        console.error('Error fetching filtered data:', err);
+        const mergedOptions = mergeSelectedWithOptions(filteredOptions, formData.stages, originalStages);
+        setStages(mergedOptions);
+      } else if (type === 'investmentFocuses') {
+        const filteredOptions = originalBusinessSectors.filter(option =>
+          option.label.toLowerCase().includes(searchLower)
+        );
+        const mergedOptions = mergeSelectedWithOptions(filteredOptions, formData.businessSectors, originalBusinessSectors);
+        setBusinessSectors(mergedOptions);
       }
-    }, 500);
+    }, 300);
 
   // Debounced auto-save functionality
   const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
