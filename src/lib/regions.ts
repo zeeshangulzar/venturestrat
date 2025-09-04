@@ -2,17 +2,50 @@ export type RegionOption = { label: string; value: string; disabled?: boolean; k
 
 // UN geoscheme continents and subregions
 export const regions: RegionOption[] = [
-  { label: 'Worldwide', value: 'Worldwide' },
-  { label: 'North America', value: 'North America' },
-  { label: 'Latin America / South America', value: 'Latin America / South America' },
-  { label: 'Europe', value: 'Europe' },
-  { label: 'Middle East', value: 'Middle East' },
+  // Africa
   { label: 'Africa', value: 'Africa' },
+  { label: 'Northern Africa', value: 'Northern Africa' },
+  { label: 'Western Africa', value: 'Western Africa' },
+  { label: 'Eastern Africa', value: 'Eastern Africa' },
+  { label: 'Central Africa', value: 'Central Africa' },
+  { label: 'Southern Africa', value: 'Southern Africa' },
+
+  // Asia
   { label: 'Asia', value: 'Asia' },
   { label: 'Central Asia', value: 'Central Asia' },
-  { label: 'Southeast Asia', value: 'Southeast Asia' },
-  { label: 'East Asia', value: 'East Asia' },
   { label: 'South Asia', value: 'South Asia' },
+  { label: 'South-eastern Asia', value: 'South-eastern Asia' },
+  { label: 'Eastern Asia', value: 'Eastern Asia' },
+  { label: 'Western Asia', value: 'Western Asia' },
+  { label: 'Northern Asia', value: 'Northern Asia' },
+
+  // Europe
+  { label: 'Europe', value: 'Europe' },
+  { label: 'Northern Europe', value: 'Northern Europe' },
+  { label: 'Southern Europe', value: 'Southern Europe' },
+  { label: 'Western Europe', value: 'Western Europe' },
+  { label: 'Eastern Europe', value: 'Eastern Europe' },
+  { label: 'Central Europe', value: 'Central Europe' },
+
+  // Americas
+  { label: 'Americas', value: 'Americas' },
+  { label: 'North America', value: 'North America' },
+  { label: 'South America', value: 'South America' },
+  { label: 'Central America', value: 'Central America' },
+  { label: 'Caribbean', value: 'Caribbean' },
+  { label: 'Latin America', value: 'Latin America' },
+
+  // Oceania
+  { label: 'Oceania', value: 'Oceania' },
+  { label: 'Australia', value: 'Australia' },
+  { label: 'New Zealand', value: 'New Zealand' },
+  { label: 'Melanesia', value: 'Melanesia' },
+  { label: 'Micronesia', value: 'Micronesia' },
+  { label: 'Polynesia', value: 'Polynesia' },
+  { label: 'Pacific Islands', value: 'Pacific Islands' },
+
+  // Antarctica
+  { label: 'Antarctica', value: 'Antarctica' }
 ];
 
 export const buildRegionCountryOptions = (
