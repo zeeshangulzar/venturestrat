@@ -2,14 +2,16 @@
 
 import { setRole } from '@components/_actions'
 import { useEffect, useState, useTransition } from 'react'
+import { getApiUrl } from '@lib/api';
 
-type ClerkUser = {
+type BackendUser = {
   id: string;
   firstName: string | null;
   lastName: string | null;
-  emailAddresses: Array<{ id: string; emailAddress: string }>;
-  primaryEmailAddressId: string | null;
-  publicMetadata: { role?: string };
+  email: string;
+  role: string;
+  onboardingComplete: boolean;
+  publicMetaData: any;
   createdAt: number;
   banned: boolean;
   locked: boolean;
@@ -28,7 +30,7 @@ export default function UsersList({
   pageSize = 20,
   showRoleActions = false,
 }: UsersListProps) {
-  const [users, setUsers] = useState<ClerkUser[]>([])
+  const [users, setUsers] = useState<BackendUser[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [isPending, startTransition] = useTransition()
@@ -101,7 +103,7 @@ export default function UsersList({
         setUsers(prevUsers => 
           prevUsers.map(user => 
             user.id === userId 
-              ? { ...user, publicMetadata: { ...user.publicMetadata, role: newRole } }
+              ? { ...user, role: newRole }
               : user
           )
         )
@@ -161,6 +163,12 @@ export default function UsersList({
                   Role
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                  Company
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                  Location
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                   Created At
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
@@ -173,10 +181,12 @@ export default function UsersList({
                 const fullName = user.firstName || user.lastName
                   ? `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim()
                   : '—'
-                const email = user.emailAddresses[0]?.emailAddress || '—'
-                const role = titleizeRole(user.publicMetadata?.role as string | '')
+                const email = user.email || '—'
+                const role = titleizeRole(user.role)
                 const createdDate = formatDate(user.createdAt)
-                const currentRole = user.publicMetadata?.role as string | undefined
+                const company = user.publicMetaData?.companyName || '—'
+                const location = user.publicMetaData?.userCountry || '—'
+                const currentRole = user.role
 
                 return (
                   <tr 
@@ -199,6 +209,12 @@ export default function UsersList({
                           )}
                         </span>
                       ) }
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-500">
+                      {company}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-500">
+                      {location}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-500">
                       {createdDate}

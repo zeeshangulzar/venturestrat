@@ -2,6 +2,7 @@ import { Webhook } from 'svix'
 import { headers } from 'next/headers'
 import { WebhookEvent } from '@clerk/nextjs/server'
 import { setDefaultRole } from '@components/_actions'
+import { getApiUrl } from '@lib/api'
 
 export async function POST(req: Request) {
   // Get the headers
@@ -57,6 +58,32 @@ export async function POST(req: Request) {
       console.log(`Default role 'moderator' set for new user: ${userId}`);
     } catch (error) {
       console.error('Error setting default role for new user:', error);
+    }
+  } else if (eventType === 'user.updated') {
+    // Handle user updates - this could include role changes
+    const { id: userId, public_metadata } = evt.data;
+    
+    if (public_metadata && public_metadata.role) {
+      try {
+        // Sync role change to backend
+        const backendResponse = await fetch(getApiUrl(`/api/user/${userId}`), {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            role: public_metadata.role
+          }),
+        });
+
+        if (!backendResponse.ok) {
+          console.warn(`Failed to sync role update to backend for user ${userId}: ${backendResponse.status}`);
+        } else {
+          console.log(`Role update synced to backend for user ${userId}: ${public_metadata.role}`);
+        }
+      } catch (error) {
+        console.error('Error syncing role update to backend:', error);
+      }
     }
   }
 

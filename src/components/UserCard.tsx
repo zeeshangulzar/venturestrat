@@ -7,9 +7,10 @@ type SerializedUser = {
   id: string;
   firstName: string | null;
   lastName: string | null;
-  emailAddresses: Array<{ id: string; emailAddress: string }>;
-  primaryEmailAddressId: string | null;
-  publicMetadata: { role?: string };
+  email: string;
+  role: string;
+  onboardingComplete: boolean;
+  publicMetaData: any;
   createdAt: number | Date;
   banned: boolean;
   locked: boolean;
@@ -22,9 +23,8 @@ type UserCardProps = {
 
 export default function UserCard({ user, showRoleActions }: UserCardProps) {
   const router = useRouter();
-  const primaryEmail =
-    user.emailAddresses?.find((e) => e.id === user.primaryEmailAddressId)?.emailAddress ?? '—';
-  const role = user.publicMetadata?.role ?? '';
+  const primaryEmail = user.email ?? '—';
+  const role = user.role ?? '';
   const created = user.createdAt ? new Date(user.createdAt).toLocaleString() : '—';
 
   const handleCardClick = () => {

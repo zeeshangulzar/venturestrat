@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { checkRole } from '@utils/roles';
-import { clerkClient } from '@clerk/nextjs/server';
+import { getApiUrl } from '@lib/api';
 
 export async function GET(request: Request) {
   try {
@@ -17,32 +17,47 @@ export async function GET(request: Request) {
     const page = parseInt(searchParams.get('page') || '1');
     const pageSize = parseInt(searchParams.get('pageSize') || '20');
 
-    const client = await clerkClient();
-    const limit = pageSize;
-    const offset = (Math.max(1, page) - 1) * pageSize;
+    // Build query parameters for backend API
+    const backendParams = new URLSearchParams({
+      page: page.toString(),
+      pageSize: pageSize.toString(),
+    });
+    
+    if (search) {
+      backendParams.append('search', search);
+    }
 
-    const resp = await client.users.getUserList({
-      query: search || undefined,
-      limit,
-      offset,
-      orderBy: '-created_at',
+    // Fetch users from backend API
+    const backendResponse = await fetch(getApiUrl(`/api/users?${backendParams}`), {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
     });
 
-    const users = resp.data.map(user => ({
+    if (!backendResponse.ok) {
+      throw new Error(`Backend API error: ${backendResponse.status}`);
+    }
+
+    const backendData = await backendResponse.json();
+
+    // Transform backend data to match frontend expectations
+    const users = backendData.map((user: any) => ({
       id: user.id,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      emailAddresses: user.emailAddresses,
-      primaryEmailAddressId: user.primaryEmailAddressId,
-      publicMetadata: user.publicMetadata,
-      createdAt: user.createdAt,
-      banned: user.banned,
-      locked: user.locked
+      firstName: user.firstname,
+      lastName: user.lastname,
+      email: user.email,
+      role: user.role,
+      onboardingComplete: user.onboardingComplete,
+      publicMetaData: user.publicMetaData,
+      createdAt: new Date(user.createdAt).getTime(), // Convert to timestamp for compatibility
+      banned: false, // Backend doesn't have banned status
+      locked: false, // Backend doesn't have locked status
     }));
 
     return NextResponse.json({
       users,
-      total: resp.totalCount,
+      total: users.length, // Backend might not return total count, using current page length
       success: true
     });
   } catch (error) {
