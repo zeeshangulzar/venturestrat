@@ -44,6 +44,11 @@ type ApiInvestor = {
   stages?: string[] | null
   markets?: Array<{ market: { id: string | number; title: string } }> | null
   pastInvestments?: Array<{ pastInvestment: { id: string | number; title: string } }> | null
+
+  // 👇 Add this so you don’t need `any`
+  sourceData?: {
+    emails?: Array<{ id: string; email: string; status: string }>
+  }
 }
 
 type ApiResponse = {
@@ -68,10 +73,10 @@ export function useUserShortlist(userId: string): UseUserShortlistReturn {
   // Adapter to map backend investor → InvestorCard shape
   const normalizeInvestor = (inv: ApiInvestor): Investor => {
     const sourceEmails =
-      (inv as any)?.sourceData?.emails && Array.isArray((inv as any).sourceData.emails)
-        ? (inv as any).sourceData.emails
+      inv.sourceData?.emails && Array.isArray(inv.sourceData.emails)
+        ? inv.sourceData.emails
         : []
-
+        
     return {
       id: String(inv.id),
       name: inv.name ?? inv.companyName ?? inv.fundName ?? 'Unnamed Investor',
