@@ -107,7 +107,14 @@ const Sidebar = () => {
             </Link>
           </div>
 
-
+          <div className={getActiveWrapperClass('/fundraising')}>
+            <Link href= "fundraising" className={`ml-2.5 mr-2.5 block text-lg py-2 rounded-lg transition-colors cursor-pointer ${getLinkClass('/fundraising')}`}>
+              <div className="flex items-center">
+                <FinancialsIcon className="h-6 w-6 mr-2" />
+                <span className='font-medium text-[14px]'>CRM</span>
+              </div>
+            </Link>
+           </div>
 
           <div className={getActiveWrapperClass('/task-manager')}>
             <div className={`ml-2.5 mr-2.5 block text-lg py-2 rounded-lg transition-colors cursor-pointer ${getLinkClass('/task-manager')}`}>
@@ -127,13 +134,13 @@ const Sidebar = () => {
              </div>
            </div>
 
-           <div className={getActiveWrapperClass('/fundraising')}>
-             <Link href= "fundraising" className={`ml-2.5 mr-2.5 block text-lg py-2 rounded-lg transition-colors cursor-pointer ${getLinkClass('/fundraising')}`}>
+           <div className={getActiveWrapperClass('/financials')}>
+             <div className={`ml-2.5 mr-2.5 block text-lg py-2 rounded-lg transition-colors cursor-pointer ${getLinkClass('/financials')}`}>
                <div className="flex items-center">
                  <FinancialsIcon className="h-6 w-6 mr-2" />
-                 <span className='font-medium text-[14px]'>Fundraising</span>
+                 <span className='font-medium text-[14px]'>Financials</span>
                </div>
-             </Link>
+             </div>
            </div>
 
            <div className={getActiveWrapperClass('/presentations')}>
