@@ -1,8 +1,10 @@
 'use client';
 
 import { useUser } from "@clerk/nextjs";
+import { useState } from "react";
 import ThreeBageIcon from "@components/icons/ThreeBagdeIcon";
 import { useUserShortlist } from '@hooks/useUserShortlist'
+import MailTabs, { MailSectionType } from '@components/MailTabs'
 
 export default function FundraisingPage() {
   const { user } = useUser();
@@ -14,42 +16,51 @@ export default function FundraisingPage() {
     totalShortlisted,
   } = useUserShortlist(user?.id ?? "");
 
+  // State for mail section
+  const [activeMailSection, setActiveMailSection] = useState<MailSectionType>('all');
+
   return (
-    <main className="min-h-screen bg-[#F4F6FB]">
+    <main className="min-h-screen bg-[#F4F6FB] h-[1441px]">
       <div className="flex bg-[#FFFFFF] items-center bg-[rgba(255, 255, 255, 0.8)] h-[60px] px-5 py-4 border-b border-[#EDEEEF]">
         <h2 className="not-italic font-bold text-[18px] leading-[24px] tracking-[-0.02em] text-[#0C2143]">Fundraising CRM</h2>
       </div>
 
       {/* 3 Column Layout */}
-      <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Column 1 */}
-        <div className="px-5 py-3 flex flex-col gap-4">
-          <div className="not-italic font-semibold text-base leading-4 tracking-tight capitalize text-[#0C2143] flex items-center gap-2 py-3">
-            <svg width="8" height="8" viewBox="0 0 8 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="4" cy="4" r="4" fill="#FF6D65"/>
-            </svg>
-            Target
-            <div className="flex flex-col justify-center items-center px-3 py-[3px] gap-2 w-[31px] h-[22px] bg-white rounded-[40px]">
-              <div className="w-[7px] h-4 font-manrope not-italic font-medium text-[12px] leading-4 tracking-[-0.02em] capitalize text-[#0C2143]">
-                {totalShortlisted}
-              </div>
-            </div>
-            <ThreeBageIcon />
-          </div>
-          <div className="flex items-center gap-2 h-[50px] box-border  bg-white/40 border border-dashed border-white/70 rounded-[10px] justify-center">
-            <svg width="21" height="20" viewBox="0 0 21 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <g clipPath="url(#clip0_741_4584)">
-              <path d="M10.333 4.16675V15.8334" stroke="#0C2143" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M4.5 10H16.1667" stroke="#0C2143" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </g>
-              <defs>
-              <clipPath id="clip0_741_4584">
-              <rect width="20" height="20" fill="white" transform="translate(0.333008)"/>
-              </clipPath>
-              </defs>
-            </svg>
-            <h2 className="not-italic font-semibold text-base leading-4 tracking-tight capitalize text-[#0C2143]"> Add New</h2>
-          </div>
+      <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6 h-[60%] overflow-auto">
+         {/* Column 1 */}
+         <div className="px-5 py-3 flex flex-col gap-4 h-full">
+           {/* Sticky Header Section */}
+           <div className="sticky top-0 bg-[#F4F6FB] z-10 pb-2">
+             <div className="not-italic font-semibold text-base leading-4 tracking-tight capitalize text-[#0C2143] flex items-center gap-2 py-3">
+               <svg width="8" height="8" viewBox="0 0 8 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                 <circle cx="4" cy="4" r="4" fill="#FF6D65"/>
+               </svg>
+               Target
+               <div className="flex flex-col justify-center items-center px-3 py-[3px] gap-2 w-[31px] h-[22px] bg-white rounded-[40px]">
+                 <div className="w-[7px] h-4 font-manrope not-italic font-medium text-[12px] leading-4 tracking-[-0.02em] capitalize text-[#0C2143]">
+                   {totalShortlisted}
+                 </div>
+               </div>
+               <ThreeBageIcon />
+             </div>
+             <div className="flex items-center gap-2 p-3 box-border  bg-white/40 border border-dashed border-white/70 rounded-[10px] justify-center">
+               <svg width="21" height="20" viewBox="0 0 21 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                 <g clipPath="url(#clip0_741_4584)">
+                 <path d="M10.333 4.16675V15.8334" stroke="#0C2143" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                 <path d="M4.5 10H16.1667" stroke="#0C2143" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                 </g>
+                 <defs>
+                 <clipPath id="clip0_741_4584">
+                 <rect width="20" height="20" fill="white" transform="translate(0.333008)"/>
+                 </clipPath>
+                 </defs>
+               </svg>
+               <h2 className="not-italic font-semibold text-base leading-4 tracking-tight capitalize text-[#0C2143]"> Add New</h2>
+             </div>
+           </div>
+           
+           {/* Scrollable Content Area */}
+           <div className="flex-1 overflow-y-auto">
           { user && (
             <>
               {loading && (
@@ -100,7 +111,7 @@ export default function FundraisingPage() {
                               </defs>
                             </svg>
                           </p>
-                          <p className="not-italic font-semibold text-[16px] leading-6 tracking-[-0.02em] text-[#0C2143]">
+                          <p className="not-italic font-semibold text-[16px] leading-6 tracking-[-0.02em] text-[#0C2143] break-all">
                             {inv.emails?.[0]?.email || "N/A"}
                           </p>
                         </div>
@@ -133,72 +144,129 @@ export default function FundraisingPage() {
                       </div>
                     </li>
                   ))}
-                </ul>
+                 </ul>
 
-              )}
-              
-            </>
-          )}
-        </div>
+               )}
+               
+             </>
+           )}
+           </div>
+         </div>
 
         {/* Column 2 */}
-        <div className="px-5 py-3 flex flex-col gap-4">
-          <div className="not-italic font-semibold text-base leading-4 tracking-tight capitalize text-[#0C2143] flex items-center gap-2 py-3">
-            <svg width="9" height="8" viewBox="0 0 9 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="4.33301" cy="4" r="4" fill="#FFC342"/>
-            </svg>
-            Connected
-            <div className="flex flex-col justify-center items-center px-3 py-[3px] gap-2 w-[31px] h-[22px] bg-white rounded-[40px]">
-              <div className="w-[7px] h-4 font-manrope not-italic font-medium text-[12px] leading-4 tracking-[-0.02em] capitalize text-[#0C2143]">
-                0
+        <div className="px-5 py-3 flex flex-col gap-4 h-full">
+          {/* Sticky Header Section */}
+          <div className="sticky top-0 bg-[#F4F6FB] z-10 pb-2">
+            <div className="not-italic font-semibold text-base leading-4 tracking-tight capitalize text-[#0C2143] flex items-center gap-2 py-3">
+              <svg width="9" height="8" viewBox="0 0 9 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="4.33301" cy="4" r="4" fill="#FFC342"/>
+              </svg>
+              Connected
+              <div className="flex flex-col justify-center items-center px-3 py-[3px] gap-2 w-[31px] h-[22px] bg-white rounded-[40px]">
+                <div className="w-[7px] h-4 font-manrope not-italic font-medium text-[12px] leading-4 tracking-[-0.02em] capitalize text-[#0C2143]">
+                  0
+                </div>
               </div>
+              <ThreeBageIcon />
             </div>
-            <ThreeBageIcon />
+            <div className="flex items-center gap-2 p-3 box-border  bg-white/40 border border-dashed border-white/70 rounded-[10px] justify-center">
+              <svg width="21" height="20" viewBox="0 0 21 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <g clipPath="url(#clip0_741_4584)">
+                <path d="M10.333 4.16675V15.8334" stroke="#0C2143" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M4.5 10H16.1667" stroke="#0C2143" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </g>
+                <defs>
+                <clipPath id="clip0_741_4584">
+                <rect width="20" height="20" fill="white" transform="translate(0.333008)"/>
+                </clipPath>
+                </defs>
+              </svg>
+              <h2 className="not-italic font-semibold text-base leading-4 tracking-tight capitalize text-[#0C2143]"> Add New</h2>
+            </div>
           </div>
-           <div className="flex items-center gap-2 h-[50px] box-border  bg-white/40 border border-dashed border-white/70 rounded-[10px] justify-center">
-            <svg width="21" height="20" viewBox="0 0 21 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <g clipPath="url(#clip0_741_4584)">
-              <path d="M10.333 4.16675V15.8334" stroke="#0C2143" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M4.5 10H16.1667" stroke="#0C2143" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </g>
-              <defs>
-              <clipPath id="clip0_741_4584">
-              <rect width="20" height="20" fill="white" transform="translate(0.333008)"/>
-              </clipPath>
-              </defs>
-            </svg>
-            <h2 className="not-italic font-semibold text-base leading-4 tracking-tight capitalize text-[#0C2143]"> Add New</h2>
+          
+          {/* Scrollable Content Area */}
+          <div className="flex-1 overflow-y-auto">
+            {/* Content for Connected column can be added here */}
           </div>
         </div>
 
         {/* Column 3 */}
-        <div className="px-5 py-3 flex flex-col gap-4">
-          <div className="not-italic font-semibold text-base leading-4 tracking-tight capitalize text-[#0C2143] flex items-center gap-2 py-3">
-            <svg width="9" height="8" viewBox="0 0 9 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="4.66602" cy="4" r="4" fill="#2CEAA8"/>
-            </svg>
-            Interested
-            <div className="flex flex-col justify-center items-center px-3 py-[3px] gap-2 w-[31px] h-[22px] bg-white rounded-[40px]">
-              <div className="w-[7px] h-4 font-manrope not-italic font-medium text-[12px] leading-4 tracking-[-0.02em] capitalize text-[#0C2143]">
-                0
+        <div className="px-5 py-3 flex flex-col gap-4 h-full">
+          {/* Sticky Header Section */}
+          <div className="sticky top-0 bg-[#F4F6FB] z-10 pb-2">
+            <div className="not-italic font-semibold text-base leading-4 tracking-tight capitalize text-[#0C2143] flex items-center gap-2 py-3">
+              <svg width="9" height="8" viewBox="0 0 9 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="4.66602" cy="4" r="4" fill="#2CEAA8"/>
+              </svg>
+              Interested
+              <div className="flex flex-col justify-center items-center px-3 py-[3px] gap-2 w-[31px] h-[22px] bg-white rounded-[40px]">
+                <div className="w-[7px] h-4 font-manrope not-italic font-medium text-[12px] leading-4 tracking-[-0.02em] capitalize text-[#0C2143]">
+                  0
+                </div>
               </div>
+              <ThreeBageIcon />
             </div>
-            <ThreeBageIcon />
+            <div className="flex items-center gap-2 p-3 box-border  bg-white/40 border border-dashed border-white/70 rounded-[10px] justify-center">
+              <svg width="21" height="20" viewBox="0 0 21 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <g clipPath="url(#clip0_741_4584)">
+                <path d="M10.333 4.16675V15.8334" stroke="#0C2143" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M4.5 10H16.1667" stroke="#0C2143" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </g>
+                <defs>
+                <clipPath id="clip0_741_4584">
+                <rect width="20" height="20" fill="white" transform="translate(0.333008)"/>
+                </clipPath>
+                </defs>
+              </svg>
+              <h2 className="not-italic font-semibold text-base leading-4 tracking-tight capitalize text-[#0C2143]"> Add New</h2>
+            </div>
           </div>
-           <div className="flex items-center gap-2 h-[50px] box-border  bg-white/40 border border-dashed border-white/70 rounded-[10px] justify-center">
-            <svg width="21" height="20" viewBox="0 0 21 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <g clipPath="url(#clip0_741_4584)">
-              <path d="M10.333 4.16675V15.8334" stroke="#0C2143" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M4.5 10H16.1667" stroke="#0C2143" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </g>
-              <defs>
-              <clipPath id="clip0_741_4584">
-              <rect width="20" height="20" fill="white" transform="translate(0.333008)"/>
-              </clipPath>
-              </defs>
-            </svg>
-            <h2 className="not-italic font-semibold text-base leading-4 tracking-tight capitalize text-[#0C2143]"> Add New</h2>
+          
+          {/* Scrollable Content Area */}
+          <div className="flex-1 overflow-y-auto">
+            {/* Content for Interested column can be added here */}
           </div>
+        </div>
+      </div>
+      <div className='bg-[#F4F6FB] px-4 h-[40%]'>
+        <div className="bg-[#FFFFFF] border border-[#EDEEEF] rounded-[14px] px-5 py-3 h-full overflow-y-auto">
+          <h2 className="not-italic font-bold text-[18px] leading-[24px] tracking-[-0.02em] text-[#0C2143]">Mails</h2>
+          
+          <MailTabs 
+            activeSection={activeMailSection} 
+            onSectionChange={setActiveMailSection}
+          >
+            <div className="space-y-4">
+              {activeMailSection === 'all' && (
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <p className="text-gray-600">All mails content will be displayed here.</p>
+                  <p className="text-sm text-gray-500 mt-2">This section shows all emails in your fundraising campaign.</p>
+                </div>
+              )}
+              
+              {activeMailSection === 'sent' && (
+                <div className="p-4 bg-blue-50 rounded-lg">
+                  <p className="text-blue-600">Sent mails content will be displayed here.</p>
+                  <p className="text-sm text-blue-500 mt-2">This section shows all emails you have sent to investors.</p>
+                </div>
+              )}
+              
+              {activeMailSection === 'opened' && (
+                <div className="p-4 bg-yellow-50 rounded-lg">
+                  <p className="text-yellow-600">Opened mails content will be displayed here.</p>
+                  <p className="text-sm text-yellow-500 mt-2">This section shows emails that have been opened by recipients.</p>
+                </div>
+              )}
+              
+              {activeMailSection === 'answered' && (
+                <div className="p-4 bg-green-50 rounded-lg">
+                  <p className="text-green-600">Answered mails content will be displayed here.</p>
+                  <p className="text-sm text-green-500 mt-2">This section shows emails that have received responses.</p>
+                </div>
+              )}
+            </div>
+          </MailTabs>
         </div>
       </div>
     </main>

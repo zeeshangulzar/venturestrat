@@ -76,7 +76,7 @@ export function useUserShortlist(userId: string): UseUserShortlistReturn {
       inv.sourceData?.emails && Array.isArray(inv.sourceData.emails)
         ? inv.sourceData.emails
         : []
-        
+
     return {
       id: String(inv.id),
       name: inv.name ?? inv.companyName ?? inv.fundName ?? 'Unnamed Investor',

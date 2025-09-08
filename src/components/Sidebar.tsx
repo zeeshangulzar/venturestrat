@@ -107,7 +107,7 @@ const Sidebar = () => {
             </Link>
           </div>
 
-          <div className={getActiveWrapperClass('/fundraising')}>
+          <div className={`${getActiveWrapperClass('/fundraising')} hidden`}>
             <Link href= "fundraising" className={`ml-2.5 mr-2.5 block text-lg py-2 rounded-lg transition-colors cursor-pointer ${getLinkClass('/fundraising')}`}>
               <div className="flex items-center">
                 <FinancialsIcon className="h-6 w-6 mr-2" />
