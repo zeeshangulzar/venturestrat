@@ -1,10 +1,12 @@
 'use client';
 
 import { useUser } from "@clerk/nextjs";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ThreeBageIcon from "@components/icons/ThreeBagdeIcon";
 import { useUserShortlist } from '@hooks/useUserShortlist'
-import MailTabs, { MailSectionType } from '@components/MailTabs'
+import ChatGPTIntegration from '@components/ChatGPTIntegration'
+import EmailTabsManager from '@components/EmailTabsManager'
+import { fetchUserData } from '@lib/api'
 
 export default function FundraisingPage() {
   const { user } = useUser();
@@ -16,13 +18,68 @@ export default function FundraisingPage() {
     totalShortlisted,
   } = useUserShortlist(user?.id ?? "");
 
-  // State for mail section
-  const [activeMailSection, setActiveMailSection] = useState<MailSectionType>('all');
+  
+  // State for user data
+  const [userData, setUserData] = useState<{
+    companyName?: string;
+    businessSectors?: string[];
+    stages?: string[];
+    fundingAmount?: number;
+    fundingCurrency?: string;
+  } | null>(null);
+  const [userDataLoading, setUserDataLoading] = useState(true);
+  
+  // State for email generation feedback
+  const [emailGenerationStatus, setEmailGenerationStatus] = useState<{
+    type: 'success' | 'error' | null;
+    message: string;
+  }>({ type: null, message: '' });
+
+  // State for triggering email list refresh
+  const [emailRefreshTrigger, setEmailRefreshTrigger] = useState(0);
+
+  // Function to trigger email list refresh
+  const triggerEmailRefresh = () => {
+    setEmailRefreshTrigger(prev => prev + 1);
+  };
+
+  // Load user data for ChatGPT prompt
+  useEffect(() => {
+    const loadUserData = async () => {
+      if (!user?.id) return;
+      
+      setUserDataLoading(true);
+      try {
+        const userData = await fetchUserData(user.id);
+        if (userData && typeof userData === 'object') {
+          const actualUserData = (userData as any).user || userData;
+          setUserData(actualUserData.publicMetaData || {});
+        }
+      } catch (error) {
+        console.error('Failed to load user data:', error);
+      } finally {
+        setUserDataLoading(false);
+      }
+    };
+
+    loadUserData();
+  }, [user?.id]);
 
   return (
     <main className="min-h-screen bg-[#F4F6FB] h-[1441px]">
       <div className="flex bg-[#FFFFFF] items-center bg-[rgba(255, 255, 255, 0.8)] h-[60px] px-5 py-4 border-b border-[#EDEEEF]">
         <h2 className="not-italic font-bold text-[18px] leading-[24px] tracking-[-0.02em] text-[#0C2143]">Fundraising CRM</h2>
+        
+        {/* Email Generation Status */}
+        {emailGenerationStatus.type && (
+          <div className={`ml-4 px-3 py-1 rounded-md text-sm ${
+            emailGenerationStatus.type === 'success' 
+              ? 'bg-green-100 text-green-800' 
+              : 'bg-red-100 text-red-800'
+          }`}>
+            {emailGenerationStatus.message}
+          </div>
+        )}
       </div>
 
       {/* 3 Column Layout */}
@@ -138,9 +195,34 @@ export default function FundraisingPage() {
                         <button className="flex-1 justify-center items-center px-5 py-2.5 gap-1 h-[39px] left-4 top-[394px] bg-[#EEF3FD] rounded-[10px] font-manrope not-italic font-medium text-[14px] leading-[19px] tracking-[-0.02em] text-[#2563EB]">
                           Contact
                         </button>
-                        <button className="flex-1 justify-center items-center px-5 py-2.5 gap-1 h-[39px] left-4 top-[394px] bg-[#2563EB] rounded-[10px] font-manrope not-italic font-medium text-[14px] leading-[19px] tracking-[-0.02em] text-[#FFFFFF]">
-                          AI Email
-                        </button>
+                        {user && userData && !userDataLoading && (
+                          <ChatGPTIntegration
+                            investor={inv}
+                            user={user}
+                            userData={userData}
+                            onEmailGenerated={(emailContent) => {
+                              setEmailGenerationStatus({
+                                type: 'success',
+                                message: 'Email generated successfully!'
+                              });
+                              // Auto-hide success message after 3 seconds
+                              setTimeout(() => {
+                                setEmailGenerationStatus({ type: null, message: '' });
+                              }, 3000);
+                            }}
+                            onError={(error) => {
+                              setEmailGenerationStatus({
+                                type: 'error',
+                                message: error
+                              });
+                              // Auto-hide error message after 5 seconds
+                              setTimeout(() => {
+                                setEmailGenerationStatus({ type: null, message: '' });
+                              }, 5000);
+                            }}
+                            onEmailCreated={triggerEmailRefresh}
+                          />
+                        )}
                       </div>
                     </li>
                   ))}
@@ -230,43 +312,18 @@ export default function FundraisingPage() {
         </div>
       </div>
       <div className='bg-[#F4F6FB] px-4 h-[40%]'>
-        <div className="bg-[#FFFFFF] border border-[#EDEEEF] rounded-[14px] px-5 py-3 h-full overflow-y-auto">
-          <h2 className="not-italic font-bold text-[18px] leading-[24px] tracking-[-0.02em] text-[#0C2143]">Mails</h2>
+        <div className="bg-[#FFFFFF] border border-[#EDEEEF] rounded-[14px] h-full overflow-hidden">
+          <div className="p-5 border-b border-[#EDEEEF]">
+            <h2 className="not-italic font-bold text-[18px] leading-[24px] tracking-[-0.02em] text-[#0C2143]">Mails</h2>
+          </div>
           
-          <MailTabs 
-            activeSection={activeMailSection} 
-            onSectionChange={setActiveMailSection}
-          >
-            <div className="space-y-4">
-              {activeMailSection === 'all' && (
-                <div className="p-4 bg-gray-50 rounded-lg">
-                  <p className="text-gray-600">All mails content will be displayed here.</p>
-                  <p className="text-sm text-gray-500 mt-2">This section shows all emails in your fundraising campaign.</p>
-                </div>
-              )}
-              
-              {activeMailSection === 'sent' && (
-                <div className="p-4 bg-blue-50 rounded-lg">
-                  <p className="text-blue-600">Sent mails content will be displayed here.</p>
-                  <p className="text-sm text-blue-500 mt-2">This section shows all emails you have sent to investors.</p>
-                </div>
-              )}
-              
-              {activeMailSection === 'opened' && (
-                <div className="p-4 bg-yellow-50 rounded-lg">
-                  <p className="text-yellow-600">Opened mails content will be displayed here.</p>
-                  <p className="text-sm text-yellow-500 mt-2">This section shows emails that have been opened by recipients.</p>
-                </div>
-              )}
-              
-              {activeMailSection === 'answered' && (
-                <div className="p-4 bg-green-50 rounded-lg">
-                  <p className="text-green-600">Answered mails content will be displayed here.</p>
-                  <p className="text-sm text-green-500 mt-2">This section shows emails that have received responses.</p>
-                </div>
-              )}
+          {user?.id ? (
+            <EmailTabsManager userId={user.id} refreshTrigger={emailRefreshTrigger} />
+          ) : (
+            <div className="flex items-center justify-center h-full">
+              <p className="text-gray-500">Please log in to view emails</p>
             </div>
-          </MailTabs>
+          )}
         </div>
       </div>
     </main>

@@ -25,9 +25,6 @@ export default function MailSection({ section, children }: MailSectionProps) {
 
   return (
     <div className="mt-4">
-      <h3 className="text-lg font-semibold text-[#0C2143] mb-4">
-        {getSectionTitle(section)}
-      </h3>
       {children}
     </div>
   );
