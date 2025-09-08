@@ -8,6 +8,12 @@ interface MailTabsProps {
   activeSection: MailSectionType;
   onSectionChange: (section: MailSectionType) => void;
   children: ReactNode;
+  counts?: {
+    all?: number;
+    sent?: number;
+    opened?: number;
+    answered?: number;
+  };
 }
 
 interface MailTabData {
@@ -17,16 +23,15 @@ interface MailTabData {
   isClickable: boolean;
 }
 
-const mailTabs: MailTabData[] = [
-  { type: 'all', label: 'All Mails', count: 0, isClickable: true },
-  { type: 'sent', label: 'Sent', count: 0, isClickable: true },
-  { type: 'opened', label: 'Opened', count: 0, isClickable: false },
-  { type: 'answered', label: 'Answered', count: 0, isClickable: false },
-];
-
-export default function MailTabs({ activeSection, onSectionChange, children }: MailTabsProps) {
+export default function MailTabs({ activeSection, onSectionChange, children, counts = {} }: MailTabsProps) {
+  const mailTabs: MailTabData[] = [
+    { type: 'all', label: 'All Mails', count: counts.all || 0, isClickable: true },
+    { type: 'sent', label: 'Sent', count: counts.sent || 0, isClickable: true },
+    { type: 'opened', label: 'Opened', count: counts.opened || 0, isClickable: false },
+    { type: 'answered', label: 'Answered', count: counts.answered || 0, isClickable: false },
+  ];
   return (
-    <div>
+    <div className='p-[15px]'>
       {/* Mail Tab Buttons */}
       <div className="mt-4 flex flex-wrap gap-4">
         {mailTabs.map((tab) => (
