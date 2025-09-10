@@ -84,6 +84,9 @@ export default function EmailSidebar({ drafts, selectedEmailId, onEmailSelect }:
                       <p className="text-xs text-gray-500 truncate">
                         To: {getRecipients(draft.to)}
                       </p>
+                      <p className="text-xs text-gray-500 truncate">
+                        Subject: {draft.subject}
+                      </p>
                     </div>
                   </div>
                 </div>

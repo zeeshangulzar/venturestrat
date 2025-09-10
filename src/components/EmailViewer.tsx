@@ -251,7 +251,7 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, readOnl
                 type="text"
                 value={editedSubject}
                 onChange={(e) => handleFieldChange('subject', e.target.value)}
-                className="w-full text-lg font-semibold border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full text-lg font-semibold border border-gray-300 rounded px-3 py-2 focus:outline-none"
                 placeholder="Email subject"
               />
             )}
