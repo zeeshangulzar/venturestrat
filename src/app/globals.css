@@ -53,3 +53,19 @@ body {
     gap: 1rem;
   }
 }
+
+/* CKEditor styling for proper scrolling */
+.ck-editor {
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.ck-editor__main {
+  flex: 1 !important;
+  min-height: 0 !important;
+}
+
+.ck-editor__editable {
+  height: -webkit-fill-available !important;
+}

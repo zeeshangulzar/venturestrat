@@ -52,8 +52,8 @@ export default function FundraisingPage() {
       try {
         const userData = await fetchUserData(user.id);
         if (userData && typeof userData === 'object') {
-          const actualUserData = (userData as any).user || userData;
-          setUserData(actualUserData.publicMetaData || {});
+          const actualUserData = (userData as { user?: { publicMetaData?: unknown } }).user || userData;
+          setUserData((actualUserData as { publicMetaData?: unknown }).publicMetaData || {});
         }
       } catch (error) {
         console.error('Failed to load user data:', error);
@@ -311,7 +311,7 @@ export default function FundraisingPage() {
           </div>
         </div>
       </div>
-      <div className='bg-[#F4F6FB] px-4 h-[40%]'>
+      <div className='bg-[#F4F6FB] px-4 h-fit'>
         <div className="bg-[#FFFFFF] border border-[#EDEEEF] rounded-[14px] h-full overflow-hidden">
           <div className="p-5 border-b border-[#EDEEEF]">
             <h2 className="not-italic font-bold text-[18px] leading-[24px] tracking-[-0.02em] text-[#0C2143]">Mails</h2>

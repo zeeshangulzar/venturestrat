@@ -21,9 +21,10 @@ interface EmailManagementInterfaceProps {
   userId: string;
   mode?: 'draft' | 'sent';
   refreshTrigger?: number; // Add refresh trigger prop
+  onEmailSent?: () => void; // Add callback for when email is sent
 }
 
-export default function EmailManagementInterface({ userId, mode = 'draft', refreshTrigger }: EmailManagementInterfaceProps) {
+export default function EmailManagementInterface({ userId, mode = 'draft', refreshTrigger, onEmailSent }: EmailManagementInterfaceProps) {
   const [drafts, setDrafts] = useState<EmailDraft[]>([]);
   const [selectedEmailId, setSelectedEmailId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -92,6 +93,19 @@ export default function EmailManagementInterface({ userId, mode = 'draft', refre
     );
   };
 
+  const handleEmailSent = () => {
+    // Refresh the draft list to remove the sent email
+    fetchDrafts();
+    
+    // Clear selected email since it's no longer a draft
+    setSelectedEmailId(null);
+    
+    // Notify parent component if callback provided
+    if (onEmailSent) {
+      onEmailSent();
+    }
+  };
+
   const selectedEmail = drafts.find(draft => draft.id === selectedEmailId) || null;
 
   if (loading) {
@@ -137,6 +151,7 @@ export default function EmailManagementInterface({ userId, mode = 'draft', refre
       <EmailViewer
         email={selectedEmail}
         onEmailUpdate={handleEmailUpdate}
+        onEmailSent={handleEmailSent}
         readOnly={mode === 'sent'}
       />
     </div>
