@@ -65,7 +65,7 @@ export default function FundraisingPage() {
   }, [user?.id]);
 
   return (
-    <main className="min-h-screen bg-[#F4F6FB] h-[1441px]">
+    <main className="min-h-screen bg-[#F4F6FB] h-auto pb-[16px]">
       <div className="flex bg-[#FFFFFF] items-center bg-[rgba(255, 255, 255, 0.8)] h-[60px] px-5 py-4 border-b border-[#EDEEEF]">
         <h2 className="not-italic font-bold text-[18px] leading-[24px] tracking-[-0.02em] text-[#0C2143]">Fundraising CRM</h2>
         
@@ -170,7 +170,7 @@ export default function FundraisingPage() {
                               <button className="bg-[rgba(218,156,22,0.14)] px-4 py-2 rounded-[40px] font-medium text-[14px] not-italic text-sm leading-6 text-[#C58A09] whitespace-nowrap">
                                 Contacted
                               </button>
-                              {user && userData && !userDataLoading && (
+                              {user && userData && !userDataLoading && inv.emails.length > 0 && (
                                 <ChatGPTIntegration
                                   investor={inv}
                                   user={user}
