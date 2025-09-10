@@ -56,7 +56,7 @@ export default function EmailSidebar({ drafts, selectedEmailId, onEmailSelect }:
   };
 
   return (
-    <div className="w-80 bg-white border-r border-gray-200 flex flex-col h-full">
+    <div className="w-80 bg-white border-r border-gray-200 flex flex-col h-auto">
       {/* Header */}
       <div className="p-4 border-b border-gray-200">
         <h2 className="text-lg font-semibold text-gray-900">Email Drafts</h2>
@@ -88,7 +88,7 @@ export default function EmailSidebar({ drafts, selectedEmailId, onEmailSelect }:
                   </div>
                 </div>
                 {/* Only add border if not the last item */}
-                {index < drafts.length - 1 && (
+                {index < drafts.length && (
                   <div className="border-b border-gray-100"></div>
                 )}
               </div>

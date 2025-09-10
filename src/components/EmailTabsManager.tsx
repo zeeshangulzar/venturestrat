@@ -80,6 +80,11 @@ export default function EmailTabsManager({ userId, refreshTrigger }: EmailTabsMa
     fetchCounts();
   };
 
+  const handleEmailSent = () => {
+    // Refresh counts when an email is sent
+    fetchCounts();
+  };
+
   return (
     <MailTabs
       activeSection={activeSection}
@@ -88,11 +93,21 @@ export default function EmailTabsManager({ userId, refreshTrigger }: EmailTabsMa
     >
       <div className="h-full">
         {activeSection === 'all' && (
-          <EmailManagementInterface userId={userId} mode="draft" refreshTrigger={refreshTrigger} />
+          <EmailManagementInterface 
+            userId={userId} 
+            mode="draft" 
+            refreshTrigger={refreshTrigger} 
+            onEmailSent={handleEmailSent}
+          />
         )}
         
         {activeSection === 'sent' && (
-          <EmailManagementInterface userId={userId} mode="sent" refreshTrigger={refreshTrigger} />
+          <EmailManagementInterface 
+            userId={userId} 
+            mode="sent" 
+            refreshTrigger={refreshTrigger} 
+            onEmailSent={handleEmailSent}
+          />
         )}
         
         {activeSection === 'opened' && (
