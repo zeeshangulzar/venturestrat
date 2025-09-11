@@ -14,6 +14,7 @@ interface MailTabsProps {
     opened?: number;
     answered?: number;
   };
+  disabled?: boolean;
 }
 
 interface MailTabData {
@@ -23,7 +24,7 @@ interface MailTabData {
   isClickable: boolean;
 }
 
-export default function MailTabs({ activeSection, onSectionChange, children, counts = {} }: MailTabsProps) {
+export default function MailTabs({ activeSection, onSectionChange, children, counts = {}, disabled = false }: MailTabsProps) {
   const mailTabs: MailTabData[] = [
     { type: 'all', label: 'All Mails', count: counts.all || 0, isClickable: true },
     { type: 'sent', label: 'Sent', count: counts.sent || 0, isClickable: true },
@@ -31,25 +32,28 @@ export default function MailTabs({ activeSection, onSectionChange, children, cou
     { type: 'answered', label: 'Answered', count: counts.answered || 0, isClickable: false },
   ];
   return (
-    <div className='p-[15px]'>
+    <div className='p-[15px] h-full flex flex-col'>
       {/* Mail Tab Buttons */}
-      <div className="mt-4 flex flex-wrap gap-4">
+      <div className="mt-4 flex flex-wrap gap-4 flex-shrink-0">
         {mailTabs.map((tab) => (
           <MailTabButton
             key={tab.type}
             label={tab.label}
             count={tab.count}
             isActive={activeSection === tab.type}
-            onClick={() => onSectionChange(tab.type)}
-            isClickable={tab.isClickable}
+            onClick={() => !disabled && onSectionChange(tab.type)}
+            isClickable={tab.isClickable && !disabled}
+            disabled={disabled}
           />
         ))}
       </div>
 
       {/* Mail Content Sections */}
-      <MailSection section={activeSection}>
-        {children}
-      </MailSection>
+      <div className="flex-1 min-h-0">
+        <MailSection section={activeSection}>
+          {children}
+        </MailSection>
+      </div>
     </div>
   );
 }

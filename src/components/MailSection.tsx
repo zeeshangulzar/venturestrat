@@ -24,7 +24,7 @@ export default function MailSection({ section, children }: MailSectionProps) {
   };
 
   return (
-    <div className="mt-4">
+    <div className="mt-4 h-full">
       {children}
     </div>
   );

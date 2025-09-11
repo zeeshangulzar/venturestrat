@@ -4,6 +4,7 @@ interface MailTabButtonProps {
   isActive: boolean;
   onClick: () => void;
   isClickable?: boolean;
+  disabled?: boolean;
 }
 
 export default function MailTabButton({ 
@@ -11,7 +12,8 @@ export default function MailTabButton({
   count, 
   isActive, 
   onClick, 
-  isClickable = true 
+  isClickable = true,
+  disabled = false
 }: MailTabButtonProps) {
   return (
     <div 
@@ -19,8 +21,8 @@ export default function MailTabButton({
         isActive 
           ? 'bg-[#2563EB] text-white' 
           : 'bg-[#F6F6F7] text-[#0C2143]'
-      } ${isClickable ? 'cursor-pointer hover:opacity-80' : 'cursor-default'}`}
-      onClick={isClickable ? onClick : undefined}
+      } ${isClickable && !disabled ? 'cursor-pointer hover:opacity-80' : 'cursor-default'} ${disabled ? 'opacity-50' : ''}`}
+      onClick={isClickable && !disabled ? onClick : undefined}
     >
       <span className="font-semibold text-[14px] leading-4 tracking-[-0.02em] capitalize">
         {label}
