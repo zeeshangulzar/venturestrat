@@ -43,19 +43,19 @@ export default function InvestorStatusDropdown({
 
   return (
     <div className="relative" ref={dropdownRef}>
-      {/* Status Button */}
-      <div className="flex gap-[20px] flex-wrap items-center">
-        <button 
+      {/* Status Button and Dropdown Icon */}
+      <div className="flex items-center">
+        {/* Static Status Button - Not clickable */}
+        <div 
           className={`px-4 py-2 rounded-[40px] font-medium text-[14px] not-italic text-sm leading-6 whitespace-nowrap ${buttonColor}`}
-          onClick={() => setIsOpen(!isOpen)}
         >
           {buttonText}
-        </button>
+        </div>
         
-        {/* Dropdown SVG */}
+        {/* Dropdown SVG - Only this is clickable */}
         <button 
           onClick={() => setIsOpen(!isOpen)}
-          className="p-1 hover:bg-gray-100 rounded transition-colors"
+          className="p-1 hover:bg-gray-100 rounded transition-colors ml-2"
         >
           <svg 
             width="16" 
