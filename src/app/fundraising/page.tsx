@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { useUserShortlist } from '@hooks/useUserShortlist'
 import ChatGPTIntegration from '@components/ChatGPTIntegration'
 import EmailTabsManager from '@components/EmailTabsManager'
+import InvestorStatusDropdown from '@components/InvestorStatusDropdown'
 import { fetchUserData } from '@lib/api'
 
 export default function FundraisingPage() {
@@ -175,10 +176,12 @@ export default function FundraisingPage() {
                             </div>
                           </td>
                           <td className="w-[25%] px-4 py-4">
-                            <div className="flex gap-[20px] flex-wrap">
-                              <button className="bg-[rgba(218,156,22,0.14)] px-4 py-2 rounded-[40px] font-medium text-[14px] not-italic text-sm leading-6 text-[#C58A09] whitespace-nowrap">
-                                Contacted
-                              </button>
+                            <div className="flex gap-[20px] flex-wrap items-center">
+                              <InvestorStatusDropdown 
+                                buttonText="Contacted"
+                                buttonColor="bg-[rgba(218,156,22,0.14)] text-[#C58A09]"
+                              />
+
                               {user && userData && !userDataLoading && inv.emails.length > 0 && (
                                 <ChatGPTIntegration
                                   investor={inv}
