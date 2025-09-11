@@ -45,8 +45,19 @@ export default function ChatGPTIntegration({
     setIsGenerating(true);
     
     try {
-      // Prepare the prompt with all the necessary information
-      const prompt = `Compose a brief outreach email to ${investor.name} about ${userData.companyName || 'our company'}, ensuring the message is well-structured and easy to read. Start with a one-line introduction of who you are (${user.firstName || ''} ${user.lastName || ''}, founder of ${userData.companyName || 'our company'}) and how your company's business model is tackling a problem relevant to ${investor.name}'s focus on ${investor.markets.map(m => m.market.title).join(', ') || 'their investment focus'}. In the next part, provide a couple of key metrics or milestones as evidence of traction – you may format these as 2–3 bullet points (for example: growth rate, user base, revenue, or partnerships). Make sure to mention that you're raising a ${userData.stages?.[0] || 'funding'} round and that this aligns with ${investor.name}'s investment preferences. Personalize the email by referencing one of ${investor.name}'s past investments (e.g., "${investor.pastInvestments.map(p => p.pastInvestment.title).join(', ')}") as a way to highlight common ground or insight. Conclude the email with a confident call-to-action inviting ${investor.name} to continue the conversation (such as scheduling a call or reviewing your pitch deck)`;
+        // Extract titles from the first two past investments
+        const pastInvestments = investor.pastInvestments || [];
+        const selectedPastInvestments = pastInvestments
+          .slice(0, 2) // Take first two
+          .map(p => p.pastInvestment?.title || '')
+          .filter(Boolean); // Remove empty strings
+        
+        const pastInvestmentsText = selectedPastInvestments.length > 0 
+          ? selectedPastInvestments.join(', ')
+          : 'their past investments';
+
+        // Prepare the prompt with all the necessary information
+        const prompt = `Compose a brief outreach email to ${investor.name} about ${userData.companyName || 'our company'}, ensuring the message is well-structured and easy to read. Start with a one-line introduction of who you are (${user.firstName || ''} ${user.lastName || ''}, founder of ${userData.companyName || 'our company'}) and how your company is tackling a problem — if the business model is not provided, infer a simple one-line business description based on the website http://www.rtyst.com. In the next part, provide a couple of key metrics or milestones as evidence of traction – you may format these as 2–3 bullet points (for example: growth rate, user base, revenue, or partnerships). Make sure to mention that you're raising a ${userData.stages?.[0] || 'funding'} round and that this aligns with ${investor.name}'s investment preferences. Personalize the email by referencing some of ${investor.name}'s past investments (for example: "${pastInvestmentsText}") as a way to highlight common ground or insight. Conclude the email with a confident call-to-action inviting ${investor.name} to continue the conversation (such as scheduling a call or reviewing your pitch deck)`;
 
       // Call ChatGPT API (you'll need to implement this endpoint)
       const response = await fetch('/api/chatgpt/generate-email', {
