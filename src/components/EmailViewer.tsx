@@ -350,8 +350,9 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
                 type="email"
                 value={editedFrom}
                 onChange={(e) => handleFieldChange('from', e.target.value)}
-                className="ml-2 border border-gray-300 rounded px-2 py-1 focus:outline-none"
+                className="ml-2 border border-gray-300 rounded px-2 py-1 focus:outline-none w-full max-w-md min-w-0"
                 placeholder="sender@example.com"
+                style={{ minWidth: '200px' }}
               />
             )}
           </div>

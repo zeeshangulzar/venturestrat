@@ -228,7 +228,7 @@ export default function FundraisingPage() {
       </div>
       <div className='bg-[#F4F6FB] px-4 h-[800px]'>
         <div className="bg-[#FFFFFF] border border-[#EDEEEF] rounded-[14px] h-full flex flex-col">
-          <div className="p-5 border-b border-[#EDEEEF] flex-shrink-0">
+          <div className="p-5 flex-shrink-0">
             <h2 className="not-italic font-bold text-[18px] leading-[24px] tracking-[-0.02em] text-[#0C2143]">Mails</h2>
           </div>
           
