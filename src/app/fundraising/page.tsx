@@ -227,25 +227,27 @@ export default function FundraisingPage() {
         </div>
       </div>
       <div className='bg-[#F4F6FB] px-4 h-[800px]'>
-        <div className="bg-[#FFFFFF] border border-[#EDEEEF] rounded-[14px] h-full overflow-hidden">
-          <div className="p-5 border-b border-[#EDEEEF]">
+        <div className="bg-[#FFFFFF] border border-[#EDEEEF] rounded-[14px] h-full flex flex-col">
+          <div className="p-5 border-b border-[#EDEEEF] flex-shrink-0">
             <h2 className="not-italic font-bold text-[18px] leading-[24px] tracking-[-0.02em] text-[#0C2143]">Mails</h2>
           </div>
           
-          {user?.id ? (
-            <EmailTabsManager 
-              userId={user.id} 
-              refreshTrigger={emailRefreshTrigger} 
-              selectEmailId={selectedEmailId || undefined}
-              onTabSwitch={(tab) => {
-                console.log('Tab switched to:', tab);
-              }}
-            />
-          ) : (
-            <div className="flex items-center justify-center h-full">
-              <p className="text-gray-500">Please log in to view emails</p>
-            </div>
-          )}
+          <div className="flex-1 min-h-0">
+            {user?.id ? (
+              <EmailTabsManager 
+                userId={user.id} 
+                refreshTrigger={emailRefreshTrigger} 
+                selectEmailId={selectedEmailId || undefined}
+                onTabSwitch={(tab) => {
+                  console.log('Tab switched to:', tab);
+                }}
+              />
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <p className="text-gray-500">Please log in to view emails</p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </main>

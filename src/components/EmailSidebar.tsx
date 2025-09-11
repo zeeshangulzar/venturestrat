@@ -58,19 +58,19 @@ export default function EmailSidebar({ drafts, selectedEmailId, onEmailSelect }:
   return (
     <div className="w-80 bg-white border-r border-gray-200 flex flex-col h-auto">
       {/* Header */}
-      <div className="p-4 border-b border-gray-200">
+      <div className="p-4 border-b border-gray-200 flex-shrink-0">
         <h2 className="text-lg font-semibold text-gray-900">Email Drafts</h2>
         <p className="text-sm text-gray-500">{drafts.length} draft{drafts.length !== 1 ? 's' : ''}</p>
       </div>
 
       {/* Email List */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto min-h-0">
         {drafts.length === 0 ? (
           <div className="p-4 text-center text-gray-500">
             <p className="text-sm">No email drafts found</p>
           </div>
         ) : (
-          <div className='flex flex-col gap-2 p-[6px]'>
+          <div className='flex flex-col gap-2 p-[6px] pb-4'>
             {drafts.map((draft, index) => (
               <div key={draft.id}>
                 <div
