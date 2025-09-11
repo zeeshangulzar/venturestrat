@@ -87,7 +87,7 @@ export default function EmailDraftList({ userId, activeSection }: EmailDraftList
   if (loading) {
     return (
       <div className="p-4 text-center text-gray-500">
-        Loading email drafts...
+        Loading email...
       </div>
     );
   }

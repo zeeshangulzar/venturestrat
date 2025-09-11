@@ -198,6 +198,12 @@ export default function EmailManagementInterface({ userId, mode = 'draft', refre
   // Fetch individual email when selectedEmailId changes
   useEffect(() => {
     if (selectedEmailId) {
+      // Clear current selected email if switching to a different email
+      // This prevents showing old email content while fetching new email
+      if (selectedEmail && selectedEmail.id !== selectedEmailId) {
+        setSelectedEmail(null);
+      }
+      
       // For sent emails, just show cached data
       if (mode === 'sent') {
         const emailFromList = drafts.find(draft => draft.id === selectedEmailId);
@@ -216,7 +222,7 @@ export default function EmailManagementInterface({ userId, mode = 'draft', refre
     } else {
       setSelectedEmail(null);
     }
-  }, [selectedEmailId, mode, needsFreshData]); // Removed drafts from dependencies
+  }, [selectedEmailId, mode]);
 
 
   // Cleanup effect to handle pending saves
@@ -293,7 +299,7 @@ export default function EmailManagementInterface({ userId, mode = 'draft', refre
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading email drafts...</p>
+          <p className="text-gray-600">Loading email...</p>
         </div>
       </div>
     );
