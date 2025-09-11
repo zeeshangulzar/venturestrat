@@ -68,4 +68,9 @@ body {
 
 .ck-editor__editable {
   height: -webkit-fill-available !important;
+  background-color: #F4F6FB !important;
+}
+
+.ck-toolbar_grouping {
+  background-color: #F4F6FB !important;
 }
