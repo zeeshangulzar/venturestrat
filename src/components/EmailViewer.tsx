@@ -85,12 +85,17 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
       // Update editor content if editor is ready
       if (editorRef.current) {
         editorRef.current.setData(body);
+        // Reset flag after editor data is set
+        setTimeout(() => {
+          isSettingInitialDataRef.current = false;
+        }, 200);
+      } else {
+        // If editor is not ready, reset flag after longer delay
+        // The onReady callback will handle setting the data
+        setTimeout(() => {
+          isSettingInitialDataRef.current = false;
+        }, 500);
       }
-      
-      // Reset flag after a short delay to allow editor to process the data
-      setTimeout(() => {
-        isSettingInitialDataRef.current = false;
-      }, 100);
     }
   }, [email]);
 
@@ -170,11 +175,18 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
 
   // Handle field changes with auto-save
   const handleFieldChange = (field: string, value: string) => {
-    console.log('Field change debug:', { field, value });
+    console.log('Field change debug:', { field, value, isSettingInitialData: isSettingInitialDataRef.current });
     
     // Skip auto-save if we're setting initial data
     if (isSettingInitialDataRef.current) {
       console.log('Skipping auto-save - setting initial data');
+      return;
+    }
+    
+    // Check if the value actually changed to prevent unnecessary saves
+    const currentValue = currentValuesRef.current[`edited${field.charAt(0).toUpperCase() + field.slice(1)}` as keyof typeof currentValuesRef.current];
+    if (currentValue === value) {
+      console.log('Skipping auto-save - value unchanged');
       return;
     }
     
@@ -366,7 +378,13 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
                 }}
                 onReady={(editor) => {
                   editorRef.current = editor;
+                  // Set flag to prevent auto-save when setting initial data
+                  isSettingInitialDataRef.current = true;
                   editor.setData(editedBody);
+                  // Reset flag after editor data is set
+                  setTimeout(() => {
+                    isSettingInitialDataRef.current = false;
+                  }, 200);
                 }}
                 config={{
                   toolbar: [
