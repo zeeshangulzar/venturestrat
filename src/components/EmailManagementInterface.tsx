@@ -324,16 +324,6 @@ export default function EmailManagementInterface({ userId, mode = 'draft', refre
   return (
     <div className="flex h-full bg-gray-50 relative">
       {/* Background loading indicator */}
-      {loading && (
-        <div className="absolute top-2 right-2 z-20">
-          <div className="flex items-center space-x-2 bg-white px-3 py-1 rounded-full shadow-sm border">
-            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-            <span className="text-sm text-gray-600">
-              {hasInitialData ? 'Refreshing...' : 'Loading...'}
-            </span>
-          </div>
-        </div>
-      )}
       
       {/* Loading overlay for tab switching - reduced opacity for smoother transition */}
       {isTabSwitching && (
