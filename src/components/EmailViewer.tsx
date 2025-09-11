@@ -175,18 +175,14 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
 
   // Handle field changes with auto-save
   const handleFieldChange = (field: string, value: string) => {
-    console.log('Field change debug:', { field, value, isSettingInitialData: isSettingInitialDataRef.current });
-    
     // Skip auto-save if we're setting initial data
     if (isSettingInitialDataRef.current) {
-      console.log('Skipping auto-save - setting initial data');
       return;
     }
     
     // Check if the value actually changed to prevent unnecessary saves
     const currentValue = currentValuesRef.current[`edited${field.charAt(0).toUpperCase() + field.slice(1)}` as keyof typeof currentValuesRef.current];
     if (currentValue === value) {
-      console.log('Skipping auto-save - value unchanged');
       return;
     }
     
