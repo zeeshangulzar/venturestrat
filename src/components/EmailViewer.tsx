@@ -21,10 +21,13 @@ interface EmailViewerProps {
   email: EmailDraft | null;
   onEmailUpdate: (updatedEmail: EmailDraft) => void;
   onEmailSent?: () => void;
+  onEmailSaveStart?: () => void;
+  onEmailSaveEnd?: () => void;
   readOnly?: boolean;
+  loading?: boolean;
 }
 
-export default function EmailViewer({ email, onEmailUpdate, onEmailSent, readOnly = false }: EmailViewerProps) {
+export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmailSaveStart, onEmailSaveEnd, readOnly = false, loading = false }: EmailViewerProps) {
   const [editedSubject, setEditedSubject] = useState('');
   const [editedBody, setEditedBody] = useState('');
   const [editedFrom, setEditedFrom] = useState('');
@@ -43,6 +46,12 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, readOnl
     editedBody: '',
     editedFrom: ''
   });
+  
+  // Ref to store previous body length for deletion detection
+  const previousBodyLengthRef = useRef(0);
+  
+  // Ref to track if we're setting initial data (to prevent auto-save)
+  const isSettingInitialDataRef = useRef(false);
   
   // Ref for CKEditor instance
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -67,10 +76,21 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, readOnl
         editedFrom: from
       };
       
+      // Initialize previous body length
+      previousBodyLengthRef.current = body.length;
+      
+      // Set flag to prevent auto-save when setting initial data
+      isSettingInitialDataRef.current = true;
+      
       // Update editor content if editor is ready
       if (editorRef.current) {
         editorRef.current.setData(body);
       }
+      
+      // Reset flag after a short delay to allow editor to process the data
+      setTimeout(() => {
+        isSettingInitialDataRef.current = false;
+      }, 100);
     }
   }, [email]);
 
@@ -89,6 +109,11 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, readOnl
 
     setIsSaving(true);
     setSaveStatus('idle');
+    
+    // Notify parent component that save is starting
+    if (onEmailSaveStart) {
+      onEmailSaveStart();
+    }
 
     try {
       const currentValues = currentValuesRef.current;
@@ -123,8 +148,13 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, readOnl
       setTimeout(() => setSaveStatus('idle'), 3000);
     } finally {
       setIsSaving(false);
+      
+      // Notify parent component that save is complete
+      if (onEmailSaveEnd) {
+        onEmailSaveEnd();
+      }
     }
-  }, [email, readOnly, onEmailUpdate]);
+  }, [email, readOnly, onEmailUpdate, onEmailSaveStart, onEmailSaveEnd]);
   
   const debouncedAutoSave = useCallback(() => {
     // Clear any existing timeout
@@ -132,15 +162,21 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, readOnl
       clearTimeout(autoSaveTimeoutRef.current);
     }
     
-    // Set new timeout for 3 seconds after user stops typing (increased for better UX)
+    // Set new timeout for 1.5 seconds after user stops typing (reduced for better responsiveness)
     autoSaveTimeoutRef.current = setTimeout(() => {
       autoSave();
-    }, 3000);
+    }, 1500);
   }, [autoSave]);
 
   // Handle field changes with auto-save
   const handleFieldChange = (field: string, value: string) => {
     console.log('Field change debug:', { field, value });
+    
+    // Skip auto-save if we're setting initial data
+    if (isSettingInitialDataRef.current) {
+      console.log('Skipping auto-save - setting initial data');
+      return;
+    }
     
     switch (field) {
       case 'subject':
@@ -150,6 +186,17 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, readOnl
       case 'body':
         setEditedBody(value);
         currentValuesRef.current.editedBody = value;
+        
+        // Check if this is a significant deletion (content length decreased by more than 50%)
+        const previousLength = previousBodyLengthRef.current;
+        if (previousLength > 0 && value.length < previousLength * 0.5) {
+          // This looks like a significant deletion, save immediately
+          console.log('Significant deletion detected, saving immediately');
+          autoSave();
+          return;
+        }
+        // Update previous length for next comparison
+        previousBodyLengthRef.current = value.length;
         break;
       case 'from':
         setEditedFrom(value);
@@ -237,7 +284,16 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, readOnl
   }
 
   return (
-    <div className="flex-1 flex flex-col bg-white h-full">
+    <div className="flex-1 flex flex-col bg-white h-full relative">
+      {/* Loading overlay */}
+      {loading && (
+        <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-10">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading email...</p>
+          </div>
+        </div>
+      )}
       {/* Header */}
       <div className="border-b border-gray-200 p-4 flex-shrink-0">
         <div className="flex justify-between items-start mb-4">
@@ -256,20 +312,6 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, readOnl
               />
             )}
           </div>
-          
-          {!readOnly && (
-            <div className="flex items-center space-x-2 ml-4">
-              {isSaving && (
-                <span className="text-blue-600 text-sm">Saving...</span>
-              )}
-              {saveStatus === 'success' && (
-                <span className="text-green-600 text-sm">Saved!</span>
-              )}
-              {saveStatus === 'error' && (
-                <span className="text-red-600 text-sm">Save failed</span>
-              )}
-            </div>
-          )}
         </div>
 
         {/* Email Metadata */}
@@ -299,7 +341,7 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, readOnl
       </div>
 
       {/* Email Content */}
-      <div className="flex-1 p-4 flex flex-col min-h-0">
+      <div className="flex-1 p-4 flex flex-col min-h-0 overflow-y-auto">
         <div className="flex-1 flex flex-col min-h-0">
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Email Content
@@ -346,36 +388,38 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, readOnl
           )}
         </div>
         
-        {/* Send Email Button - Only show for non-readOnly mode */}
-        {!readOnly && (
-          <div className="border-t border-gray-200 p-4 bg-gray-50 flex-shrink-0 bg-white">
-            {/* Status Message */}
-            {sendMessage && (
-              <div className={`mb-3 p-3 rounded-md text-sm ${
-                sendStatus === 'success' 
+        {/* Send Email Button Section - Always render to maintain consistent height */}
+        <div className="border-t border-gray-200 p-4 flex-shrink-0 bg-white">
+          {/* Status Message - Always reserve space to prevent height changes */}
+          <div className={`mb-3 p-3 rounded-md text-sm transition-all duration-200 ${
+            sendMessage 
+              ? (sendStatus === 'success' 
                   ? 'bg-green-50 text-green-700 border border-green-200' 
-                  : 'bg-red-50 text-red-700 border border-red-200'
-              }`}>
-                <div className="flex items-center">
-                  {sendStatus === 'success' ? (
-                    <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                  ) : (
-                    <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                    </svg>
-                  )}
-                  {sendMessage}
-                </div>
+                  : 'bg-red-50 text-red-700 border border-red-200')
+              : 'h-0 p-0 mb-0 opacity-0 overflow-hidden'
+          }`}>
+            {sendMessage && (
+              <div className="flex items-center">
+                {sendStatus === 'success' ? (
+                  <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                ) : (
+                  <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                )}
+                {sendMessage}
               </div>
             )}
-            
-            <div className="flex justify-end">
+          </div>
+          
+          <div className="flex justify-end">
+            {!readOnly ? (
               <button
                 onClick={handleSendEmail}
                 disabled={isSending}
-                className={`px-6 py-2 rounded-md font-medium transition-colors ${
+                className={`px-6 py-2 rounded-md font-medium transition-colors mb-[50px] ${
                   isSending
                     ? 'bg-gray-400 text-gray-700 cursor-not-allowed'
                     : 'bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
@@ -393,9 +437,14 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, readOnl
                   'Send Email'
                 )}
               </button>
-            </div>
+            ) : (
+              /* Placeholder content for read-only mode to maintain consistent height */
+              <div className="px-6 py-2 text-sm text-gray-500">
+                Read-only mode
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
     </div>
   );

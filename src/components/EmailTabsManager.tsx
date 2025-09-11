@@ -26,6 +26,7 @@ export default function EmailTabsManager({ userId, refreshTrigger }: EmailTabsMa
     answered: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [pendingSave, setPendingSave] = useState(false);
 
   const fetchCounts = async () => {
     if (!userId) return;
@@ -74,10 +75,19 @@ export default function EmailTabsManager({ userId, refreshTrigger }: EmailTabsMa
     fetchCounts();
   }, [userId, refreshTrigger]); // Add refreshTrigger to dependencies
 
-  const handleSectionChange = (section: MailSectionType) => {
-    setActiveSection(section);
-    // Refresh counts when switching sections
-    fetchCounts();
+  const handleSectionChange = async (section: MailSectionType) => {
+    // Only prevent tab switching if there's a pending save and we're switching away from drafts
+    if (pendingSave && activeSection === 'all') {
+      console.warn('Cannot switch tabs while save is in progress');
+      return;
+    }
+    
+    // Add a small delay to prevent viewport jumping
+    setTimeout(() => {
+      setActiveSection(section);
+      // Refresh counts when switching sections
+      fetchCounts();
+    }, 50);
   };
 
   const handleEmailSent = () => {
@@ -85,11 +95,20 @@ export default function EmailTabsManager({ userId, refreshTrigger }: EmailTabsMa
     fetchCounts();
   };
 
+  const handleSaveStart = () => {
+    setPendingSave(true);
+  };
+
+  const handleSaveEnd = () => {
+    setPendingSave(false);
+  };
+
   return (
     <MailTabs
       activeSection={activeSection}
       onSectionChange={handleSectionChange}
       counts={counts}
+      disabled={pendingSave && activeSection === 'all'}
     >
       <div className="h-full">
         {activeSection === 'all' && (
@@ -98,6 +117,8 @@ export default function EmailTabsManager({ userId, refreshTrigger }: EmailTabsMa
             mode="draft" 
             refreshTrigger={refreshTrigger} 
             onEmailSent={handleEmailSent}
+            onSaveStart={handleSaveStart}
+            onSaveEnd={handleSaveEnd}
           />
         )}
         
@@ -107,6 +128,8 @@ export default function EmailTabsManager({ userId, refreshTrigger }: EmailTabsMa
             mode="sent" 
             refreshTrigger={refreshTrigger} 
             onEmailSent={handleEmailSent}
+            onSaveStart={handleSaveStart}
+            onSaveEnd={handleSaveEnd}
           />
         )}
         

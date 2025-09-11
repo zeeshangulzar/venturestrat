@@ -1,6 +1,48 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getApiUrl } from '@lib/api';
 
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ messageId: string }> }
+) {
+  try {
+    const { messageId } = await params;
+
+    if (!messageId) {
+      return NextResponse.json(
+        { error: 'Message ID is required' },
+        { status: 400 }
+      );
+    }
+
+    // Forward the request to the backend
+    const backendResponse = await fetch(getApiUrl(`/api/message/${messageId}`), {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!backendResponse.ok) {
+      const errorData = await backendResponse.json();
+      return NextResponse.json(
+        { error: errorData.error || 'Failed to fetch message' },
+        { status: backendResponse.status }
+      );
+    }
+
+    const data = await backendResponse.json();
+    return NextResponse.json(data);
+
+  } catch (error) {
+    console.error('Error in message fetch API:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ messageId: string }> }
