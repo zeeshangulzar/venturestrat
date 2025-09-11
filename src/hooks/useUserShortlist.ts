@@ -48,6 +48,9 @@ type ApiInvestor = {
   // 👇 Add this so you don’t need `any`
   sourceData?: {
     emails?: Array<{ id: string; email: string; status: string }>
+    pastInvestments?: Array<{ id: string | number; title: string }>
+    markets?: Array<{ id: string | number; title: string }>
+    investorTypes?: string[]
   }
 }
 
@@ -76,7 +79,12 @@ export function useUserShortlist(userId: string): UseUserShortlistReturn {
       inv.sourceData?.emails && Array.isArray(inv.sourceData.emails)
         ? inv.sourceData.emails
         : []
-
+    const sourcePastInvestments =
+      inv.sourceData?.pastInvestments && Array.isArray(inv.sourceData.pastInvestments)
+        ? inv.sourceData.pastInvestments.map((p) => ({
+            pastInvestment: { id: String(p.id), title: p.title },
+          }))
+        : []
     return {
       id: String(inv.id),
       name: inv.name ?? inv.companyName ?? inv.fundName ?? 'Unnamed Investor',
@@ -105,14 +113,15 @@ export function useUserShortlist(userId: string): UseUserShortlistReturn {
             market: { id: String(m.market.id), title: m.market.title },
           }))
         : [],
-      pastInvestments: Array.isArray(inv.pastInvestments)
-        ? inv.pastInvestments.map((p) => ({
-            pastInvestment: {
-              id: String(p.pastInvestment.id),
-              title: p.pastInvestment.title,
-            },
-          }))
-        : [],
+      pastInvestments:
+        Array.isArray(inv.pastInvestments) && inv.pastInvestments.length > 0
+          ? inv.pastInvestments.map((p) => ({
+              pastInvestment: {
+                id: String(p.pastInvestment.id),
+                title: p.pastInvestment.title,
+              },
+            }))
+          : sourcePastInvestments,
     }
   }
 
