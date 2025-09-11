@@ -29,6 +29,7 @@ export default function EmailTabsManager({ userId, refreshTrigger, selectEmailId
   });
   const [loading, setLoading] = useState(true);
   const [pendingSave, setPendingSave] = useState(false);
+  const [userInitiatedTabChange, setUserInitiatedTabChange] = useState(false);
 
   const fetchCounts = async () => {
     if (!userId) return;
@@ -77,22 +78,43 @@ export default function EmailTabsManager({ userId, refreshTrigger, selectEmailId
     fetchCounts();
   }, [userId, refreshTrigger]); // Add refreshTrigger to dependencies
 
-  // Auto-switch to 'all' tab when selectEmailId is provided (AI email created)
+  // Reset user-initiated flag when selectEmailId changes (new AI email created)
   useEffect(() => {
-    if (selectEmailId && activeSection !== 'all') {
+    if (selectEmailId) {
+      console.log('New selectEmailId detected, resetting user-initiated flag');
+      setUserInitiatedTabChange(false);
+    }
+  }, [selectEmailId]);
+
+  // Auto-switch to 'all' tab when selectEmailId is provided (AI email created)
+  // But only if the user hasn't manually switched tabs
+  useEffect(() => {
+    if (selectEmailId && activeSection !== 'all' && !userInitiatedTabChange) {
       console.log('Auto-switching to all tab for selectEmailId:', selectEmailId);
       setActiveSection('all');
       if (onTabSwitch) {
         onTabSwitch('all');
       }
     }
-  }, [selectEmailId, activeSection, onTabSwitch]);
+  }, [selectEmailId, activeSection, onTabSwitch, userInitiatedTabChange]);
 
   const handleSectionChange = async (section: MailSectionType) => {
+    console.log('Tab switch attempt:', { from: activeSection, to: section, pendingSave });
+    
+    // Mark this as a user-initiated tab change
+    setUserInitiatedTabChange(true);
+    
     // Only prevent tab switching if there's a pending save and we're switching away from drafts
-    if (pendingSave && activeSection === 'all') {
+    if (pendingSave && activeSection === 'all' && section !== 'all') {
       console.warn('Cannot switch tabs while save is in progress');
+      setUserInitiatedTabChange(false); // Reset flag if switch is prevented
       return;
+    }
+    
+    // Clear pending save state when switching tabs (except when staying on 'all')
+    if (section !== 'all') {
+      console.log('Clearing pending save state for tab switch');
+      setPendingSave(false);
     }
     
     // Add a small delay to prevent viewport jumping
@@ -109,10 +131,12 @@ export default function EmailTabsManager({ userId, refreshTrigger, selectEmailId
   };
 
   const handleSaveStart = () => {
+    console.log('Save started - setting pending save to true');
     setPendingSave(true);
   };
 
   const handleSaveEnd = () => {
+    console.log('Save ended - setting pending save to false');
     setPendingSave(false);
   };
 
@@ -121,7 +145,7 @@ export default function EmailTabsManager({ userId, refreshTrigger, selectEmailId
       activeSection={activeSection}
       onSectionChange={handleSectionChange}
       counts={counts}
-      disabled={pendingSave && activeSection === 'all'}
+      disabled={false}
     >
       <div className="h-full">
         {activeSection === 'all' && (
