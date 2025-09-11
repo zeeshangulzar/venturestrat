@@ -74,3 +74,11 @@ body {
 .ck-toolbar_grouping {
   background-color: #F4F6FB !important;
 }
+
+.ck.ck-editor__main>.ck-editor__editable:not(.ck-focused) {
+  border: unset !important;
+}
+
+.ck.ck-editor__top .ck-sticky-panel .ck-sticky-panel__content {
+  border: unset !important;
+}

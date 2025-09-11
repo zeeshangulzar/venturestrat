@@ -70,7 +70,7 @@ export default function EmailSidebar({ drafts, selectedEmailId, onEmailSelect }:
             <p className="text-sm">No email drafts found</p>
           </div>
         ) : (
-          <div>
+          <div className='flex flex-col gap-2 p-[6px]'>
             {drafts.map((draft, index) => (
               <div key={draft.id}>
                 <div
@@ -78,8 +78,8 @@ export default function EmailSidebar({ drafts, selectedEmailId, onEmailSelect }:
                     console.log('Email selected in sidebar:', draft.id, draft.subject);
                     onEmailSelect(draft.id);
                   }}
-                  className={`p-4 cursor-pointer hover:bg-gray-50 transition-colors ${
-                    selectedEmailId === draft.id ? 'border-r-2 border-blue-500' : ''
+                  className={`pt-[12px] pr-[15px] pb-[12px] pl-[10px] cursor-pointer hover:bg-gray-50 transition-colors border border-[#EEF3FD] rounded-[10px] ${
+                    selectedEmailId === draft.id ? 'bg-gradient-to-r from-[rgba(37,99,235,0.04)] to-[rgba(37,99,235,0.15)]' : ''
                   }`}
                 >
                   <div className="flex justify-between items-start mb-2">
@@ -93,10 +93,6 @@ export default function EmailSidebar({ drafts, selectedEmailId, onEmailSelect }:
                     </div>
                   </div>
                 </div>
-                {/* Only add border if not the last item */}
-                {index < drafts.length && (
-                  <div className="border-b border-gray-100"></div>
-                )}
               </div>
             ))}
           </div>
