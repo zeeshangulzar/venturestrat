@@ -333,10 +333,9 @@ export default function EmailManagementInterface({ userId, mode = 'draft', refre
         <div className="absolute top-2 right-2 z-20">
           <div className="flex items-center space-x-2 bg-white px-3 py-1 rounded-full shadow-sm border">
             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-            <span className="text-sm text-gray-600">
-              {hasInitialData ? 'Refreshing...' : 'Loading...'}
-              console.log('Loading state:', loading, 'Has initial data:', hasInitialData);
-            </span>
+              <span className="text-sm text-gray-600">
+                {hasInitialData ? 'Refreshing...' : 'Loading...'}
+              </span>
           </div>
         </div>
       )}
@@ -346,7 +345,7 @@ export default function EmailManagementInterface({ userId, mode = 'draft', refre
         <div className="absolute inset-0 bg-white bg-opacity-50 flex items-center justify-center z-10 transition-opacity duration-200">
           <div className="text-center">
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto mb-2"></div>
-            <p className="text-gray-600 text-sm">Loading {mode === 'sent' ? 'sent' : 'draft'} emails...</p>
+            <p className="text-gray-600 text-sm">Loading {mode === "sent" ? "sent" : "draft"} emails...</p>
           </div>
         </div>
       )}
