@@ -57,12 +57,6 @@ export default function EmailSidebar({ drafts, selectedEmailId, onEmailSelect }:
 
   return (
     <div className="w-80 bg-white border-r border-gray-200 flex flex-col h-auto">
-      {/* Header */}
-      <div className="p-4 border-b border-gray-200 flex-shrink-0">
-        <h2 className="text-lg font-semibold text-gray-900">Email Drafts</h2>
-        <p className="text-sm text-gray-500">{drafts.length} draft{drafts.length !== 1 ? 's' : ''}</p>
-      </div>
-
       {/* Email List */}
       <div className="flex-1 overflow-y-auto min-h-0">
         {drafts.length === 0 ? (
@@ -84,10 +78,10 @@ export default function EmailSidebar({ drafts, selectedEmailId, onEmailSelect }:
                 >
                   <div className="flex justify-between items-start mb-2">
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs text-gray-500 truncate">
+                      <p className="font-bold text-[16px] leading-[16px] tracking-[-0.02em] text-[#0C2143] mb-2 truncate">
                         To: {getRecipients(draft.to)}
                       </p>
-                      <p className="text-xs text-gray-500 truncate">
+                      <p className="font-normal text-[14px] leading-[16px] tracking-[-0.02em] text-[#525A68] truncate">
                         Subject: {draft.subject}
                       </p>
                     </div>

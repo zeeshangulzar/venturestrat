@@ -34,7 +34,7 @@ export default function MailTabs({ activeSection, onSectionChange, children, cou
   return (
     <div className='p-[15px] h-full flex flex-col'>
       {/* Mail Tab Buttons */}
-      <div className="mt-4 flex flex-wrap gap-4 flex-shrink-0">
+      <div className="flex flex-wrap gap-4 flex-shrink-0 border-b border-gray-200 pb-3">
         {mailTabs.map((tab) => (
           <MailTabButton
             key={tab.type}
