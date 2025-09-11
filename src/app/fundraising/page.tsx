@@ -49,7 +49,13 @@ export default function FundraisingPage() {
   // Function to select a specific email
   const selectEmail = (emailId: string) => {
     console.log('selectEmail called with ID:', emailId);
-    setSelectedEmailId(emailId);
+    // Clear current selection first to force fresh data fetch
+    // This handles the case where backend returns existing email instead of new one
+    setSelectedEmailId(null);
+    // Use setTimeout to ensure the null state is processed before setting the new ID
+    setTimeout(() => {
+      setSelectedEmailId(emailId);
+    }, 0);
   };
 
   // Load user data for ChatGPT prompt

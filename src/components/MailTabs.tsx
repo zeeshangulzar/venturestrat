@@ -32,7 +32,7 @@ export default function MailTabs({ activeSection, onSectionChange, children, cou
     { type: 'answered', label: 'Answered', count: counts.answered || 0, isClickable: false },
   ];
   return (
-    <div className='p-[15px] h-full flex flex-col'>
+    <div className='p-[15px] h-full flex flex-col pt-0'>
       {/* Mail Tab Buttons */}
       <div className="flex flex-wrap gap-4 flex-shrink-0 border-b border-gray-200 pb-3">
         {mailTabs.map((tab) => (

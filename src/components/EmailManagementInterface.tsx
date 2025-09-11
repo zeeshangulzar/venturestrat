@@ -102,8 +102,9 @@ export default function EmailManagementInterface({ userId, mode = 'draft', refre
         if (data.data.length > 0) {
           if (!selectedEmailId) {
             setSelectedEmailId(data.data[0].id);
-          } else if (selectEmailId && data.data.find((email: EmailDraft) => email.id === selectEmailId) && selectedEmailId !== selectEmailId) {
-            // If we have a selectEmailId and it exists in the new data, and it's different from current selection, select it
+          } else if (selectEmailId && selectedEmailId !== selectEmailId) {
+            // If we have a selectEmailId and it's different from current selection, select it
+            // This handles both cases: when the email exists in the list and when it doesn't (AI-generated email)
             setSelectedEmailId(selectEmailId);
             // Notify parent that selectEmailId has been processed
             if (onSelectEmailProcessed) {
@@ -117,8 +118,9 @@ export default function EmailManagementInterface({ userId, mode = 'draft', refre
         if (data.length > 0) {
           if (!selectedEmailId) {
             setSelectedEmailId(data[0].id);
-          } else if (selectEmailId && data.find((email: EmailDraft) => email.id === selectEmailId) && selectedEmailId !== selectEmailId) {
-            // If we have a selectEmailId and it exists in the new data, and it's different from current selection, select it
+          } else if (selectEmailId && selectedEmailId !== selectEmailId) {
+            // If we have a selectEmailId and it's different from current selection, select it
+            // This handles both cases: when the email exists in the list and when it doesn't (AI-generated email)
             setSelectedEmailId(selectEmailId);
             // Notify parent that selectEmailId has been processed
             if (onSelectEmailProcessed) {
@@ -205,23 +207,32 @@ export default function EmailManagementInterface({ userId, mode = 'draft', refre
           setSelectedEmail(emailFromList);
         }
       } else {
-        // For draft emails, show cached data immediately if available, then fetch fresh data
-        const emailFromList = drafts.find(draft => draft.id === selectedEmailId);
-        if (emailFromList) {
-          setSelectedEmail(emailFromList);
+        // For draft emails, when selectEmailId is provided (AI email creation),
+        // always clear current selection and fetch fresh data from backend
+        // This handles the case where backend returns existing email instead of new one
+        if (selectEmailId && selectEmailId === selectedEmailId) {
+          // This is an AI email creation - clear current selection to force fresh fetch
+          setSelectedEmail(null);
         } else {
-          // Only clear selectedEmail if we don't have cached data and we're switching to a different email
-          if (selectedEmail && selectedEmail.id !== selectedEmailId) {
-            setSelectedEmail(null);
+          // Regular email selection - show cached data if available
+          const emailFromList = drafts.find(draft => draft.id === selectedEmailId);
+          if (emailFromList) {
+            setSelectedEmail(emailFromList);
+          } else {
+            // Only clear selectedEmail if we don't have cached data and we're switching to a different email
+            if (selectedEmail && selectedEmail.id !== selectedEmailId) {
+              setSelectedEmail(null);
+            }
           }
         }
+        // Always fetch individual email data to ensure we have the latest version
         fetchIndividualEmail(selectedEmailId);
         setNeedsFreshData(false);
       }
     } else {
       setSelectedEmail(null);
     }
-  }, [selectedEmailId, mode]);
+  }, [selectedEmailId, mode, selectEmailId]);
 
 
   // Cleanup effect to handle pending saves

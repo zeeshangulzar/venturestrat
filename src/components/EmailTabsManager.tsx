@@ -85,6 +85,9 @@ export default function EmailTabsManager({ userId, refreshTrigger, selectEmailId
       console.log('New selectEmailId detected, resetting user-initiated flag and processed state');
       setUserInitiatedTabChange(false);
       setProcessedSelectEmailId(null); // Reset processed state for new selectEmailId
+      // Force refresh of email list to ensure we get the latest data
+      // This handles the case where backend returns existing email instead of new one
+      fetchCounts();
     }
   }, [selectEmailId]);
 

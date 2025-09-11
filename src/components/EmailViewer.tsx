@@ -341,7 +341,7 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
         {/* Email Metadata */}
         <div className="space-y-4 text-sm">
           {/* From Field - First */}
-          <div>
+          {/* <div>
             <span className="font-medium text-gray-700">From:</span>
             {readOnly ? (
               <span className="ml-2 text-gray-900">{email.from}</span>
@@ -352,10 +352,11 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
                 onChange={(e) => handleFieldChange('from', e.target.value)}
                 className="ml-2 border border-gray-300 rounded px-2 py-1 focus:outline-none w-full max-w-md min-w-0"
                 placeholder="sender@example.com"
+                disabled
                 style={{ minWidth: '200px' }}
               />
             )}
-          </div>
+          </div> */}
           
           {/* To Field - Display Only */}
           <div>
