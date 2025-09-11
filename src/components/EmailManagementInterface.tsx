@@ -66,8 +66,11 @@ export default function EmailManagementInterface({ userId, mode = 'draft', refre
     setError(null);
     
     // Only show tab switching overlay if we have existing data and are switching modes
+    // Add a small delay to prevent flickering during rapid tab switches
     if (drafts.length > 0 && hasInitialData) {
-      setIsTabSwitching(true);
+      setTimeout(() => {
+        setIsTabSwitching(true);
+      }, 100);
     }
     
     // For both sent and draft emails, fetch immediately
