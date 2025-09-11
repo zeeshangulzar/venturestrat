@@ -178,7 +178,7 @@ export default function FundraisingPage() {
                           <td className="w-[25%] px-4 py-4">
                             <div className="flex gap-[20px] flex-wrap items-center">
                               <InvestorStatusDropdown 
-                                buttonText="Contacted"
+                                buttonText="Target"
                                 buttonColor="bg-[rgba(218,156,22,0.14)] text-[#C58A09]"
                               />
 
