@@ -124,9 +124,9 @@ export default function ChatGPTIntegration({
     <button
       onClick={generateEmail}
       disabled={isGenerating}
-      className="flex-1 justify-center items-center px-5 py-2.5 gap-1 h-[39px] left-4 top-[394px] bg-[#2563EB] rounded-[10px] font-manrope not-italic font-medium text-[14px] leading-[19px] tracking-[-0.02em] text-[#FFFFFF] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+      className={`flex-1 justify-center items-center ${isGenerating ? "px-2" : "px-5"} py-2.5 gap-1 h-[43px] left-4 top-[394px] bg-[#2563EB] rounded-[10px] font-manrope not-italic font-medium text-[14px] leading-[19px] tracking-[-0.02em] text-[#FFFFFF] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer`}
     >
-      {isGenerating ? 'Generating...' : 'AI Email'}
+      {isGenerating ? 'Loading...' : 'AI Email'}
     </button>
   );
 }
