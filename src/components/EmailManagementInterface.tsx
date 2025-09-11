@@ -198,23 +198,22 @@ export default function EmailManagementInterface({ userId, mode = 'draft', refre
   // Fetch individual email when selectedEmailId changes
   useEffect(() => {
     if (selectedEmailId) {
-      // Clear current selected email if switching to a different email
-      // This prevents showing old email content while fetching new email
-      if (selectedEmail && selectedEmail.id !== selectedEmailId) {
-        setSelectedEmail(null);
-      }
-      
-      // For sent emails, just show cached data
+      // For sent emails, just show cached data immediately
       if (mode === 'sent') {
         const emailFromList = drafts.find(draft => draft.id === selectedEmailId);
         if (emailFromList) {
           setSelectedEmail(emailFromList);
         }
       } else {
-        // For draft emails, show cached data first if available, then fetch fresh data
+        // For draft emails, show cached data immediately if available, then fetch fresh data
         const emailFromList = drafts.find(draft => draft.id === selectedEmailId);
-        if (emailFromList && !selectedEmail) {
+        if (emailFromList) {
           setSelectedEmail(emailFromList);
+        } else {
+          // Only clear selectedEmail if we don't have cached data and we're switching to a different email
+          if (selectedEmail && selectedEmail.id !== selectedEmailId) {
+            setSelectedEmail(null);
+          }
         }
         fetchIndividualEmail(selectedEmailId);
         setNeedsFreshData(false);
@@ -329,7 +328,18 @@ export default function EmailManagementInterface({ userId, mode = 'draft', refre
 
   return (
     <div className="flex h-full bg-gray-50 relative">
-      {/* Background loading indicator */}
+      {/* Background loading indicator - only show when not tab switching */}
+      {loading && !isTabSwitching && (
+        <div className="absolute top-2 right-2 z-20">
+          <div className="flex items-center space-x-2 bg-white px-3 py-1 rounded-full shadow-sm border">
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+            <span className="text-sm text-gray-600">
+              {hasInitialData ? 'Refreshing...' : 'Loading...'}
+              console.log('Loading state:', loading, 'Has initial data:', hasInitialData);
+            </span>
+          </div>
+        </div>
+      )}
       
       {/* Loading overlay for tab switching - reduced opacity for smoother transition */}
       {isTabSwitching && (
@@ -353,7 +363,7 @@ export default function EmailManagementInterface({ userId, mode = 'draft', refre
         onEmailSaveStart={mode === 'draft' ? handleEmailSaveStart : undefined}
         onEmailSaveEnd={mode === 'draft' ? handleEmailSaveEnd : undefined}
         readOnly={mode === 'sent'}
-        loading={false}
+        loading={!!(selectedEmailId && !selectedEmail)}
       />
     </div>
   );
