@@ -36,10 +36,19 @@ export default function FundraisingPage() {
 
   // State for triggering email list refresh
   const [emailRefreshTrigger, setEmailRefreshTrigger] = useState(0);
+  
+  // State for selecting a specific email ID
+  const [selectedEmailId, setSelectedEmailId] = useState<string | null>(null);
 
   // Function to trigger email list refresh
   const triggerEmailRefresh = () => {
     setEmailRefreshTrigger(prev => prev + 1);
+  };
+  
+  // Function to select a specific email
+  const selectEmail = (emailId: string) => {
+    console.log('selectEmail called with ID:', emailId);
+    setSelectedEmailId(emailId);
   };
 
   // Load user data for ChatGPT prompt
@@ -195,7 +204,11 @@ export default function FundraisingPage() {
                                       setEmailGenerationStatus({ type: null, message: '' });
                                     }, 5000);
                                   }}
-                                  onEmailCreated={triggerEmailRefresh}
+                                  onEmailCreated={(emailId) => {
+                                    console.log('AI email created with ID:', emailId);
+                                    selectEmail(emailId);
+                                    triggerEmailRefresh();
+                                  }}
                                 />
                               )}
                             </div>
@@ -217,7 +230,14 @@ export default function FundraisingPage() {
           </div>
           
           {user?.id ? (
-            <EmailTabsManager userId={user.id} refreshTrigger={emailRefreshTrigger} />
+            <EmailTabsManager 
+              userId={user.id} 
+              refreshTrigger={emailRefreshTrigger} 
+              selectEmailId={selectedEmailId || undefined}
+              onTabSwitch={(tab) => {
+                console.log('Tab switched to:', tab);
+              }}
+            />
           ) : (
             <div className="flex items-center justify-center h-full">
               <p className="text-gray-500">Please log in to view emails</p>
