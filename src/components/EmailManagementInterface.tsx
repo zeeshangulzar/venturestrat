@@ -24,9 +24,10 @@ interface EmailManagementInterfaceProps {
   onEmailSent?: () => void; // Add callback for when email is sent
   onSaveStart?: () => void; // Add callback for when save starts
   onSaveEnd?: () => void; // Add callback for when save ends
+  selectEmailId?: string; // Add prop to select a specific email ID
 }
 
-export default function EmailManagementInterface({ userId, mode = 'draft', refreshTrigger, onEmailSent, onSaveStart, onSaveEnd }: EmailManagementInterfaceProps) {
+export default function EmailManagementInterface({ userId, mode = 'draft', refreshTrigger, onEmailSent, onSaveStart, onSaveEnd, selectEmailId }: EmailManagementInterfaceProps) {
   const [drafts, setDrafts] = useState<EmailDraft[]>([]);
   const [selectedEmailId, setSelectedEmailId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -77,15 +78,41 @@ export default function EmailManagementInterface({ userId, mode = 'draft', refre
       if (data.data && Array.isArray(data.data)) {
         setDrafts(data.data);
         setHasInitialData(true);
-        // Auto-select first email if none selected
-        if (data.data.length > 0 && !selectedEmailId) {
-          setSelectedEmailId(data.data[0].id);
+        // Auto-select first email if none selected, or if we have a specific email to select
+        if (data.data.length > 0) {
+          console.log('fetchDrafts - checking email selection:', { 
+            selectedEmailId, 
+            selectEmailId, 
+            dataLength: data.data.length,
+            mode 
+          });
+          if (!selectedEmailId) {
+            console.log('Setting first email as selected:', data.data[0].id);
+            setSelectedEmailId(data.data[0].id);
+          } else if (selectEmailId && data.data.find((email: EmailDraft) => email.id === selectEmailId)) {
+            // If we have a selectEmailId and it exists in the new data, select it
+            console.log('Setting selectEmailId as selected:', selectEmailId);
+            setSelectedEmailId(selectEmailId);
+          }
         }
       } else if (Array.isArray(data)) {
         setDrafts(data);
         setHasInitialData(true);
-        if (data.length > 0 && !selectedEmailId) {
-          setSelectedEmailId(data[0].id);
+        if (data.length > 0) {
+          console.log('fetchDrafts - checking email selection (array):', { 
+            selectedEmailId, 
+            selectEmailId, 
+            dataLength: data.length,
+            mode 
+          });
+          if (!selectedEmailId) {
+            console.log('Setting first email as selected (array):', data[0].id);
+            setSelectedEmailId(data[0].id);
+          } else if (selectEmailId && data.find((email: EmailDraft) => email.id === selectEmailId)) {
+            // If we have a selectEmailId and it exists in the new data, select it
+            console.log('Setting selectEmailId as selected (array):', selectEmailId);
+            setSelectedEmailId(selectEmailId);
+          }
         }
       } else {
         setDrafts([]);
@@ -103,15 +130,19 @@ export default function EmailManagementInterface({ userId, mode = 'draft', refre
   const fetchIndividualEmail = async (emailId: string) => {
     if (!emailId) return;
     
+    console.log('fetchIndividualEmail called for ID:', emailId);
+    
     // First, try to find the email in the current drafts list to avoid unnecessary loading
     const existingEmail = drafts.find(draft => draft.id === emailId);
     if (existingEmail) {
+      console.log('Found email in cache, showing cached version first');
       setSelectedEmail(existingEmail);
     }
     
     setLoadingEmail(true);
     
     try {
+      console.log('Fetching fresh email data from backend for ID:', emailId);
       const response = await fetch(getApiUrl(`/api/message/${emailId}`), {
         method: 'GET',
         headers: {
@@ -126,11 +157,13 @@ export default function EmailManagementInterface({ userId, mode = 'draft', refre
       const data = await response.json();
       // Handle the response format where data is wrapped in a 'message' object
       const emailData = data.message || data;
+      console.log('Fresh email data received:', emailData.subject);
       setSelectedEmail(emailData);
     } catch (err) {
       console.error('Error fetching individual email:', err);
       // Fallback to existing email if available
       if (existingEmail) {
+        console.log('Falling back to cached email due to error');
         setSelectedEmail(existingEmail);
       } else {
         setSelectedEmail(null);
@@ -148,27 +181,33 @@ export default function EmailManagementInterface({ userId, mode = 'draft', refre
     fetchDrafts();
   }, [userId, mode, refreshTrigger]); // Add refreshTrigger to dependencies
 
+  // Handle selectEmailId prop - this is now handled in fetchDrafts
+
   // Fetch individual email when selectedEmailId changes
   useEffect(() => {
+    console.log('Email selection effect triggered:', { selectedEmailId, mode, draftsLength: drafts.length });
     if (selectedEmailId) {
       // For both sent and draft emails, show cached data immediately
       const emailFromList = drafts.find(draft => draft.id === selectedEmailId);
       if (emailFromList) {
+        console.log('Showing cached email immediately:', emailFromList.subject);
         setSelectedEmail(emailFromList);
       }
       
-      // Only fetch individual email for draft emails if we don't have the email in our list
-      // OR if we specifically need fresh data (like after a save operation)
-      if (mode === 'draft' && (!emailFromList || needsFreshData)) {
+      // Always fetch individual email for draft emails to get fresh data from backend
+      // This ensures we show the latest content when switching between emails
+      if (mode === 'draft') {
+        console.log('Scheduling fresh email fetch for draft mode');
         // Add a small delay to ensure any pending saves have completed
         const timeoutId = setTimeout(() => {
           fetchIndividualEmail(selectedEmailId);
           setNeedsFreshData(false); // Reset the flag after fetching
-        }, 500); // 500ms delay to allow pending saves to complete
+        }, 100); // Reduced delay for better responsiveness
         
         return () => clearTimeout(timeoutId);
       }
     } else {
+      console.log('No selectedEmailId, clearing selected email');
       setSelectedEmail(null);
     }
   }, [selectedEmailId, mode, drafts, needsFreshData]); // Add needsFreshData dependency
@@ -185,6 +224,7 @@ export default function EmailManagementInterface({ userId, mode = 'draft', refre
   }, [pendingSave]);
 
   const handleEmailSelect = (emailId: string) => {
+    console.log('handleEmailSelect called with ID:', emailId);
     setSelectedEmailId(emailId);
   };
 

@@ -8,6 +8,8 @@ import EmailManagementInterface from './EmailManagementInterface';
 interface EmailTabsManagerProps {
   userId: string;
   refreshTrigger?: number; // Add refresh trigger prop
+  selectEmailId?: string; // Add prop to select a specific email ID
+  onTabSwitch?: (tab: MailSectionType) => void; // Add callback for tab switching
 }
 
 interface EmailCounts {
@@ -17,7 +19,7 @@ interface EmailCounts {
   answered: number;
 }
 
-export default function EmailTabsManager({ userId, refreshTrigger }: EmailTabsManagerProps) {
+export default function EmailTabsManager({ userId, refreshTrigger, selectEmailId, onTabSwitch }: EmailTabsManagerProps) {
   const [activeSection, setActiveSection] = useState<MailSectionType>('all');
   const [counts, setCounts] = useState<EmailCounts>({
     all: 0,
@@ -75,6 +77,17 @@ export default function EmailTabsManager({ userId, refreshTrigger }: EmailTabsMa
     fetchCounts();
   }, [userId, refreshTrigger]); // Add refreshTrigger to dependencies
 
+  // Auto-switch to 'all' tab when selectEmailId is provided (AI email created)
+  useEffect(() => {
+    if (selectEmailId && activeSection !== 'all') {
+      console.log('Auto-switching to all tab for selectEmailId:', selectEmailId);
+      setActiveSection('all');
+      if (onTabSwitch) {
+        onTabSwitch('all');
+      }
+    }
+  }, [selectEmailId, activeSection, onTabSwitch]);
+
   const handleSectionChange = async (section: MailSectionType) => {
     // Only prevent tab switching if there's a pending save and we're switching away from drafts
     if (pendingSave && activeSection === 'all') {
@@ -119,6 +132,7 @@ export default function EmailTabsManager({ userId, refreshTrigger }: EmailTabsMa
             onEmailSent={handleEmailSent}
             onSaveStart={handleSaveStart}
             onSaveEnd={handleSaveEnd}
+            selectEmailId={selectEmailId}
           />
         )}
         
@@ -130,6 +144,7 @@ export default function EmailTabsManager({ userId, refreshTrigger }: EmailTabsMa
             onEmailSent={handleEmailSent}
             onSaveStart={handleSaveStart}
             onSaveEnd={handleSaveEnd}
+            selectEmailId={selectEmailId}
           />
         )}
         

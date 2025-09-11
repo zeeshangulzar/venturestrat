@@ -28,7 +28,7 @@ interface ChatGPTIntegrationProps {
   };
   onEmailGenerated: (emailContent: string) => void;
   onError: (error: string) => void;
-  onEmailCreated?: () => void; // New callback for when email is successfully created
+  onEmailCreated?: (emailId: string) => void; // New callback for when email is successfully created with email ID
 }
 
 export default function ChatGPTIntegration({
@@ -92,9 +92,12 @@ export default function ChatGPTIntegration({
         throw new Error('Failed to save email draft');
       }
 
-      // Call the onEmailCreated callback to refresh the email list
-      if (onEmailCreated) {
-        onEmailCreated();
+      const createdEmail = await messageResponse.json();
+      const emailId = createdEmail.id || createdEmail.message?.id || createdEmail.data?.id;
+
+      // Call the onEmailCreated callback to refresh the email list and pass the email ID
+      if (onEmailCreated && emailId) {
+        onEmailCreated(emailId);
       }
 
       onEmailGenerated(emailContent);
