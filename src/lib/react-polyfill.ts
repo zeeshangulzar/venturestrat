@@ -71,7 +71,6 @@ const applyPolyfill = () => {
       }
     }
     
-    console.log('React 19 polyfill applied successfully');
   } catch (error) {
     console.warn('Failed to apply React 19 polyfill:', error);
   }
