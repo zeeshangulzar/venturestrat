@@ -9,7 +9,6 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@ckeditor/ckeditor5-build-classic": "41.4.2",
     "@ckeditor/ckeditor5-react": "6.2.0",
     "@clerk/nextjs": "^6.28.1",
     "@heroicons/react": "^2.2.0",
@@ -18,6 +17,7 @@
     "next": "15.4.5",
     "react": "19.1.0",
     "react-dom": "19.1.0",
+    "react-quill": "^2.0.0",
     "react-select": "^5.10.2",
     "svix": "^1.74.1",
     "world-countries-capitals": "^3.4.0"
