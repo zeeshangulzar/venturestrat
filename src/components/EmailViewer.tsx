@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { getApiUrl } from '@lib/api';
-import { CKEditor } from '@ckeditor/ckeditor5-react';
-import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
+import '@lib/react-polyfill'; // Import React 19 polyfill for React Quill compatibility
+import QuillEditor from './QuillEditor';
 
 interface EmailDraft {
   id: string;
@@ -53,9 +53,7 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
   // Ref to track if we're setting initial data (to prevent auto-save)
   const isSettingInitialDataRef = useRef(false);
   
-  // Ref for CKEditor instance
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const editorRef = useRef<any>(null);
+  // Note: QuillRef removed as we're using a wrapper component for React 19 compatibility
 
   useEffect(() => {
     if (email) {
@@ -82,20 +80,10 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
       // Set flag to prevent auto-save when setting initial data
       isSettingInitialDataRef.current = true;
       
-      // Update editor content if editor is ready
-      if (editorRef.current) {
-        editorRef.current.setData(body);
-        // Reset flag after editor data is set
-        setTimeout(() => {
-          isSettingInitialDataRef.current = false;
-        }, 200);
-      } else {
-        // If editor is not ready, reset flag after longer delay
-        // The onReady callback will handle setting the data
-        setTimeout(() => {
-          isSettingInitialDataRef.current = false;
-        }, 500);
-      }
+      // Reset flag after a short delay to allow React Quill to initialize
+      setTimeout(() => {
+        isSettingInitialDataRef.current = false;
+      }, 200);
     }
   }, [email]);
 
@@ -130,7 +118,7 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
         },
         body: JSON.stringify({
           subject: currentValues.editedSubject,
-          body: currentValues.editedBody, // This will be HTML from CKEditor
+          body: currentValues.editedBody, // This will be HTML from React Quill
           from: currentValues.editedFrom,
         }),
       });
@@ -380,31 +368,14 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
             </div>
           ) : (
             <div className="w-full flex-1 min-h-0 flex flex-col">
-              <CKEditor
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                editor={ClassicEditor as any}
-                onChange={(event, editor) => {
-                  const data = editor.getData();
-                  handleFieldChange('body', data);
+              <QuillEditor
+                value={editedBody}
+                onChange={(content: string) => {
+                  handleFieldChange('body', content);
                 }}
-                onReady={(editor) => {
-                  editorRef.current = editor;
-                  // Set flag to prevent auto-save when setting initial data
-                  isSettingInitialDataRef.current = true;
-                  editor.setData(editedBody);
-                  // Reset flag after editor data is set
-                  setTimeout(() => {
-                    isSettingInitialDataRef.current = false;
-                  }, 200);
-                }}
-                config={{
-                  toolbar: [
-                    'fontFamily', 'fontSize', '|',
-                    'bold', 'underline', 'fontColor', 'italic', 'strikethrough', '|',
-                    'numberedList', 'bulletedList'
-                  ],
-                  placeholder: 'Enter your email content...'
-                }}
+                placeholder="Enter your email content..."
+                style={{ minHeight: '400px' }}
+                className="flex-1"
               />
             </div>
           )}
@@ -439,7 +410,7 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
           <div className="flex justify-end">
             {!readOnly ? (
             <div
-              className={`flex items-center gap-2 px-6 py-2 rounded-md font-medium transition-colors mb-[50px] ${
+              className={`flex items-center gap-2 px-6 py-2 rounded-md font-medium transition-colors mt-[50px] ${
                 isSending
                   ? 'bg-gray-400 text-gray-700 cursor-not-allowed'
                   : 'bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
@@ -477,7 +448,7 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
             ) : (
               /* Placeholder content for read-only mode to maintain consistent height */
               <div className="px-6 py-2 text-sm text-gray-500">
-                Read-only mode
+              
               </div>
             )}
           </div>

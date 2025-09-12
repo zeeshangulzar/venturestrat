@@ -54,31 +54,25 @@ body {
   }
 }
 
-/* CKEditor styling for proper scrolling */
-.ck-editor {
+/* React Quill styling for proper scrolling */
+.ql-editor {
   height: 100% !important;
-  display: flex !important;
-  flex-direction: column !important;
-}
-
-.ck-editor__main {
-  flex: 1 !important;
-  min-height: 0 !important;
-}
-
-.ck-editor__editable {
-  height: -webkit-fill-available !important;
+  min-height: 400px !important;
   background-color: #F4F6FB !important;
 }
 
-.ck-toolbar_grouping {
+.ql-toolbar {
+  background-color: #F4F6FB !important;
+  border: 1px solid #EDEEEF !important;
+  border-bottom: none !important;
+}
+
+.ql-container {
+  border: 1px solid #EDEEEF !important;
+  border-top: none !important;
   background-color: #F4F6FB !important;
 }
 
-.ck.ck-editor__main>.ck-editor__editable:not(.ck-focused) {
-  border: unset !important;
-}
-
-.ck.ck-editor__top .ck-sticky-panel .ck-sticky-panel__content {
-  border: unset !important;
+.ql-editor:focus {
+  outline: none !important;
 }
