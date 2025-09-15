@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
         messages: [
           {
             role: 'system',
-            content: 'You are a professional email writing assistant specializing in investor outreach emails. Write clear, concise, and professional emails that are personalized and engaging.'
+            content: `You are a professional email writing assistant specializing in investor outreach emails. Write emails in **HTML format** with proper tags (e.g., <p>, <ul>, <li>, <strong>). Do not return Markdown.`
           },
           {
             role: 'user',
