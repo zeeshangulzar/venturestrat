@@ -370,7 +370,7 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
           
           {isAIModalOpen && (
             <div 
-              className="absolute inset-0 z-50flex items-start justify-start"
+              className="absolute inset-0 z-50 flex items-start justify-start"
               onClick={() => {
                 setIsAIModalOpen(false);
                 setSelectedText('');

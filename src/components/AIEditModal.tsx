@@ -256,14 +256,14 @@ export default function AIEditModal({
         {aiResponse && (
           <div className="p-6">
             <div className="flex gap-3 items-center">
-              <div className="relative bg-white border border-[#EDEEEF] rounded-[10px] w-full">
+              <div className="relative bg-white border border-[#EDEEEF] w-full shadow-[4px_4px_28px_rgba(30,41,59,0.2)] rounded-[10px]">
                 <input
                   ref={searchInputRef}
                   type="text"
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
                   onKeyPress={handleKeyPress}
-                  className="w-full pl-12 pr-12 py-4 bg-white border border-[#EDEEEF] rounded-[10px]"
+                  className="w-full p-[5px] bg-white border border-[#EDEEEF] rounded-[10px]"
                   disabled={isGenerating}
                 /> 
                  {/* Logo - Always visible */}
