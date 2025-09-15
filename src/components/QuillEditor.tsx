@@ -338,7 +338,7 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
           />
           
           {showFloatingButton && (
-            <div className="absolute z-40 flex items-center gap-2 bg-white border border-gray-200 rounded-lg shadow-lg px-3 py-2"
+            <div className="absolute z-[45] flex items-center gap-2 bg-white border border-gray-200 rounded-lg shadow-lg px-3 py-2"
                  style={{
                    top: `${buttonPosition.top}px`,
                    left: `${buttonPosition.left}px`,
@@ -369,23 +369,35 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
           )}
           
           {isAIModalOpen && (
-            <div 
-              className="absolute inset-0 z-50 flex items-start justify-start"
-              onClick={() => {
-                setIsAIModalOpen(false);
-                setSelectedText('');
-                setSelectedRange(null);
-              }}
-            >
+            <>
+              {/* Invisible backdrop for click outside - covers full screen */}
               <div 
-                className="bg-white max-w-2xl w-full mx-4 max-h-[80vh] flex flex-col border border-[#EDEEEF] shadow-[4px_4px_28px_rgba(30,41,59,0.2)] rounded-[10px]"
-                style={{
-                  position: 'absolute',
-                  top: `${buttonPosition.top + 50}px`,
-                  zIndex: 50
+                className="fixed inset-0 z-40"
+                onClick={() => {
+                  setIsAIModalOpen(false);
+                  setSelectedText('');
+                  setSelectedRange(null);
                 }}
-                onClick={(e) => e.stopPropagation()}
+              />
+              
+              {/* Modal container positioned below selected text */}
+              <div 
+                className="absolute inset-0 z-50 flex items-start justify-start"
+                onClick={() => {
+                  setIsAIModalOpen(false);
+                  setSelectedText('');
+                  setSelectedRange(null);
+                }}
               >
+                <div 
+                  className="bg-white max-w-2xl w-full mx-4 max-h-[80vh] flex flex-col border border-[#EDEEEF] shadow-[4px_4px_28px_rgba(30,41,59,0.2)] rounded-[10px]"
+                  style={{
+                    position: 'absolute',
+                    top: `${buttonPosition.top + 50}px`,
+                    zIndex: 50
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                >
                 <AIEditModal
                   isOpen={isAIModalOpen}
                   onClose={() => {
@@ -402,8 +414,9 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
                   position={buttonPosition}
                   editorRef={editorRef}
                 />
+                </div>
               </div>
-            </div>
+            </>
           )}
         </>
       )}

@@ -265,7 +265,7 @@ export default function AIEditModal({
                   onKeyPress={handleKeyPress}
                   className="w-full p-[5px] bg-white border border-[#EDEEEF] rounded-[10px]"
                   disabled={isGenerating}
-                /> 
+                />
                  {/* Logo - Always visible */}
                  <div className="absolute left-3 top-1/2 transform -translate-y-1/2 pointer-events-none flex items-center">
                    <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
