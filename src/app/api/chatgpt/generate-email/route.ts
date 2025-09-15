@@ -92,8 +92,6 @@ IMPORTANT FORMATTING RULES:
       body = trimmedContent;
     }
 
-    console.log('Parsed email:', { subject, bodyLength: body.length });
-
     return NextResponse.json({
       subject: subject,
       body: body,

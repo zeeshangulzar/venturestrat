@@ -187,7 +187,6 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
         const previousLength = previousBodyLengthRef.current;
         if (previousLength > 0 && value.length < previousLength * 0.5) {
           // This looks like a significant deletion, save immediately
-          console.log('Significant deletion detected, saving immediately');
           autoSave();
           return;
         }
@@ -376,6 +375,7 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
                 placeholder="Enter your email content..."
                 style={{ minHeight: '400px' }}
                 className="flex-1"
+                enableAIEditing={true}
               />
             </div>
           )}

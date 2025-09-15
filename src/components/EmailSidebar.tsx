@@ -69,7 +69,6 @@ export default function EmailSidebar({ drafts, selectedEmailId, onEmailSelect }:
               <div key={draft.id}>
                 <div
                   onClick={() => {
-                    console.log('Email selected in sidebar:', draft.id, draft.subject);
                     onEmailSelect(draft.id);
                   }}
                   className={`pt-[12px] pr-[15px] pb-[12px] pl-[10px] cursor-pointer hover:bg-gray-50 transition-colors border border-[#EEF3FD] rounded-[10px] ${
