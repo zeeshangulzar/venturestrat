@@ -69,8 +69,6 @@ export const updateUserData = async (userId: string, userData: Record<string, un
       // onboardingComplete removed from publicMetaData
     }
   };
-  
-  console.log('Sending to backend:', requestBody);
 
   // First try to update the user (PUT request)
   let response = await fetch(getApiUrl(`/api/user/${userId}`), {

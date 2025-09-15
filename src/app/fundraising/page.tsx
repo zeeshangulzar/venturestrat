@@ -48,7 +48,6 @@ export default function FundraisingPage() {
   
   // Function to select a specific email
   const selectEmail = (emailId: string) => {
-    console.log('selectEmail called with ID:', emailId);
     // Clear current selection first to force fresh data fetch
     // This handles the case where backend returns existing email instead of new one
     setSelectedEmailId(null);
@@ -214,7 +213,6 @@ export default function FundraisingPage() {
                                     }, 5000);
                                   }}
                                   onEmailCreated={(emailId) => {
-                                    console.log('AI email created with ID:', emailId);
                                     selectEmail(emailId);
                                     triggerEmailRefresh();
                                   }}

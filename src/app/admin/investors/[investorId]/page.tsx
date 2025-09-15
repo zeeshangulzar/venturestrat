@@ -45,8 +45,6 @@ export default function AdminInvestorShowPage() {
       const urlFilters = urlParams.get('filters');
       const urlPage = urlParams.get('page');
       
-      console.log('Admin detail page - URL parameters:', { urlFilters, urlPage });
-      
       if (urlFilters || urlPage) {
         // Create back URL with filters and page
         let url = '/admin/investors';

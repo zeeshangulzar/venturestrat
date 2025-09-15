@@ -92,9 +92,6 @@ const InvestorCard: React.FC<{ investor: Investor; appliedFilters?: Filters; bas
     const pageParam = currentUrl.searchParams.get('page');
     const currentPage = pageParam ? parseInt(pageParam) : 1;
     
-    console.log('Navigating to detail page with filters:', currentFilters);
-    console.log('Current page:', currentPage);
-    
     // Create URL with filters and page as parameters
     const params = new URLSearchParams();
     params.set('filters', encodeURIComponent(JSON.stringify(currentFilters)));
