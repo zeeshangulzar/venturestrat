@@ -10,6 +10,8 @@ interface AIEditModalProps {
   onAddNew: (text: string) => void;
   onReplace: (text: string) => void;
   onGenerateAI: (prompt: string, selectedText: string, previousResponse?: string) => Promise<string>;
+  position?: { top: number; left: number };
+  editorRef?: React.RefObject<HTMLDivElement | null>;
 }
 
 export default function AIEditModal({
@@ -19,7 +21,9 @@ export default function AIEditModal({
   onCopy,
   onAddNew,
   onReplace,
-  onGenerateAI
+  onGenerateAI,
+  position,
+  editorRef
 }: AIEditModalProps) {
   const [prompt, setPrompt] = useState('');
   const [aiResponse, setAiResponse] = useState('');
@@ -110,16 +114,50 @@ export default function AIEditModal({
 
   if (!isOpen) return null;
 
+  // Calculate modal position
+  const modalPosition = position && position.top > 0 && position.left > 0 && editorRef?.current ? (() => {
+    const editorRect = editorRef.current.getBoundingClientRect();
+    const modalWidth = 600; // Approximate modal width
+    const modalHeight = 400; // Approximate modal height
+    
+    // Calculate position relative to the editor container
+    let top = position.top + 50;
+    
+    // If modal would go off the bottom of the editor, position it above the button
+    if (top + modalHeight > editorRect.height) {
+      top = position.top - modalHeight - 10; // Position above the button
+    }
+    
+    // If modal would go off the top of the editor, position it at the top
+    if (top < 10) {
+      top = 10;
+    }
+    
+    return {
+      top: `${top}px`
+    };
+  })() : {
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)'
+  };
+
   return (
-    <div 
-      className="fixed inset-0 flex items-center justify-center z-50"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) {
-          onClose();
-        }
-      }}
-    >
-      <div className="bg-white max-w-2xl w-full mx-4 max-h-[80vh] flex flex-col border border-[#EDEEEF] shadow-[4px_4px_28px_rgba(30,41,59,0.2)] rounded-[10px]">
+    <div className="w-full h-full flex flex-col">
+        {/* Header with close button */}
+        {aiResponse && (
+          <div className="flex justify-end p-2">
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 transition-colors p-1"
+              title="Close"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        )}
         {/* Content */}
         <div className="flex-1 overflow-y-auto">
           {/* Hidden Selected Text Field */}
@@ -206,8 +244,8 @@ export default function AIEditModal({
 
           {/* AI Response */}
           {aiResponse && (
-            <div className="mb-6">
-              <div className="max-h-40 overflow-y-auto p-6">
+            <div className="">
+              <div className="max-h-40 overflow-y-auto px-5">
                 {aiResponse}
               </div>
             </div>
@@ -304,7 +342,6 @@ export default function AIEditModal({
             </div>
           </div>
         )}
-      </div>
     </div>
   );
 }

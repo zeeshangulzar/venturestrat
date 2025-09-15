@@ -131,10 +131,10 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
         const endBounds = quillEditor.getBounds(endRange);
         
         if (endBounds) {
-          // Position at the end of the last character
+          // Position at the end of the last character (relative to editor)
           endPosition = {
-            top: endBounds.top + editorRect.top - 10,
-            left: endBounds.left + endBounds.width + editorRect.left + 10
+            top: endBounds.top + endBounds.height + 10, // Below the text
+            left: endBounds.left + endBounds.width + 10 // To the right of the text
           };
         } else {
           // Fallback: try to get bounds of the last line
@@ -149,56 +149,59 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
             
             if (lastLineBounds) {
               endPosition = {
-                top: lastLineBounds.top + editorRect.top - 10,
-                left: lastLineBounds.left + lastLineBounds.width + editorRect.left + 10
+                top: lastLineBounds.top + lastLineBounds.height + 10,
+                left: lastLineBounds.left + lastLineBounds.width + 10
               };
             } else {
               // Final fallback to original bounds
               endPosition = {
-                top: bounds.top + editorRect.top - 10,
-                left: bounds.left + bounds.width + editorRect.left + 10
+                top: bounds.top + bounds.height + 10,
+                left: bounds.left + bounds.width + 10
               };
             }
           } else {
             // Empty last line, position at the end of the previous line
             endPosition = {
-              top: bounds.top + editorRect.top - 10,
-              left: bounds.left + bounds.width + editorRect.left + 10
+              top: bounds.top + bounds.height + 10,
+              left: bounds.left + bounds.width + 10
             };
           }
         }
       } else {
         // Single line selection: use original calculation
         endPosition = {
-          top: bounds.top + editorRect.top - 10,
-          left: bounds.left + bounds.width + editorRect.left + 10
+          top: bounds.top + bounds.height + 10,
+          left: bounds.left + bounds.width + 10
         };
       }
 
-      // Ensure button doesn't go off-screen
+      // Ensure button doesn't go off the editor area
       const buttonWidth = 200; // Approximate button width
       const buttonHeight = 40; // Approximate button height
       
-      // Check if button would go off the right edge
-      if (endPosition.left + buttonWidth > window.innerWidth) {
-        endPosition.left = window.innerWidth - buttonWidth - 10;
+      // Check if button would go off the right edge of the editor
+      if (endPosition.left + buttonWidth > editorRect.width) {
+        endPosition.left = editorRect.width - buttonWidth - 10;
       }
       
-      // Check if button would go off the top edge
+      // Check if button would go off the bottom edge of the editor
+      if (endPosition.top + buttonHeight > editorRect.height) {
+        endPosition.top = bounds.top - buttonHeight - 10; // Position above text instead
+      }
+      
+      // Ensure minimum position
       if (endPosition.top < 10) {
-        endPosition.top = bounds.top + editorRect.top + bounds.height + 10; // Position below text instead
+        endPosition.top = 10;
       }
-      
-      // Check if button would go off the bottom edge
-      if (endPosition.top + buttonHeight > window.innerHeight) {
-        endPosition.top = window.innerHeight - buttonHeight - 10;
+      if (endPosition.left < 10) {
+        endPosition.left = 10;
       }
 
       setButtonPosition(endPosition);
     } catch (error) {
       console.error('Error calculating button position:', error);
-      // Fallback to center position
-      setButtonPosition({ top: 0, left: 0 });
+      // Fallback to center of editor
+      setButtonPosition({ top: 100, left: 100 });
     }
   };
 
@@ -335,7 +338,7 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
           />
           
           {showFloatingButton && (
-            <div className="fixed z-40 flex items-center gap-2 bg-white border border-gray-200 rounded-lg shadow-lg px-3 py-2"
+            <div className="absolute z-40 flex items-center gap-2 bg-white border border-gray-200 rounded-lg shadow-lg px-3 py-2"
                  style={{
                    top: `${buttonPosition.top}px`,
                    left: `${buttonPosition.left}px`,
@@ -365,20 +368,43 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
             </div>
           )}
           
-          <AIEditModal
-            isOpen={isAIModalOpen}
-            onClose={() => {
-              setIsAIModalOpen(false);
-              // Clear selection when modal is closed
-              setSelectedText('');
-              setSelectedRange(null);
-            }}
-            selectedText={selectedText}
-            onCopy={handleCopy}
-            onAddNew={handleAddNew}
-            onReplace={handleReplace}
-            onGenerateAI={generateAI}
-          />
+          {isAIModalOpen && (
+            <div 
+              className="absolute inset-0 z-50flex items-start justify-start"
+              onClick={() => {
+                setIsAIModalOpen(false);
+                setSelectedText('');
+                setSelectedRange(null);
+              }}
+            >
+              <div 
+                className="bg-white max-w-2xl w-full mx-4 max-h-[80vh] flex flex-col border border-[#EDEEEF] shadow-[4px_4px_28px_rgba(30,41,59,0.2)] rounded-[10px]"
+                style={{
+                  position: 'absolute',
+                  top: `${buttonPosition.top + 50}px`,
+                  zIndex: 50
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <AIEditModal
+                  isOpen={isAIModalOpen}
+                  onClose={() => {
+                    setIsAIModalOpen(false);
+                    // Clear selection when modal is closed
+                    setSelectedText('');
+                    setSelectedRange(null);
+                  }}
+                  selectedText={selectedText}
+                  onCopy={handleCopy}
+                  onAddNew={handleAddNew}
+                  onReplace={handleReplace}
+                  onGenerateAI={generateAI}
+                  position={buttonPosition}
+                  editorRef={editorRef}
+                />
+              </div>
+            </div>
+          )}
         </>
       )}
     </div>
