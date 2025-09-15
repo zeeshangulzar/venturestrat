@@ -14,7 +14,6 @@ export const fetchUserData = async (userId: string): Promise<unknown> => {
       'Content-Type': 'application/json',
     },
   });
-console.log('Fetch user response:', response);
   if (!response.ok) {
     if (response.status === 404) {
       // User doesn't exist in backend yet (new user), return null instead of throwing

@@ -23,7 +23,14 @@ export async function POST(request: NextRequest) {
         messages: [
           {
             role: 'system',
-            content: `You are a professional email writing assistant specializing in investor outreach emails. Write emails in **HTML format** with proper tags (e.g., <p>, <ul>, <li>, <strong>). Do not return Markdown.`
+            content: `You are a professional email writing assistant specializing in investor outreach emails. 
+
+IMPORTANT FORMATTING RULES:
+1. Start your response with "Subject: [Your Subject Here]" on the first line
+2. Write the email body in HTML format with proper tags (e.g., <p>, <ul>, <li>, <strong>)
+3. Do not return Markdown - use HTML only
+4. The subject line should be compelling and professional
+5. The body should be well-structured with proper HTML formatting`
           },
           {
             role: 'user',
@@ -59,20 +66,33 @@ export async function POST(request: NextRequest) {
     let subject = '';
     let body = '';
 
-    // Check if the response starts with "Subject:"
-    if (trimmedContent.startsWith('Subject:')) {
-      const lines = trimmedContent.split('\n');
-      const subjectLine = lines[0];
-      subject = subjectLine.replace('Subject:', '').trim();
+    // Check if the response contains "Subject:" (case insensitive)
+    const subjectMatch = trimmedContent.match(/^Subject:\s*(.+)$/im);
+    
+    if (subjectMatch) {
+      // Extract subject
+      subject = subjectMatch[1].trim();
       
-      // Remove the subject line and any empty lines after it
-      const bodyLines = lines.slice(1).filter((line: string) => line.trim() !== '');
-      body = bodyLines.join('\n').trim();
+      // Remove the subject line from the content to get the body
+      // Handle both plain text and HTML content
+      if (trimmedContent.includes('<')) {
+        // HTML content - remove the subject line while preserving HTML
+        body = trimmedContent.replace(/^Subject:\s*.+$/im, '').trim();
+        // Remove any leading empty lines or <br> tags
+        body = body.replace(/^(\s*<br\s*\/?>\s*)+/, '').trim();
+      } else {
+        // Plain text content
+        const lines = trimmedContent.split('\n');
+        const bodyLines = lines.slice(1).filter((line: string) => line.trim() !== '');
+        body = bodyLines.join('\n').trim();
+      }
     } else {
-      // If no subject line, use a default subject and the entire content as body
+      // If no subject line found, use a default subject and the entire content as body
       subject = 'Partnership Opportunity';
       body = trimmedContent;
     }
+
+    console.log('Parsed email:', { subject, bodyLength: body.length });
 
     return NextResponse.json({
       subject: subject,
