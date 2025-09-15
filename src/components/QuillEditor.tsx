@@ -36,6 +36,7 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
   const [selectedText, setSelectedText] = useState('');
   const [selectedRange, setSelectedRange] = useState<any>(null);
   const [showFloatingButton, setShowFloatingButton] = useState(false);
+  const [buttonPosition, setButtonPosition] = useState({ top: 0, left: 0 });
   const editorRef = useRef<HTMLDivElement>(null);
   const quillRef = useRef<any>(null);
   const quillContentRef = useRef<HTMLDivElement | null>(null);
@@ -84,10 +85,128 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
     }
   }, [isClient]); // Update when ReactQuill is loaded
 
+  // Update button position on scroll and resize
+  useEffect(() => {
+    if (!showFloatingButton || !selectedRange) return;
+
+    const updatePosition = () => {
+      calculateButtonPosition(selectedRange);
+    };
+
+    window.addEventListener('scroll', updatePosition, true);
+    window.addEventListener('resize', updatePosition);
+
+    return () => {
+      window.removeEventListener('scroll', updatePosition, true);
+      window.removeEventListener('resize', updatePosition);
+    };
+  }, [showFloatingButton, selectedRange]);
+
+  // Function to calculate button position at the end of selected text
+  const calculateButtonPosition = (range: any) => {
+    if (!quillRef.current || !quillContentRef.current) return;
+
+    const quillEditor = quillRef.current.getEditor();
+    if (!quillEditor) return;
+
+    try {
+      // Get the bounds of the selection
+      const bounds = quillEditor.getBounds(range);
+      if (!bounds) return;
+
+      // Get the editor container's position
+      const editorRect = quillContentRef.current.getBoundingClientRect();
+      
+      // Get the text content of the selection
+      const selectedText = quillEditor.getText(range.index, range.length);
+      
+      let endPosition;
+      
+      if (selectedText.includes('\n')) {
+        // Multi-line selection: find the actual end of the text using DOM
+        const endIndex = range.index + range.length;
+        
+        // Create a range that ends at the exact end of the selection
+        const endRange = { index: endIndex - 1, length: 1 };
+        const endBounds = quillEditor.getBounds(endRange);
+        
+        if (endBounds) {
+          // Position at the end of the last character
+          endPosition = {
+            top: endBounds.top + editorRect.top - 10,
+            left: endBounds.left + endBounds.width + editorRect.left + 10
+          };
+        } else {
+          // Fallback: try to get bounds of the last line
+          const lines = selectedText.split('\n');
+          const lastLine = lines[lines.length - 1];
+          
+          if (lastLine.length > 0) {
+            // Find the start of the last line in the selection
+            const lastLineStart = range.index + selectedText.lastIndexOf('\n') + 1;
+            const lastLineRange = { index: lastLineStart, length: lastLine.length };
+            const lastLineBounds = quillEditor.getBounds(lastLineRange);
+            
+            if (lastLineBounds) {
+              endPosition = {
+                top: lastLineBounds.top + editorRect.top - 10,
+                left: lastLineBounds.left + lastLineBounds.width + editorRect.left + 10
+              };
+            } else {
+              // Final fallback to original bounds
+              endPosition = {
+                top: bounds.top + editorRect.top - 10,
+                left: bounds.left + bounds.width + editorRect.left + 10
+              };
+            }
+          } else {
+            // Empty last line, position at the end of the previous line
+            endPosition = {
+              top: bounds.top + editorRect.top - 10,
+              left: bounds.left + bounds.width + editorRect.left + 10
+            };
+          }
+        }
+      } else {
+        // Single line selection: use original calculation
+        endPosition = {
+          top: bounds.top + editorRect.top - 10,
+          left: bounds.left + bounds.width + editorRect.left + 10
+        };
+      }
+
+      // Ensure button doesn't go off-screen
+      const buttonWidth = 200; // Approximate button width
+      const buttonHeight = 40; // Approximate button height
+      
+      // Check if button would go off the right edge
+      if (endPosition.left + buttonWidth > window.innerWidth) {
+        endPosition.left = window.innerWidth - buttonWidth - 10;
+      }
+      
+      // Check if button would go off the top edge
+      if (endPosition.top < 10) {
+        endPosition.top = bounds.top + editorRect.top + bounds.height + 10; // Position below text instead
+      }
+      
+      // Check if button would go off the bottom edge
+      if (endPosition.top + buttonHeight > window.innerHeight) {
+        endPosition.top = window.innerHeight - buttonHeight - 10;
+      }
+
+      setButtonPosition(endPosition);
+    } catch (error) {
+      console.error('Error calculating button position:', error);
+      // Fallback to center position
+      setButtonPosition({ top: 0, left: 0 });
+    }
+  };
+
   // AI editing functions
   const handleTextSelected = (text: string, range: any) => {
     setSelectedText(text);
     setSelectedRange(range);
+    calculateButtonPosition(range);
     setShowFloatingButton(true);
   };
 
@@ -216,11 +335,10 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
           />
           
           {showFloatingButton && (
-            <div className="absolute z-40 flex items-center gap-2 bg-white border border-gray-200 rounded-lg shadow-lg px-3 py-2"
+            <div className="fixed z-40 flex items-center gap-2 bg-white border border-gray-200 rounded-lg shadow-lg px-3 py-2"
                  style={{
-                   top: '50%',
-                   left: '50%',
-                   transform: 'translate(-50%, -50%)',
+                   top: `${buttonPosition.top}px`,
+                   left: `${buttonPosition.left}px`,
                  }}>
               <button
                 onClick={handleClearSelection}

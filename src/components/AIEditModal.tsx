@@ -119,8 +119,7 @@ export default function AIEditModal({
         }
       }}
     >
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] flex flex-col">
-
+      <div className="bg-white max-w-2xl w-full mx-4 max-h-[80vh] flex flex-col border border-[#EDEEEF] shadow-[4px_4px_28px_rgba(30,41,59,0.2)] rounded-[10px]">
         {/* Content */}
         <div className="flex-1 overflow-y-auto">
           {/* Hidden Selected Text Field */}
@@ -298,9 +297,9 @@ export default function AIEditModal({
               </button>
               <button
                 onClick={handleReplace}
-                className="px-4 py-2 bg-white border border-[#EDEEEF] rounded-[10px]"
+                className="text-center px-4 py-2 bg-[#0C2143] text-white border border-[#EDEEEF] rounded-[10px] not-italic font-medium text-[12px] leading-[26px] tracking-[-0.02em]"
               >
-                Replace
+                <p className='w-[max-content]'>Replace text</p>
               </button>
             </div>
           </div>
