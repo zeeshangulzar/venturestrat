@@ -102,7 +102,7 @@ export default function FundraisingPage() {
           {/* Sticky Table Header */}
           <div className="sticky top-0 z-20 bg-white px-6 py-4 border-b border-[#EDEEEF]">
             <h3 className="not-italic font-bold text-[18px] leading-[24px] tracking-[-0.02em] text-[#0C2143]">
-              Target
+              My List
             </h3>
           </div>
 
@@ -177,7 +177,7 @@ export default function FundraisingPage() {
                           </td>
                           <td className="w-[15%] px-4 py-4">
                             <div className="not-italic font-medium text-base leading-6 tracking-[-0.02em] text-[#0C2143] truncate">
-                              {inv.city}, {inv.country}
+                              {inv.state ? `${inv.state}, ${inv.country}` : inv.country}
                             </div>
                           </td>
                           <td className="w-[25%] px-4 py-4">
@@ -186,7 +186,6 @@ export default function FundraisingPage() {
                                 buttonText="Target"
                                 buttonColor="bg-[rgba(218,156,22,0.14)] text-[#C58A09]"
                               />
-
                               {user && userData && !userDataLoading && inv.emails.length > 0 && (
                                 <ChatGPTIntegration
                                   investor={inv}
