@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useUser } from '@clerk/nextjs';
 import { getApiUrl } from '@lib/api';
 import InvestorCard from '@components/InvestorCard';
 import Pagination from '@components/Pagination';
@@ -46,7 +47,9 @@ type ApiResponse = {
 };
 
 export default function InvestorsPage() {
+  const { user } = useUser();
   const [investors, setInvestors] = useState<Investor[]>([]);
+  const [shortlistedInvestorIds, setShortlistedInvestorIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -151,26 +154,41 @@ export default function InvestorsPage() {
     setError(null);
 
     try {
-      const url = getApiUrl(
-        `/api/investors?page=${currentPage}&itemsPerPage=${itemsPerPage}&search=${encodeURIComponent(
-          searchQuery
-        )}&filters=${encodeURIComponent(JSON.stringify(filters))}`
-      );
+      // Fetch both investors and shortlist data simultaneously
+      const [investorsRes, shortlistRes] = await Promise.all([
+        fetch(getApiUrl(
+          `/api/investors?page=${currentPage}&itemsPerPage=${itemsPerPage}&search=${encodeURIComponent(
+            searchQuery
+          )}&filters=${encodeURIComponent(JSON.stringify(filters))}`
+        ), {
+          method: 'GET',
+          headers: { 'ngrok-skip-browser-warning': 'true' },
+        }),
+        user?.id ? fetch(getApiUrl(`/api/shortlists/${user.id}`), {
+          method: 'GET',
+          headers: { 'ngrok-skip-browser-warning': 'true' },
+        }) : Promise.resolve(null)
+      ]);
 
-      const res = await fetch(url, {
-        method: 'GET',
-        headers: { 'ngrok-skip-browser-warning': 'true' },
-      });
+      if (!investorsRes.ok) throw new Error(`HTTP error! status: ${investorsRes.status}`);
 
-      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+      const investorsData: ApiResponse = await investorsRes.json();
+      setInvestors(investorsData.investors || []);
+      setPagination(investorsData.pagination);
 
-      const data: ApiResponse = await res.json();
-      setInvestors(data.investors || []);
-      setPagination(data.pagination);
+      // Process shortlist data if user is logged in
+      if (shortlistRes && shortlistRes.ok) {
+        const shortlistData: { investor: { id: string } }[] = await shortlistRes.json();
+        const shortlistedIds = new Set(shortlistData.map(entry => entry.investor.id));
+        setShortlistedInvestorIds(shortlistedIds);
+      } else {
+        setShortlistedInvestorIds(new Set());
+      }
     } catch (err) {
       console.error('Error fetching investors:', err);
       setError(err instanceof Error ? err.message : 'An error occurred');
       setInvestors([]);
+      setShortlistedInvestorIds(new Set());
     } finally {
       setLoading(false);
     }
@@ -238,6 +256,18 @@ export default function InvestorsPage() {
               key={investor.id}
               investor={investor}
               appliedFilters={filters}
+              isShortlisted={shortlistedInvestorIds.has(investor.id)}
+              onShortlistChange={(investorId, shortlisted) => {
+                setShortlistedInvestorIds(prev => {
+                  const newSet = new Set(prev);
+                  if (shortlisted) {
+                    newSet.add(investorId);
+                  } else {
+                    newSet.delete(investorId);
+                  }
+                  return newSet;
+                });
+              }}
             />
           ))
         ) : (

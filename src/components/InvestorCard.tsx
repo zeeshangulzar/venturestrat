@@ -44,36 +44,26 @@ type Filters = {
   pastInvestment: string[];
 };
 
-const InvestorCard: React.FC<{ investor: Investor; appliedFilters?: Filters; basePath?: string; hideTargetButton?: boolean; }> = ({ 
+const InvestorCard: React.FC<{ 
+  investor: Investor; 
+  appliedFilters?: Filters; 
+  basePath?: string; 
+  hideTargetButton?: boolean;
+  isShortlisted?: boolean;
+  onShortlistChange?: (investorId: string, shortlisted: boolean) => void;
+}> = ({ 
   investor, 
   appliedFilters,
   basePath = '/investors',
-  hideTargetButton = false
+  hideTargetButton = false,
+  isShortlisted = false,
+  onShortlistChange
 }) => {
   const { user } = useUser();
   const router = useRouter();
-  const [shortlisted, setShortlisted] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    const fetchShortlist = async () => {
-      if (!user?.id) return;
-      try {
-        const res = await fetch(getApiUrl(`/api/shortlists/${user.id}`), {
-          method: 'GET',
-          headers: {
-            'ngrok-skip-browser-warning': 'true',
-          },
-        });
-        const data: { investor: { id: string } }[] = await res.json();
-        const isShortlisted = data.some((entry) => entry.investor.id === investor.id);
-        setShortlisted(isShortlisted);
-      } catch (error) {
-        console.error('Error fetching shortlists:', error);
-      }
-    };
-    fetchShortlist();
-  }, [user, investor.id]);
+  // Shortlist status is now passed as a prop, no need to fetch individually
 
   const handleCardClick = () => {
     // Pass current filters and page as URL parameters for back navigation
@@ -121,8 +111,11 @@ const InvestorCard: React.FC<{ investor: Investor; appliedFilters?: Filters; bas
           investorId: investor.id,
         }),
       });
-      if (res.ok) setShortlisted(true);
-      else console.error('Shortlist error:', (await res.json()).message || 'Unknown error');
+      if (res.ok) {
+        onShortlistChange?.(investor.id, true);
+      } else {
+        console.error('Shortlist error:', (await res.json()).message || 'Unknown error');
+      }
     } catch (e) {
       console.error('Error shortlisting investor:', e);
     }
@@ -319,16 +312,16 @@ const InvestorCard: React.FC<{ investor: Investor; appliedFilters?: Filters; bas
 
           {user && !hideTargetButton && (
             <button
-              disabled={shortlisted || loading}
+              disabled={isShortlisted || loading}
               onClick={handleShortlist}
               className={`w-full sm:w-auto inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-medium text-white transition-all duration-200 ${
-                shortlisted
-                  ? 'bg-emerald-600 hover:bg-blue-700'
+                isShortlisted
+                  ? 'bg-emerald-600 hover:bg-emerald-700'
                   : 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800'
               } disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0`}
-              title={shortlisted ? 'Already targeted' : 'Add to target list'}
+              title={isShortlisted ? 'Already targeted' : 'Add to target list'}
             >
-              {shortlisted ? 'Targeted ✓' : loading ? 'Adding…' : 'Target +'}
+              {isShortlisted ? 'Targeted ✓' : loading ? 'Adding…' : 'Target +'}
             </button>
           )}
         </div>
