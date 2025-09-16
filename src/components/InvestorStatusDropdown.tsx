@@ -52,7 +52,9 @@ export default function InvestorStatusDropdown({
   const buttonRef = useRef<HTMLDivElement>(null);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
   const [isPositioned, setIsPositioned] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
   const lastUpdateRef = useRef<number>(0);
+  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Get current status display info
   const currentStatus = statusOptions.find(option => option.value === status) || statusOptions[0];
@@ -89,7 +91,7 @@ export default function InvestorStatusDropdown({
     return { top: 0, left: 0 };
   };
 
-  // Update dropdown position when opening
+  // Update dropdown position when opening and close on scroll
   useEffect(() => {
     if (isOpen && buttonRef.current) {
       const updatePosition = () => {
@@ -101,13 +103,33 @@ export default function InvestorStatusDropdown({
       // Calculate position immediately
       updatePosition();
       
-      // Update position on scroll and resize
-      window.addEventListener('scroll', updatePosition, true);
-      window.addEventListener('resize', updatePosition);
+      // Close dropdown on scroll for better UX (with small delay to prevent accidental closing)
+      const handleScroll = () => {
+        if (scrollTimeoutRef.current) {
+          clearTimeout(scrollTimeoutRef.current);
+        }
+        setIsClosing(true); // Show closing animation
+        scrollTimeoutRef.current = setTimeout(() => {
+          setIsOpen(false);
+          setIsClosing(false);
+        }, 100); // 100ms delay to prevent accidental closing
+      };
+      
+      // Update position on resize
+      const handleResize = () => {
+        updatePosition();
+      };
+      
+      // Add scroll listener to close dropdown
+      window.addEventListener('scroll', handleScroll, true);
+      window.addEventListener('resize', handleResize);
       
       return () => {
-        window.removeEventListener('scroll', updatePosition, true);
-        window.removeEventListener('resize', updatePosition);
+        window.removeEventListener('scroll', handleScroll, true);
+        window.removeEventListener('resize', handleResize);
+        if (scrollTimeoutRef.current) {
+          clearTimeout(scrollTimeoutRef.current);
+        }
       };
     } else {
       setIsPositioned(false);
@@ -120,6 +142,7 @@ export default function InvestorStatusDropdown({
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node) &&
           buttonRef.current && !buttonRef.current.contains(event.target as Node)) {
         setIsOpen(false);
+        setIsClosing(false);
       }
     };
 
@@ -135,6 +158,7 @@ export default function InvestorStatusDropdown({
   const handleOptionClick = async (newStatus: string) => {
     if (newStatus === status || !shortlistId) {
       setIsOpen(false);
+      setIsClosing(false);
       return;
     }
 
@@ -145,6 +169,7 @@ export default function InvestorStatusDropdown({
       setIsRateLimited(true);
       setTimeout(() => setIsRateLimited(false), 1000);
       setIsOpen(false);
+      setIsClosing(false);
       return;
     }
 
@@ -155,6 +180,7 @@ export default function InvestorStatusDropdown({
       await updateInvestorStatus(shortlistId, newStatus);
       onStatusChange?.(newStatus);
       setIsOpen(false);
+      setIsClosing(false);
     } catch (error) {
       console.error('Failed to update investor status:', error);
       // Reset the rate limit on error so user can retry
@@ -171,7 +197,7 @@ export default function InvestorStatusDropdown({
       <div className="flex items-center">
         {/* Static Status Button - Not clickable */}
         <div 
-          className={`px-4 py-2 rounded-[40px] font-medium text-[14px] not-italic text-sm leading-6 whitespace-nowrap ${displayColor} ${isUpdating ? 'opacity-50' : ''} ${isRateLimited ? 'opacity-50' : ''}`}
+          className={`px-4 py-2 rounded-[40px] font-medium text-[14px] not-italic text-sm leading-6 whitespace-nowrap w-32 text-center ${displayColor} ${isUpdating ? 'opacity-50' : ''} ${isRateLimited ? 'opacity-50' : ''}`}
         >
           {isUpdating ? 'Updating...' : isRateLimited ? 'Please wait...' : displayText}
         </div>
@@ -214,7 +240,9 @@ export default function InvestorStatusDropdown({
       {isOpen && isPositioned && createPortal(
         <div 
           ref={dropdownRef}
-          className="fixed w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-[9999]"
+          className={`fixed w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-[9999] transition-opacity duration-100 ${
+            isClosing ? 'opacity-0' : 'opacity-100'
+          }`}
           style={{
             top: `${dropdownPosition.top}px`,
             left: `${dropdownPosition.left}px`
