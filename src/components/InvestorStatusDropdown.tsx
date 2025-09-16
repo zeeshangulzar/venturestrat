@@ -2,29 +2,62 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { updateInvestorStatus } from '@lib/api';
 
 interface InvestorStatusDropdownProps {
   buttonText?: string;
   buttonColor?: string;
+  status?: string;
+  shortlistId?: string;
+  onStatusChange?: (newStatus: string) => void;
 }
 
 const statusOptions = [
-  { value: 'target', label: 'Target' },
-  { value: 'contacted', label: 'Contacted' },
-  { value: 'no-response', label: 'No Response' },
-  { value: 'not-interested', label: 'Not Interested' },
-  { value: 'interested', label: 'Interested' },
+  { value: 'TARGET', label: 'Target' },
+  { value: 'CONTACTED', label: 'Contacted' },
+  { value: 'NO_RESPONSE', label: 'No Response' },
+  { value: 'NOT_INTERESTED', label: 'Not Interested' },
+  { value: 'INTERESTED', label: 'Interested' },
 ];
 
+// Function to get color based on status
+const getStatusColor = (status: string): string => {
+  switch (status) {
+    case 'TARGET':
+      return 'bg-[rgba(218,156,22,0.14)] text-[#C58A09]';
+    case 'CONTACTED':
+      return 'bg-[rgba(34,197,94,0.14)] text-[#16A34A]';
+    case 'NO_RESPONSE':
+      return 'bg-[rgba(239,68,68,0.14)] text-[#DC2626]';
+    case 'NOT_INTERESTED':
+      return 'bg-[rgba(107,114,128,0.14)] text-[#6B7280]';
+    case 'INTERESTED':
+      return 'bg-[rgba(59,130,246,0.14)] text-[#2563EB]';
+    default:
+      return 'bg-[rgba(218,156,22,0.14)] text-[#C58A09]';
+  }
+};
+
 export default function InvestorStatusDropdown({ 
-  buttonText = 'Contacted', 
-  buttonColor = 'bg-[rgba(218,156,22,0.14)] text-[#C58A09]' 
+  buttonText,
+  buttonColor,
+  status = 'TARGET',
+  shortlistId,
+  onStatusChange
 }: InvestorStatusDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [isRateLimited, setIsRateLimited] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLDivElement>(null);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
   const [isPositioned, setIsPositioned] = useState(false);
+  const lastUpdateRef = useRef<number>(0);
+
+  // Get current status display info
+  const currentStatus = statusOptions.find(option => option.value === status) || statusOptions[0];
+  const displayText = buttonText || currentStatus.label;
+  const displayColor = buttonColor || getStatusColor(status);
 
   // Calculate position before opening dropdown
   const calculatePosition = () => {
@@ -99,9 +132,37 @@ export default function InvestorStatusDropdown({
     };
   }, [isOpen]);
 
-  const handleOptionClick = () => {
-    // Just close the dropdown, do nothing else
-    setIsOpen(false);
+  const handleOptionClick = async (newStatus: string) => {
+    if (newStatus === status || !shortlistId) {
+      setIsOpen(false);
+      return;
+    }
+
+    // Rate limiting: prevent multiple calls within 1 second
+    const now = Date.now();
+    if (now - lastUpdateRef.current < 1000) {
+      console.log('Rate limit: Please wait before making another update');
+      setIsRateLimited(true);
+      setTimeout(() => setIsRateLimited(false), 1000);
+      setIsOpen(false);
+      return;
+    }
+
+    lastUpdateRef.current = now;
+    setIsUpdating(true);
+    
+    try {
+      await updateInvestorStatus(shortlistId, newStatus);
+      onStatusChange?.(newStatus);
+      setIsOpen(false);
+    } catch (error) {
+      console.error('Failed to update investor status:', error);
+      // Reset the rate limit on error so user can retry
+      lastUpdateRef.current = 0;
+      // You might want to show a toast notification here
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   return (
@@ -110,15 +171,15 @@ export default function InvestorStatusDropdown({
       <div className="flex items-center">
         {/* Static Status Button - Not clickable */}
         <div 
-          className={`px-4 py-2 rounded-[40px] font-medium text-[14px] not-italic text-sm leading-6 whitespace-nowrap ${buttonColor}`}
+          className={`px-4 py-2 rounded-[40px] font-medium text-[14px] not-italic text-sm leading-6 whitespace-nowrap ${displayColor} ${isUpdating ? 'opacity-50' : ''} ${isRateLimited ? 'opacity-50' : ''}`}
         >
-          {buttonText}
+          {isUpdating ? 'Updating...' : isRateLimited ? 'Please wait...' : displayText}
         </div>
         
         {/* Dropdown SVG - Only this is clickable */}
         <button 
           onClick={() => {
-            if (!isOpen) {
+            if (!isOpen && !isUpdating) {
               // Calculate position before opening
               const position = calculatePosition();
               setDropdownPosition(position);
@@ -126,7 +187,8 @@ export default function InvestorStatusDropdown({
             }
             setIsOpen(!isOpen);
           }}
-          className="p-1 hover:bg-gray-100 rounded transition-colors ml-2"
+          disabled={isUpdating || isRateLimited}
+          className="p-1 hover:bg-gray-100 rounded transition-colors ml-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <svg 
             width="16" 
@@ -162,8 +224,11 @@ export default function InvestorStatusDropdown({
             {statusOptions.map((option) => (
               <button
                 key={option.value}
-                onClick={handleOptionClick}
-                className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors text-gray-700"
+                onClick={() => handleOptionClick(option.value)}
+                className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors ${
+                  option.value === status ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700'
+                }`}
+                disabled={isUpdating}
               >
                 {option.label}
               </button>

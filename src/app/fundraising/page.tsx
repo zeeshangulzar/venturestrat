@@ -41,9 +41,28 @@ export default function FundraisingPage() {
   // State for selecting a specific email ID
   const [selectedEmailId, setSelectedEmailId] = useState<string | null>(null);
 
+  // State for shortlist to allow immediate UI updates
+  const [shortlistState, setShortlistState] = useState(shortlist);
+
+  // Update shortlist state when data changes
+  useEffect(() => {
+    setShortlistState(shortlist);
+  }, [shortlist.length, shortlist.map(inv => inv.id).join(',')]);
+
   // Function to trigger email list refresh
   const triggerEmailRefresh = () => {
     setEmailRefreshTrigger(prev => prev + 1);
+  };
+
+  // Function to update investor status
+  const updateInvestorStatus = (shortlistId: string, newStatus: string) => {
+    setShortlistState(prev => 
+      prev.map(inv => 
+        inv.shortlistId === shortlistId 
+          ? { ...inv, status: newStatus }
+          : inv
+      )
+    );
   };
   
   // Function to select a specific email
@@ -128,7 +147,7 @@ export default function FundraisingPage() {
                   </div>
                 )}
 
-                {!loading && !error && data && shortlist.length > 0 && (
+                {!loading && !error && data && shortlistState.length > 0 && (
                   <table className="w-full table-fixed">
                     <thead className="sticky top-0 z-10 bg-[#F6F6F7]">
                       <tr>
@@ -153,7 +172,7 @@ export default function FundraisingPage() {
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                      {shortlist.map((inv) => (
+                      {shortlistState.map((inv) => (
                         <tr key={inv.id} className="hover:bg-gray-50">
                           <td className="w-[20%] px-4 py-4">
                             <div className="not-italic font-semibold text-[16px] leading-[24px] text-[#0C2143] truncate">
@@ -183,8 +202,11 @@ export default function FundraisingPage() {
                           <td className="w-[25%] px-4 py-4">
                             <div className="flex gap-[20px] flex-wrap items-center">
                               <InvestorStatusDropdown 
-                                buttonText="Target"
-                                buttonColor="bg-[rgba(218,156,22,0.14)] text-[#C58A09]"
+                                status={inv.status}
+                                shortlistId={inv.shortlistId}
+                                onStatusChange={(newStatus) => {
+                                  updateInvestorStatus(inv.shortlistId, newStatus);
+                                }}
                               />
                               {user && userData && !userDataLoading && inv.emails.length > 0 && (
                                 <ChatGPTIntegration

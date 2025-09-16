@@ -22,6 +22,8 @@ export type Investor = {
   stages: string[]
   markets: Array<{ market: { id: string; title: string } }>
   pastInvestments: Array<{ pastInvestment: { id: string; title: string } }>
+  status: string
+  shortlistId: string
 }
 
 // Raw shape coming from your API (loose but typed)
@@ -44,8 +46,10 @@ type ApiInvestor = {
   stages?: string[] | null
   markets?: Array<{ market: { id: string | number; title: string } }> | null
   pastInvestments?: Array<{ pastInvestment: { id: string | number; title: string } }> | null
+  status?: string
+  shortlistId?: string
 
-  // 👇 Add this so you don’t need `any`
+  // 👇 Add this so you don't need `any`
   sourceData?: {
     emails?: Array<{ id: string; email: string; status: string }>
     pastInvestments?: Array<{ id: string | number; title: string }>
@@ -122,6 +126,8 @@ export function useUserShortlist(userId: string): UseUserShortlistReturn {
               },
             }))
           : sourcePastInvestments,
+      status: inv.status ?? 'TARGET',
+      shortlistId: inv.shortlistId ?? '',
     }
   }
 

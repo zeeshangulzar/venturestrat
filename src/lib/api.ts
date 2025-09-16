@@ -97,3 +97,42 @@ export const updateUserData = async (userId: string, userData: Record<string, un
 
   return response.json();
 };
+
+// Global rate limiter for API calls
+const apiCallQueue = new Map<string, Promise<unknown>>();
+
+// Function to update investor status with rate limiting
+export const updateInvestorStatus = async (shortlistId: string, status: string): Promise<unknown> => {
+  const key = `${shortlistId}-${status}`;
+  
+  // If there's already a call in progress for this exact update, return the existing promise
+  if (apiCallQueue.has(key)) {
+    return apiCallQueue.get(key)!;
+  }
+
+  const apiCall = fetch(getApiUrl(`/api/shortlist/${shortlistId}/status`), {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ status }),
+  }).then(async (response) => {
+    // Remove from queue when done
+    apiCallQueue.delete(key);
+    
+    if (!response.ok) {
+      throw new Error(`Failed to update investor status: ${response.status}`);
+    }
+
+    return response.json();
+  }).catch((error) => {
+    // Remove from queue on error
+    apiCallQueue.delete(key);
+    throw error;
+  });
+
+  // Store the promise in the queue
+  apiCallQueue.set(key, apiCall);
+  
+  return apiCall;
+};
