@@ -2,6 +2,7 @@
 
 import { ClerkProvider } from '@clerk/nextjs';
 import { GlobalLoadingProvider } from './GlobalLoadingProvider';
+import { ModalProvider } from '../contexts/ModalContext';
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -26,7 +27,9 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       }}
     >
       <GlobalLoadingProvider>
-        {children}
+        <ModalProvider>
+          {children}
+        </ModalProvider>
       </GlobalLoadingProvider>
     </ClerkProvider>
   );
