@@ -114,7 +114,8 @@ export const useModalState = (modalId: string) => {
   const open = useCallback(() => {
     setIsOpen(true);
     openModal(modalId, () => {
-      setIsOpen(false);
+      // Don't call setIsOpen here to avoid circular updates
+      // The global modal system will handle the closing
     });
   }, [modalId, openModal]);
 
@@ -123,10 +124,13 @@ export const useModalState = (modalId: string) => {
     closeModal(modalId);
   }, [modalId, closeModal]);
 
+  // Use the global modal state as the source of truth
+  const globalIsOpen = isModalOpen(modalId);
+
   return {
-    isOpen,
+    isOpen: globalIsOpen || isOpen,
     open,
     close,
-    isModalOpen: isModalOpen(modalId),
+    isModalOpen: globalIsOpen,
   };
 };

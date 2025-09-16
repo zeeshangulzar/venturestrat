@@ -101,14 +101,20 @@ export default function AIEditModal({
   const handleAddNew = () => {
     if (aiResponse) {
       onAddNew(aiResponse);
-      onClose();
+      // Defer the close to avoid state update conflicts
+      setTimeout(() => {
+        onClose();
+      }, 0);
     }
   };
 
   const handleReplace = () => {
     if (aiResponse) {
       onReplace(aiResponse);
-      onClose();
+      // Defer the close to avoid state update conflicts
+      setTimeout(() => {
+        onClose();
+      }, 0);
     }
   };
 
@@ -145,7 +151,7 @@ export default function AIEditModal({
   return (
     <div data-modal-content className="w-full h-full flex flex-col">
         {/* Content */}
-        <div className="flex-1 overflow-y-auto pt-3.5">
+        <div className="flex-1 overflow-y-auto">
           {/* Hidden Selected Text Field */}
           <input
             type="hidden"
@@ -230,7 +236,7 @@ export default function AIEditModal({
 
           {/* AI Response */}
           {aiResponse && (
-            <div className="">
+            <div className="pt-3.5">
               <div className="max-h-40 overflow-y-auto px-5">
                 {aiResponse}
               </div>

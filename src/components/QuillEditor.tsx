@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import 'react-quill/dist/quill.snow.css';
 import AIEditModal from './AIEditModal';
 import QuillAISelectionHandler from './QuillAISelectionHandler';
-import { useModalState } from '../contexts/ModalContext';
+import { useModal } from '../contexts/ModalContext';
 
 interface QuillEditorProps {
   value: string;
@@ -41,8 +41,17 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
   const quillRef = useRef<any>(null);
   const quillContentRef = useRef<HTMLDivElement | null>(null);
   
-  // Use global modal state
-  const { isOpen: isAIModalOpen, open: openAIModal, close: closeAIModal } = useModalState('ai-edit-modal');
+  // Use global modal state directly
+  const { openModal, closeModal, isModalOpen } = useModal();
+  const isAIModalOpen = isModalOpen('ai-edit-modal');
+
+  // Clear selection when modal closes
+  useEffect(() => {
+    if (!isAIModalOpen) {
+      setSelectedText('');
+      setSelectedRange(null);
+    }
+  }, [isAIModalOpen]);
 
   // Default modules configuration
   const defaultModules = {
@@ -226,7 +235,9 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
   };
 
   const handleEditWithAI = () => {
-    openAIModal();
+    openModal('ai-edit-modal', () => {
+      // Modal closed - no state updates here to avoid conflicts
+    });
     setShowFloatingButton(false);
   };
 
@@ -387,10 +398,7 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
               <AIEditModal
                 isOpen={isAIModalOpen}
                 onClose={() => {
-                  closeAIModal();
-                  // Clear selection when modal is closed
-                  setSelectedText('');
-                  setSelectedRange(null);
+                  closeModal('ai-edit-modal');
                 }}
                 selectedText={selectedText}
                 onCopy={handleCopy}
