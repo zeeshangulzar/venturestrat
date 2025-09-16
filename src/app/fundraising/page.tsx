@@ -1,7 +1,7 @@
 'use client';
 
 import { useUser } from "@clerk/nextjs";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useUserShortlist } from '@hooks/useUserShortlist'
 import ChatGPTIntegration from '@components/ChatGPTIntegration'
 import EmailTabsManager from '@components/EmailTabsManager'
@@ -44,6 +44,9 @@ export default function FundraisingPage() {
 
   // State for shortlist to allow immediate UI updates
   const [shortlistState, setShortlistState] = useState(shortlist);
+
+  // Ref for the table's scroll container
+  const tableScrollContainerRef = useRef<HTMLDivElement>(null);
 
   // Update shortlist state when data changes
   useEffect(() => {
@@ -127,7 +130,7 @@ export default function FundraisingPage() {
           </div>
 
           {/* Table Content with Scrollable Container */}
-          <div className="max-h-[400px] overflow-auto">
+          <div ref={tableScrollContainerRef} className="max-h-[400px] overflow-auto">
             {user && (
               <>
                 {loading && (
@@ -233,6 +236,7 @@ export default function FundraisingPage() {
                                 onStatusChange={(newStatus) => {
                                   updateInvestorStatus(inv.shortlistId, newStatus);
                                 }}
+                                scrollContainerRef={tableScrollContainerRef}
                               />
                               {user && userData && !userDataLoading && inv.emails.length > 0 && (
                                 <ChatGPTIntegration

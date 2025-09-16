@@ -10,6 +10,7 @@ interface InvestorStatusDropdownProps {
   status?: string;
   shortlistId?: string;
   onStatusChange?: (newStatus: string) => void;
+  scrollContainerRef?: React.RefObject<HTMLElement | null>;
 }
 
 const statusOptions = [
@@ -43,7 +44,8 @@ export default function InvestorStatusDropdown({
   buttonColor,
   status = 'TARGET',
   shortlistId,
-  onStatusChange
+  onStatusChange,
+  scrollContainerRef
 }: InvestorStatusDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -103,8 +105,9 @@ export default function InvestorStatusDropdown({
       // Calculate position immediately
       updatePosition();
       
-      // Close dropdown on scroll for better UX (with small delay to prevent accidental closing)
-      const handleScroll = () => {
+      // Handle different scroll behaviors
+      const handleTableScroll = () => {
+        // Close dropdown when table is scrolled
         if (scrollTimeoutRef.current) {
           clearTimeout(scrollTimeoutRef.current);
         }
@@ -114,19 +117,33 @@ export default function InvestorStatusDropdown({
           setIsClosing(false);
         }, 100); // 100ms delay to prevent accidental closing
       };
+
+      const handleWindowScroll = () => {
+        // Update position when window scrolls to keep dropdown sticky
+        updatePosition();
+      };
       
       // Update position on resize
       const handleResize = () => {
         updatePosition();
       };
       
-      // Add scroll listener to close dropdown
-      window.addEventListener('scroll', handleScroll, true);
+      // Add scroll listeners
+      // Always listen to window scroll for position updates (sticky behavior)
+      window.addEventListener('scroll', handleWindowScroll, true);
       window.addEventListener('resize', handleResize);
       
+      // If scrollContainerRef is provided, listen to that container's scroll events to close dropdown
+      if (scrollContainerRef?.current) {
+        scrollContainerRef.current.addEventListener('scroll', handleTableScroll, true);
+      }
+      
       return () => {
-        window.removeEventListener('scroll', handleScroll, true);
+        window.removeEventListener('scroll', handleWindowScroll, true);
         window.removeEventListener('resize', handleResize);
+        if (scrollContainerRef?.current) {
+          scrollContainerRef.current.removeEventListener('scroll', handleTableScroll, true);
+        }
         if (scrollTimeoutRef.current) {
           clearTimeout(scrollTimeoutRef.current);
         }
