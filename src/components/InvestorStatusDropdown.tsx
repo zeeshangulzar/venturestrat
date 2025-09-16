@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 
 interface InvestorStatusDropdownProps {
   buttonText?: string;
@@ -21,20 +22,82 @@ export default function InvestorStatusDropdown({
 }: InvestorStatusDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLDivElement>(null);
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
+  const [isPositioned, setIsPositioned] = useState(false);
+
+  // Calculate position before opening dropdown
+  const calculatePosition = () => {
+    if (buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      const dropdownWidth = 192; // w-48 = 12rem = 192px
+      const dropdownHeight = 200; // Approximate height
+      
+      let left = rect.left;
+      let top = rect.bottom + 8;
+      
+      // Check if dropdown would go off the right edge
+      if (left + dropdownWidth > window.innerWidth) {
+        left = window.innerWidth - dropdownWidth - 16; // 16px margin
+      }
+      
+      // Check if dropdown would go off the left edge
+      if (left < 16) {
+        left = 16;
+      }
+      
+      // Check if dropdown would go off the bottom edge
+      if (top + dropdownHeight > window.innerHeight) {
+        top = rect.top - dropdownHeight - 8; // Position above the button
+      }
+      
+      return { top, left };
+    }
+    return { top: 0, left: 0 };
+  };
+
+  // Update dropdown position when opening
+  useEffect(() => {
+    if (isOpen && buttonRef.current) {
+      const updatePosition = () => {
+        const position = calculatePosition();
+        setDropdownPosition(position);
+        setIsPositioned(true);
+      };
+      
+      // Calculate position immediately
+      updatePosition();
+      
+      // Update position on scroll and resize
+      window.addEventListener('scroll', updatePosition, true);
+      window.addEventListener('resize', updatePosition);
+      
+      return () => {
+        window.removeEventListener('scroll', updatePosition, true);
+        window.removeEventListener('resize', updatePosition);
+      };
+    } else {
+      setIsPositioned(false);
+    }
+  }, [isOpen]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node) &&
+          buttonRef.current && !buttonRef.current.contains(event.target as Node)) {
         setIsOpen(false);
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, []);
+  }, [isOpen]);
 
   const handleOptionClick = () => {
     // Just close the dropdown, do nothing else
@@ -42,7 +105,7 @@ export default function InvestorStatusDropdown({
   };
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div className="relative" ref={buttonRef}>
       {/* Status Button and Dropdown Icon */}
       <div className="flex items-center">
         {/* Static Status Button - Not clickable */}
@@ -54,7 +117,15 @@ export default function InvestorStatusDropdown({
         
         {/* Dropdown SVG - Only this is clickable */}
         <button 
-          onClick={() => setIsOpen(!isOpen)}
+          onClick={() => {
+            if (!isOpen) {
+              // Calculate position before opening
+              const position = calculatePosition();
+              setDropdownPosition(position);
+              setIsPositioned(true);
+            }
+            setIsOpen(!isOpen);
+          }}
           className="p-1 hover:bg-gray-100 rounded transition-colors ml-2"
         >
           <svg 
@@ -77,9 +148,16 @@ export default function InvestorStatusDropdown({
         </button>
       </div>
 
-      {/* Dropdown Menu */}
-      {isOpen && (
-        <div className="absolute top-full left-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+      {/* Dropdown Menu - Rendered as Portal */}
+      {isOpen && isPositioned && createPortal(
+        <div 
+          ref={dropdownRef}
+          className="fixed w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-[9999]"
+          style={{
+            top: `${dropdownPosition.top}px`,
+            left: `${dropdownPosition.left}px`
+          }}
+        >
           <div className="py-2">
             {statusOptions.map((option) => (
               <button
@@ -91,7 +169,8 @@ export default function InvestorStatusDropdown({
               </button>
             ))}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
