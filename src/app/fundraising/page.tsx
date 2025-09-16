@@ -6,6 +6,7 @@ import { useUserShortlist } from '@hooks/useUserShortlist'
 import ChatGPTIntegration from '@components/ChatGPTIntegration'
 import EmailTabsManager from '@components/EmailTabsManager'
 import InvestorStatusDropdown from '@components/InvestorStatusDropdown'
+import Tooltip from '@components/Tooltip'
 import { fetchUserData } from '@lib/api'
 
 export default function FundraisingPage() {
@@ -175,29 +176,54 @@ export default function FundraisingPage() {
                       {shortlistState.map((inv) => (
                         <tr key={inv.id} className="hover:bg-gray-50">
                           <td className="w-[20%] px-4 py-4">
-                            <div className="not-italic font-semibold text-[16px] leading-[24px] text-[#0C2143] truncate">
-                              {inv.name}
-                            </div>
+                            <Tooltip content={inv.name}>
+                              <div 
+                                className="not-italic font-semibold text-[16px] leading-[24px] text-[#0C2143] truncate max-w-full overflow-hidden"
+                                style={{ maxWidth: '200px' }}
+                              >
+                                {inv.name}
+                              </div>
+                            </Tooltip>
                           </td>
                           <td className="w-[20%] px-4 py-4">
-                            <div className="not-italic font-semibold text-[16px] leading-[24px] text-[#0C2143] truncate">
-                              {inv.companyName || "N/A"}
-                            </div>
+                            <Tooltip content={inv.companyName || "N/A"}>
+                              <div 
+                                className="not-italic font-semibold text-[16px] leading-[24px] text-[#0C2143] truncate max-w-full overflow-hidden"
+                                style={{ maxWidth: '200px' }}
+                              >
+                                {inv.companyName || "N/A"}
+                              </div>
+                            </Tooltip>
                           </td>
                           <td className="w-[25%] px-4 py-4">
-                            <div className="not-italic font-medium text-base leading-6 tracking-[-0.02em] text-[#0C2143] truncate">
-                              {inv.emails?.[0]?.email || "N/A"}
-                            </div>
+                            <Tooltip content={inv.emails?.[0]?.email || "N/A"}>
+                              <div 
+                                className="not-italic font-medium text-base leading-6 tracking-[-0.02em] text-[#0C2143] truncate max-w-full overflow-hidden"
+                                style={{ maxWidth: '250px' }}
+                              >
+                                {inv.emails?.[0]?.email || "N/A"}
+                              </div>
+                            </Tooltip>
                           </td>
                           <td className="w-[15%] px-4 py-4">
-                            <div className="not-italic font-medium text-base leading-6 tracking-[-0.02em] text-[#0C2143] truncate">
-                              {inv.title || "—"}
-                            </div>
+                            <Tooltip content={inv.title || "—"}>
+                              <div 
+                                className="not-italic font-medium text-base leading-6 tracking-[-0.02em] text-[#0C2143] truncate max-w-full overflow-hidden"
+                                style={{ maxWidth: '150px' }}
+                              >
+                                {inv.title || "—"}
+                              </div>
+                            </Tooltip>
                           </td>
                           <td className="w-[15%] px-4 py-4">
-                            <div className="not-italic font-medium text-base leading-6 tracking-[-0.02em] text-[#0C2143] truncate">
-                              {inv.state ? `${inv.state}, ${inv.country}` : inv.country}
-                            </div>
+                            <Tooltip content={inv.state ? `${inv.state}, ${inv.country}` : inv.country}>
+                              <div 
+                                className="not-italic font-medium text-base leading-6 tracking-[-0.02em] text-[#0C2143] truncate max-w-full overflow-hidden"
+                                style={{ maxWidth: '150px' }}
+                              >
+                                {inv.state ? `${inv.state}, ${inv.country}` : inv.country}
+                              </div>
+                            </Tooltip>
                           </td>
                           <td className="w-[25%] px-4 py-4">
                             <div className="flex gap-[20px] flex-wrap items-center">

@@ -24,9 +24,9 @@ const statusOptions = [
 const getStatusColor = (status: string): string => {
   switch (status) {
     case 'TARGET':
-      return 'bg-[rgba(218,156,22,0.14)] text-[#C58A09]';
-    case 'CONTACTED':
       return 'bg-[rgba(34,197,94,0.14)] text-[#16A34A]';
+    case 'CONTACTED':
+      return 'bg-[rgba(218,156,22,0.14)] text-[#C58A09]';
     case 'NO_RESPONSE':
       return 'bg-[rgba(239,68,68,0.14)] text-[#DC2626]';
     case 'NOT_INTERESTED':
