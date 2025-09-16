@@ -143,23 +143,9 @@ export default function AIEditModal({
   };
 
   return (
-    <div className="w-full h-full flex flex-col">
-        {/* Header with close button */}
-        {aiResponse && (
-          <div className="flex justify-end p-2">
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 transition-colors p-1"
-              title="Close"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-        )}
+    <div data-modal-content className="w-full h-full flex flex-col">
         {/* Content */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto pt-3.5">
           {/* Hidden Selected Text Field */}
           <input
             type="hidden"
@@ -263,7 +249,7 @@ export default function AIEditModal({
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
                   onKeyPress={handleKeyPress}
-                  className="w-full p-[5px] bg-white border border-[#EDEEEF] rounded-[10px]"
+                  className="w-full p-[7px] pl-12 bg-white border border-[#EDEEEF] rounded-[10px]"
                   disabled={isGenerating}
                 />
                  {/* Logo - Always visible */}

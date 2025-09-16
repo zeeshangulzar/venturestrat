@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import 'react-quill/dist/quill.snow.css';
 import AIEditModal from './AIEditModal';
 import QuillAISelectionHandler from './QuillAISelectionHandler';
+import { useModalState } from '../contexts/ModalContext';
 
 interface QuillEditorProps {
   value: string;
@@ -32,7 +33,6 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
 }) => {
   const [isClient, setIsClient] = useState(false);
   const [ReactQuill, setReactQuill] = useState<React.ComponentType<Record<string, unknown>> | null>(null);
-  const [isAIModalOpen, setIsAIModalOpen] = useState(false);
   const [selectedText, setSelectedText] = useState('');
   const [selectedRange, setSelectedRange] = useState<any>(null);
   const [showFloatingButton, setShowFloatingButton] = useState(false);
@@ -40,6 +40,9 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
   const editorRef = useRef<HTMLDivElement>(null);
   const quillRef = useRef<any>(null);
   const quillContentRef = useRef<HTMLDivElement | null>(null);
+  
+  // Use global modal state
+  const { isOpen: isAIModalOpen, open: openAIModal, close: closeAIModal } = useModalState('ai-edit-modal');
 
   // Default modules configuration
   const defaultModules = {
@@ -223,7 +226,7 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
   };
 
   const handleEditWithAI = () => {
-    setIsAIModalOpen(true);
+    openAIModal();
     setShowFloatingButton(false);
   };
 
@@ -369,54 +372,36 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
           )}
           
           {isAIModalOpen && (
-            <>
-              {/* Invisible backdrop for click outside - covers full screen */}
+            <div 
+              className="absolute inset-0 z-50 flex items-start justify-start"
+            >
               <div 
-                className="fixed inset-0 z-40"
-                onClick={() => {
-                  setIsAIModalOpen(false);
-                  setSelectedText('');
-                  setSelectedRange(null);
-                }}
-              />
-              
-              {/* Modal container positioned below selected text */}
-              <div 
-                className="absolute inset-0 z-50 flex items-start justify-start"
-                onClick={() => {
-                  setIsAIModalOpen(false);
-                  setSelectedText('');
-                  setSelectedRange(null);
+                data-modal-content
+                className="bg-white max-w-2xl w-full mx-4 max-h-[80vh] flex flex-col border border-[#EDEEEF] shadow-[4px_4px_28px_rgba(30,41,59,0.2)] rounded-[10px]"
+                style={{
+                  position: 'absolute',
+                  top: `${buttonPosition.top + 50}px`,
+                  zIndex: 50
                 }}
               >
-                <div 
-                  className="bg-white max-w-2xl w-full mx-4 max-h-[80vh] flex flex-col border border-[#EDEEEF] shadow-[4px_4px_28px_rgba(30,41,59,0.2)] rounded-[10px]"
-                  style={{
-                    position: 'absolute',
-                    top: `${buttonPosition.top + 50}px`,
-                    zIndex: 50
-                  }}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                <AIEditModal
-                  isOpen={isAIModalOpen}
-                  onClose={() => {
-                    setIsAIModalOpen(false);
-                    // Clear selection when modal is closed
-                    setSelectedText('');
-                    setSelectedRange(null);
-                  }}
-                  selectedText={selectedText}
-                  onCopy={handleCopy}
-                  onAddNew={handleAddNew}
-                  onReplace={handleReplace}
-                  onGenerateAI={generateAI}
-                  position={buttonPosition}
-                  editorRef={editorRef}
-                />
-                </div>
+              <AIEditModal
+                isOpen={isAIModalOpen}
+                onClose={() => {
+                  closeAIModal();
+                  // Clear selection when modal is closed
+                  setSelectedText('');
+                  setSelectedRange(null);
+                }}
+                selectedText={selectedText}
+                onCopy={handleCopy}
+                onAddNew={handleAddNew}
+                onReplace={handleReplace}
+                onGenerateAI={generateAI}
+                position={buttonPosition}
+                editorRef={editorRef}
+              />
               </div>
-            </>
+            </div>
           )}
         </>
       )}
