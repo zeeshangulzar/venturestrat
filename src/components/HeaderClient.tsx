@@ -1,8 +1,8 @@
 'use client';
 
-import Link from 'next/link';
 import { SignOutButton, useUser } from '@clerk/nextjs';
 import { useState, useEffect, useRef } from 'react';
+import Breadcrumbs from './Breadcrumbs';
 
 export default function HeaderClient() {
   const [showDropdown, setShowDropdown] = useState(false);
@@ -24,9 +24,7 @@ export default function HeaderClient() {
 
   return (
     <header className="flex justify-between items-center px-5 py-4 gap-4 h-16 border-b border-[#EDEEEF]">
-      <Link href="/" className="text-lg font-bold text-gray-800">
-        Fundraising
-      </Link>
+      <Breadcrumbs />
 
       <div className="flex gap-4 items-center">
         <div className="relative" ref={dropdownRef}>
