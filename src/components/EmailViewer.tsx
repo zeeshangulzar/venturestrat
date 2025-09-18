@@ -69,6 +69,12 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
       setEditedFrom(from);
       setSaveStatus('idle');
       
+      // Clear any pending auto-save timeout when switching emails
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+        autoSaveTimeoutRef.current = null;
+      }
+      
       // Update ref values
       currentValuesRef.current = {
         editedSubject: subject,
@@ -102,6 +108,12 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
   const autoSave = useCallback(async () => {
     if (!email || readOnly) return;
 
+    // Additional safety check: ensure we're not setting initial data
+    if (isSettingInitialDataRef.current) {
+      console.log('Skipping autoSave - currently setting initial data');
+      return;
+    }
+
     setIsSaving(true);
     setSaveStatus('idle');
     
@@ -112,6 +124,19 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
 
     try {
       const currentValues = currentValuesRef.current;
+      
+      // Additional safety check: ensure the current values match the current email
+      const emailSubject = email.subject || '';
+      const emailBody = email.body || '';
+      const emailFrom = email.from || '';
+      
+      // Only save if the current values are actually different from the email values
+      if (currentValues.editedSubject === emailSubject && 
+          currentValues.editedBody === emailBody && 
+          currentValues.editedFrom === emailFrom) {
+        console.log('Skipping autoSave - no changes detected');
+        return;
+      }
 
       const response = await fetch(getApiUrl(`/api/message/${email.id}`), {
         method: 'PUT',
