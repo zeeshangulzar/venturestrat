@@ -103,7 +103,7 @@ export default function EmailDraftList({ userId, activeSection }: EmailDraftList
   if (drafts.length === 0) {
     return (
       <div className="p-4 text-center text-gray-500">
-        No email drafts found.
+        No emails found.
       </div>
     );
   }

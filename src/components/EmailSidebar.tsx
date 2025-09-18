@@ -61,7 +61,7 @@ export default function EmailSidebar({ drafts, selectedEmailId, onEmailSelect }:
       <div className="flex-1 overflow-y-auto min-h-0">
         {drafts.length === 0 ? (
           <div className="p-4 text-center text-gray-500">
-            <p className="text-sm">No email drafts found</p>
+            <p className="text-sm">No emails found</p>
           </div>
         ) : (
           <div className='flex flex-col gap-2 p-[6px] pb-4'>
