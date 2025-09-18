@@ -207,7 +207,6 @@ export default function OnboardingPage() {
           
           // Check if user has already completed onboarding
           if (actualUserData.onboardingComplete) {
-            console.log('User has completed onboarding, redirecting to home');
             setIsRedirecting(true);
             // Emit event to notify AuthFlowManager that onboarding is complete
             window.dispatchEvent(new CustomEvent('onboarding:complete'));
