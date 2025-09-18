@@ -28,6 +28,7 @@ export default function FundraisingPage() {
     stages?: string[];
     fundingAmount?: number;
     fundingCurrency?: string;
+    revenue?: string;
   } | null>(null);
   const [userDataLoading, setUserDataLoading] = useState(true);
   
