@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { SignOutButton } from '@clerk/nextjs';
+import { useState, useEffect, useRef } from 'react';
 
 // Import custom icons
 import HomeIcon from './icons/HomeIcon';
@@ -20,11 +21,38 @@ import LogoIcon from './icons/logoIcon';
 import RIcon from './icons/rtystIcon';
 import UsersIcon from './icons/UsersIcon';
 import { useRole } from '@hooks/useRole'
+import FundraisingIcon from './icons/Fundraising';
 
 // Sidebar component
 const Sidebar = () => {
   const pathname = usePathname(); // Get the current pathname
   const { isAdmin } = useRole(); // Get admin status from client-side hook
+  const [isFundraisingOpen, setIsFundraisingOpen] = useState(false);
+  const fundraisingRef = useRef<HTMLDivElement>(null);
+
+  // Auto-open fundraising dropdown if on CRM or Investors pages
+  useEffect(() => {
+    if (pathname === '/fundraising/crm' || pathname === '/fundraising/investors') {
+      setIsFundraisingOpen(true);
+    }
+  }, [pathname]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (fundraisingRef.current && !fundraisingRef.current.contains(event.target as Node)) {
+        setIsFundraisingOpen(false);
+      }
+    };
+
+    if (isFundraisingOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isFundraisingOpen]);
 
   // Helper function to apply active class based on current route
   const getLinkClass = (path: string) => {
@@ -36,6 +64,11 @@ const Sidebar = () => {
   // Helper function to get active wrapper class
   const getActiveWrapperClass = (path: string) => {
     return pathname === path ? 'border-l-4 border-l-[#2563EB]' : '';
+  };
+
+  // Helper function to check if fundraising section should be active
+  const isFundraisingActive = () => {
+    return pathname === '/fundraising/crm' || pathname === '/fundraising/investors';
   };
 
   return (
@@ -107,15 +140,6 @@ const Sidebar = () => {
             </Link>
           </div>
 
-          <div className={`${getActiveWrapperClass('/fundraising')}`}>
-            <Link href= "fundraising" className={`ml-2.5 mr-2.5 block text-lg py-2 rounded-lg transition-colors cursor-pointer ${getLinkClass('/fundraising')}`}>
-              <div className="flex items-center">
-                <FinancialsIcon className="h-6 w-6 mr-2" />
-                <span className='font-medium text-[14px]'>CRM</span>
-              </div>
-            </Link>
-           </div>
-
           <div className={getActiveWrapperClass('/task-manager')}>
             <div className={`ml-2.5 mr-2.5 block text-lg py-2 rounded-lg transition-colors cursor-pointer ${getLinkClass('/task-manager')}`}>
               <div className="flex items-center">
@@ -142,6 +166,77 @@ const Sidebar = () => {
                </div>
              </div>
            </div>
+
+           <div 
+             ref={fundraisingRef}
+             className={`${isFundraisingActive() && !isFundraisingOpen ? 'border-l-4 border-l-[#2563EB]' : ''}`}
+           >
+            <div 
+              className={`ml-2.5 mr-2.5 block text-lg py-2 rounded-lg transition-colors cursor-pointer ${
+                isFundraisingActive()
+                  ? 'bg-[#e9effd] text-blue-600 font-semibold pl-6'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50 pl-6'
+              }`}
+              onClick={() => setIsFundraisingOpen(!isFundraisingOpen)}
+            >
+              <div className="flex items-center justify-between mr-2">
+                <div className="flex items-center">
+                  <FundraisingIcon className="h-6 w-6 mr-2" />
+                  <span className='font-medium text-[14px]'>Fundraising</span>
+                </div>
+                <svg 
+                  className={`w-4 h-4 text-gray-400 transition-transform ${isFundraisingOpen ? 'rotate-180' : ''}`}
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    strokeWidth={2} 
+                    d="M19 9l-7 7-7-7" 
+                  />
+                </svg>
+              </div>
+            </div>
+            
+            {/* Dropdown Menu */}
+            {isFundraisingOpen && (
+              <div className="ml-6 mt-2 space-y-1">
+                <Link 
+                  href="/fundraising/investors" 
+                  className={`block text-sm py-2 px-3 rounded-lg transition-colors mr-2 ${
+                    pathname === '/fundraising/investors' 
+                      ? 'bg-[#e9effd] text-blue-600 font-semibold' 
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <svg width="6" height="6" viewBox="0 0 6 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <circle cx="3" cy="3" r="3" fill="currentColor"/>
+                    </svg>
+                    Investors
+                  </div>
+                </Link>
+                <Link 
+                  href="/fundraising/crm" 
+                  className={`block text-sm py-2 px-3 rounded-lg transition-colors mr-2 ${
+                    pathname === '/fundraising/crm' 
+                      ? 'bg-[#e9effd] text-blue-600 font-semibold' 
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <svg width="6" height="6" viewBox="0 0 6 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <circle cx="3" cy="3" r="3" fill="currentColor"/>
+                    </svg>
+                    CRM
+                  </div>
+                </Link>
+              </div>
+            )}
+           </div>
+           
 
            <div className={getActiveWrapperClass('/presentations')}>
              <div className={`ml-2.5 mr-2.5 block text-lg py-2 rounded-lg transition-colors cursor-pointer ${getLinkClass('/presentations')}`}>
