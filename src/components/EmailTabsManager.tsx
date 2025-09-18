@@ -9,7 +9,9 @@ interface EmailTabsManagerProps {
   userId: string;
   refreshTrigger?: number; // Add refresh trigger prop
   selectEmailId?: string; // Add prop to select a specific email ID
+  isAIEmail?: boolean; // Add flag to indicate if this is an AI email
   onTabSwitch?: (tab: MailSectionType) => void; // Add callback for tab switching
+  onEmailProcessed?: () => void; // Add callback for when email is processed
 }
 
 interface EmailCounts {
@@ -19,7 +21,7 @@ interface EmailCounts {
   answered: number;
 }
 
-export default function EmailTabsManager({ userId, refreshTrigger, selectEmailId, onTabSwitch }: EmailTabsManagerProps) {
+export default function EmailTabsManager({ userId, refreshTrigger, selectEmailId, isAIEmail, onTabSwitch, onEmailProcessed }: EmailTabsManagerProps) {
   const [activeSection, setActiveSection] = useState<MailSectionType>('all');
   const [counts, setCounts] = useState<EmailCounts>({
     all: 0,
@@ -85,7 +87,6 @@ export default function EmailTabsManager({ userId, refreshTrigger, selectEmailId
   // Reset user-initiated flag when selectEmailId changes (new AI email created)
   useEffect(() => {
     if (selectEmailId) {
-      console.log('New selectEmailId detected, resetting user-initiated flag and processed state');
       setUserInitiatedTabChange(false);
       setProcessedSelectEmailId(null); // Reset processed state for new selectEmailId
       // Force refresh of email list to ensure we get the latest data
@@ -151,13 +152,22 @@ export default function EmailTabsManager({ userId, refreshTrigger, selectEmailId
 
   const handleSelectEmailProcessed = () => {
     setProcessedSelectEmailId(selectEmailId || null);
+    // Notify parent component to clear the selectEmailId immediately
+    if (onEmailProcessed && selectEmailId) {
+      onEmailProcessed();
+    }
+    // Clear the processed state after a short delay to allow for future selections
+    setTimeout(() => {
+      setProcessedSelectEmailId(null);
+    }, 1000);
   };
 
   const handleSaveRefReady = (ref: React.MutableRefObject<(() => Promise<void>) | null>) => {
     saveRef.current = ref.current;
-    console.log('Save ref updated:', saveRef.current ? 'Available' : 'Not available');
   };
 
+
+  const willPassSelectEmailId = selectEmailId && processedSelectEmailId !== selectEmailId ? selectEmailId : undefined;
 
   return (
     <MailTabs
@@ -175,7 +185,8 @@ export default function EmailTabsManager({ userId, refreshTrigger, selectEmailId
             onEmailSent={handleEmailSent}
             onSaveStart={handleSaveStart}
             onSaveEnd={handleSaveEnd}
-            selectEmailId={selectEmailId && processedSelectEmailId !== selectEmailId ? selectEmailId : undefined}
+            selectEmailId={willPassSelectEmailId}
+            isAIEmail={isAIEmail}
             onSelectEmailProcessed={handleSelectEmailProcessed}
             onSaveRefReady={handleSaveRefReady}
           />
@@ -189,7 +200,7 @@ export default function EmailTabsManager({ userId, refreshTrigger, selectEmailId
             onEmailSent={handleEmailSent}
             onSaveStart={handleSaveStart}
             onSaveEnd={handleSaveEnd}
-            selectEmailId={selectEmailId && processedSelectEmailId !== selectEmailId ? selectEmailId : undefined}
+            selectEmailId={undefined}
             onSelectEmailProcessed={handleSelectEmailProcessed}
             onSaveRefReady={handleSaveRefReady}
           />

@@ -25,11 +25,12 @@ interface EmailManagementInterfaceProps {
   onSaveStart?: () => void; // Add callback for when save starts
   onSaveEnd?: () => void; // Add callback for when save ends
   selectEmailId?: string; // Add prop to select a specific email ID
+  isAIEmail?: boolean; // Add flag to indicate if this is an AI email
   onSelectEmailProcessed?: () => void; // Add callback for when selectEmailId is processed
   onSaveRefReady?: (saveRef: React.MutableRefObject<(() => Promise<void>) | null>) => void; // Add callback for save ref
 }
 
-export default function EmailManagementInterface({ userId, mode = 'draft', refreshTrigger, onEmailSent, onSaveStart, onSaveEnd, selectEmailId, onSelectEmailProcessed, onSaveRefReady }: EmailManagementInterfaceProps) {
+export default function EmailManagementInterface({ userId, mode = 'draft', refreshTrigger, onEmailSent, onSaveStart, onSaveEnd, selectEmailId, isAIEmail, onSelectEmailProcessed, onSaveRefReady }: EmailManagementInterfaceProps) {
   const [drafts, setDrafts] = useState<EmailDraft[]>([]);
   const [selectedEmailId, setSelectedEmailId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -42,8 +43,12 @@ export default function EmailManagementInterface({ userId, mode = 'draft', refre
   const [isFetching, setIsFetching] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isFetchingIndividualEmail, setIsFetchingIndividualEmail] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
   const lastFetchRef = useRef<string | null>(null);
   const lastIndividualFetchRef = useRef<string | null>(null);
+  const processedSelectEmailIdRef = useRef<string | null>(null);
+  const previousSelectedEmailIdRef = useRef<string | null>(null);
+  const transitionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   // Create save ref to expose save functionality
   const saveRef = useRef<(() => Promise<void>) | null>(null);
@@ -149,10 +154,21 @@ export default function EmailManagementInterface({ userId, mode = 'draft', refre
         if (data.length > 0) {
           if (!selectedEmailId) {
             setSelectedEmailId(data[0].id);
-          } else if (selectEmailId && selectedEmailId !== selectEmailId) {
+          } else if (selectEmailId && selectedEmailId !== selectEmailId && processedSelectEmailIdRef.current !== selectEmailId) {
             // If we have a selectEmailId and it's different from current selection, select it
             // This handles both cases: when the email exists in the list and when it doesn't (AI-generated email)
+            // For AI emails, we always want to fetch fresh data from backend, even if email exists in list
+            // Only process if we haven't already processed this selectEmailId
             setSelectedEmailId(selectEmailId);
+            processedSelectEmailIdRef.current = selectEmailId; // Mark as processed
+            
+            // For AI emails, immediately fetch fresh data from backend
+            if (mode === 'draft') {
+              setIsFetchingIndividualEmail(true);
+              setSelectedEmail(null);
+              fetchIndividualEmail(selectEmailId, true); // AI email, bypass duplicate check
+            }
+            
             // Notify parent that selectEmailId has been processed
             if (onSelectEmailProcessed) {
               onSelectEmailProcessed();
@@ -175,11 +191,11 @@ export default function EmailManagementInterface({ userId, mode = 'draft', refre
     }
   };
 
-  const fetchIndividualEmail = async (emailId: string) => {
+  const fetchIndividualEmail = async (emailId: string, isAIEmail = false) => {
     if (!emailId) return;
     
-    // Prevent duplicate calls for the same email ID
-    if (lastIndividualFetchRef.current === emailId) {
+    // Prevent duplicate calls for the same email ID, but not for AI emails
+    if (!isAIEmail && lastIndividualFetchRef.current === emailId) {
       return;
     }
     
@@ -220,6 +236,16 @@ export default function EmailManagementInterface({ userId, mode = 'draft', refre
       // Clear the fetch reference after completion
       lastIndividualFetchRef.current = null;
       setIsFetchingIndividualEmail(false);
+      
+      // End transition after a short delay to ensure smooth UI (only for non-AI emails)
+      if (!isAIEmail) {
+        transitionTimeoutRef.current = setTimeout(() => {
+          setIsTransitioning(false);
+        }, 100); // Small delay to prevent flashing
+      } else {
+        // AI emails should update immediately without transition delay
+        setIsTransitioning(false);
+      }
     }
   };
 
@@ -231,39 +257,69 @@ export default function EmailManagementInterface({ userId, mode = 'draft', refre
     fetchDrafts();
   }, [userId, mode, refreshTrigger]); // Add refreshTrigger to dependencies
 
-  // Handle selectEmailId prop - this is now handled in fetchDrafts
-
-  // Fetch individual email when selectedEmailId changes
+  // Handle selectEmailId prop - reset processed ref when new selectEmailId is provided
   useEffect(() => {
-    if (selectedEmailId) {
-      // For draft emails, when selectEmailId is provided (AI email creation),
-      // always clear current selection and fetch fresh data from backend
-      // This handles the case where backend returns existing email instead of new one
-      if (selectEmailId && selectEmailId === selectedEmailId) {
-        setSelectedEmail(null);
-        fetchIndividualEmail(selectedEmailId);
-        return;
-      }
+    if (selectEmailId && processedSelectEmailIdRef.current !== selectEmailId) {
+      processedSelectEmailIdRef.current = null; // Reset to allow processing of new selectEmailId
+    }
+  }, [selectEmailId]);
 
-      // For sent emails, just show cached data immediately
-      if (mode === 'sent') {
-        const emailFromList = drafts.find(draft => draft.id === selectedEmailId);
-        if (emailFromList) {
-          setSelectedEmail(emailFromList);
+  // Fetch individual email when selectedEmailId changes (only when switching to a different email)
+  useEffect(() => {
+    // Only proceed if selectedEmailId has actually changed to a different value
+    if (selectedEmailId !== previousSelectedEmailIdRef.current) {
+      previousSelectedEmailIdRef.current = selectedEmailId;
+      
+      // Clear any existing transition timeout
+      if (transitionTimeoutRef.current) {
+        clearTimeout(transitionTimeoutRef.current);
+      }
+      
+      if (selectedEmailId) {
+        // When selectEmailId is provided (AI email creation), always fetch fresh data from backend
+        if (selectEmailId && selectedEmailId && selectedEmailId.startsWith(selectEmailId)) {
+          // AI emails don't need transition blocking - they should update immediately
+          // Extract the actual email ID (remove timestamp suffix if present)
+          const actualEmailId = selectedEmailId.split('_')[0];
+          
+          // Always fetch fresh data from backend for emails selected via selectEmailId
+          setSelectedEmail(null);
+          fetchIndividualEmail(actualEmailId, isAIEmail); // Pass AI email flag
+          
+          // Notify parent that selectEmailId has been processed
+          if (onSelectEmailProcessed) {
+            onSelectEmailProcessed();
+          }
+          return;
+        }
+
+        // For sent emails, just show cached data immediately
+        if (mode === 'sent') {
+          const emailFromList = drafts.find(draft => draft.id === selectedEmailId);
+          if (emailFromList) {
+            setSelectedEmail(emailFromList);
+          }
+        } else {
+          // For regular draft emails (not AI), apply transition to prevent flashing
+          if (!isAIEmail) {
+            setIsTransitioning(true);
+          }
+          
+          // For draft emails, always fetch fresh data from backend when switching
+          // This ensures we always get the latest data from the database (including AI emails)
+          setIsFetchingIndividualEmail(true);
+          // Clear selectedEmail to show loading state instead of "Select an email"
+          setSelectedEmail(null);
+          
+          // Extract actual email ID if it has timestamp suffix (for AI emails)
+          const actualEmailId = selectedEmailId.includes('_') ? selectedEmailId.split('_')[0] : selectedEmailId;
+          fetchIndividualEmail(actualEmailId, isAIEmail || false); // Use AI email flag if provided
         }
       } else {
-        // For draft emails, always fetch fresh data from backend when switching
-        // This ensures we always get the latest data from the database
-        console.log(`Draft email selected: ${selectedEmailId} - fetching fresh data from backend`);
-        setIsFetchingIndividualEmail(true);
-        // Clear selectedEmail to show loading state instead of "Select an email"
         setSelectedEmail(null);
-        fetchIndividualEmail(selectedEmailId);
       }
-    } else {
-      setSelectedEmail(null);
     }
-  }, [selectedEmailId, mode, selectEmailId]);
+  }, [selectedEmailId, mode, selectEmailId, isAIEmail, onSelectEmailProcessed]);
 
 
   // Cleanup effect to handle pending saves
@@ -274,10 +330,19 @@ export default function EmailManagementInterface({ userId, mode = 'draft', refre
       if (pendingSave) {
         console.warn('Component unmounted with pending save - changes may be lost');
       }
+      // Clear transition timeout
+      if (transitionTimeoutRef.current) {
+        clearTimeout(transitionTimeoutRef.current);
+      }
     };
   }, [pendingSave]);
 
   const handleEmailSelect = async (emailId: string) => {
+    // Prevent rapid switching during transition, but allow AI emails to bypass this
+    if (isTransitioning && !isAIEmail) {
+      return;
+    }
+    
     // If we're in draft mode and switching to a different email, wait for save and fetch fresh data
     if (mode === 'draft' && selectedEmailId && selectedEmailId !== emailId) {
       
@@ -286,16 +351,12 @@ export default function EmailManagementInterface({ userId, mode = 'draft', refre
       const maxAttempts = 30; // 3 seconds with 100ms intervals
       
       while (isSaving && attempts < maxAttempts) {
-        console.log('Waiting for save to complete before switching emails...', attempts + 1);
         await new Promise(resolve => setTimeout(resolve, 100));
         attempts++;
       }
       
       if (isSaving) {
-        console.warn('Save did not complete in time, proceeding with email switch');
         setIsSaving(false);
-      } else {
-        console.log('Save completed before email switch');
       }
       
       // Now fetch fresh data for the new email
@@ -422,7 +483,7 @@ export default function EmailManagementInterface({ userId, mode = 'draft', refre
       
       <EmailSidebar
         drafts={drafts}
-        selectedEmailId={selectedEmailId}
+        selectedEmailId={selectedEmailId ? selectedEmailId.split('_')[0] : selectedEmailId}
         onEmailSelect={handleEmailSelect}
       />
       <EmailViewer
@@ -432,7 +493,7 @@ export default function EmailManagementInterface({ userId, mode = 'draft', refre
         onEmailSaveStart={mode === 'draft' ? handleEmailSaveStart : undefined}
         onEmailSaveEnd={mode === 'draft' ? handleEmailSaveEnd : undefined}
         readOnly={mode === 'sent'}
-        loading={isFetchingIndividualEmail}
+        loading={isFetchingIndividualEmail || isTransitioning}
         saveRef={saveRef}
       />
     </div>

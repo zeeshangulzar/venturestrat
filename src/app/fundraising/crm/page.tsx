@@ -42,6 +42,7 @@ export default function FundraisingPage() {
   
   // State for selecting a specific email ID
   const [selectedEmailId, setSelectedEmailId] = useState<string | null>(null);
+  const [isAIEmail, setIsAIEmail] = useState<boolean>(false);
 
   // State for shortlist to allow immediate UI updates
   const [shortlistState, setShortlistState] = useState(shortlist);
@@ -86,14 +87,23 @@ export default function FundraisingPage() {
   };
   
   // Function to select a specific email
-  const selectEmail = (emailId: string) => {
-    // Clear current selection first to force fresh data fetch
-    // This handles the case where backend returns existing email instead of new one
-    setSelectedEmailId(null);
-    // Use setTimeout to ensure the null state is processed before setting the new ID
-    setTimeout(() => {
-      setSelectedEmailId(emailId);
-    }, 0);
+  const selectEmail = (emailId: string, isAI?: boolean) => {
+    // For AI emails, always force a fresh fetch by using a unique timestamp
+    if (isAI) {
+      const uniqueId = `${emailId}_${Date.now()}`;
+      setSelectedEmailId(uniqueId);
+      setIsAIEmail(true);
+    } else {
+      // Clear current selection first to force fresh data fetch
+      // This handles the case where backend returns existing email instead of new one
+      setSelectedEmailId(null);
+      setIsAIEmail(false);
+      // Use setTimeout to ensure the null state is processed before setting the new ID
+      setTimeout(() => {
+        setSelectedEmailId(emailId);
+        setIsAIEmail(isAI || false);
+      }, 0);
+    }
   };
 
   // Load user data for ChatGPT prompt
@@ -286,8 +296,8 @@ export default function FundraisingPage() {
                                       setEmailGenerationStatus({ type: null, message: '' });
                                     }, 5000);
                                   }}
-                                  onEmailCreated={(emailId) => {
-                                    selectEmail(emailId);
+                                  onEmailCreated={(emailId, isAI) => {
+                                    selectEmail(emailId, isAI);
                                     triggerEmailRefresh();
                                   }}
                                 />
@@ -316,8 +326,14 @@ export default function FundraisingPage() {
                     userId={user.id} 
                     refreshTrigger={emailRefreshTrigger} 
                     selectEmailId={selectedEmailId || undefined}
+                    isAIEmail={isAIEmail}
                     onTabSwitch={(tab) => {
-                      console.log('Tab switched to:', tab);
+                      // Tab switched
+                    }}
+                    onEmailProcessed={() => {
+                      // Clear the selectedEmailId after it's been processed to prevent re-triggering
+                      setSelectedEmailId(null);
+                      // Don't clear isAIEmail flag here - let it persist for future selections
                     }}
                   />
                 ) : (

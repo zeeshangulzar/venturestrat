@@ -29,7 +29,7 @@ interface ChatGPTIntegrationProps {
   };
   onEmailGenerated: (emailContent: string) => void;
   onError: (error: string) => void;
-  onEmailCreated?: (emailId: string) => void; // New callback for when email is successfully created with email ID
+  onEmailCreated?: (emailId: string, isAIEmail?: boolean) => void; // Updated to include AI email flag
 }
 
 export default function ChatGPTIntegration({
@@ -108,9 +108,9 @@ export default function ChatGPTIntegration({
       const createdEmail = await messageResponse.json();
       const emailId = createdEmail.id || createdEmail.message?.id || createdEmail.data?.id;
 
-      // Call the onEmailCreated callback to refresh the email list and pass the email ID
+      // Call the onEmailCreated callback to refresh the email list and pass the email ID with AI flag
       if (onEmailCreated && emailId) {
-        onEmailCreated(emailId);
+        onEmailCreated(emailId, true); // true indicates this is an AI-generated email
       }
 
       onEmailGenerated(emailContent);
