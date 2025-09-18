@@ -7,6 +7,7 @@ import ChatGPTIntegration from '@components/ChatGPTIntegration'
 import EmailTabsManager from '@components/EmailTabsManager'
 import InvestorStatusDropdown from '@components/InvestorStatusDropdown'
 import Tooltip from '@components/Tooltip'
+import Loader from '@components/Loader'
 import { fetchUserData } from '@lib/api'
 
 export default function FundraisingPage() {
@@ -45,6 +46,9 @@ export default function FundraisingPage() {
   // State for shortlist to allow immediate UI updates
   const [shortlistState, setShortlistState] = useState(shortlist);
 
+  // State for full-page loader
+  const [showFullPageLoader, setShowFullPageLoader] = useState(true);
+
   // Ref for the table's scroll container
   const tableScrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -52,6 +56,18 @@ export default function FundraisingPage() {
   useEffect(() => {
     setShortlistState(shortlist);
   }, [shortlist.length, shortlist.map(inv => inv.id).join(',')]);
+
+  // Hide full-page loader when table is ready with timeout
+  useEffect(() => {
+    if (!loading && data) {
+      // Add a small delay to ensure smooth transition
+      const timer = setTimeout(() => {
+        setShowFullPageLoader(false);
+      }, 1000); // 1 second timeout
+
+      return () => clearTimeout(timer);
+    }
+  }, [loading, data]);
 
   // Function to trigger email list refresh
   const triggerEmailRefresh = () => {
@@ -103,55 +119,62 @@ export default function FundraisingPage() {
   }, [user?.id]);
 
   return (
-    <main className="min-h-screen bg-[#F4F6FB] h-auto pb-[16px]">
-      <div className="flex bg-[#FFFFFF] items-center bg-[rgba(255, 255, 255, 0.8)] h-[60px] px-5 py-4 border-b border-[#EDEEEF]">
-        <h2 className="not-italic font-bold text-[18px] leading-[24px] tracking-[-0.02em] text-[#0C2143]">Fundraising CRM</h2>
-        
-        {/* Email Generation Status */}
-        {emailGenerationStatus.type && (
-          <div className={`ml-4 px-3 py-1 rounded-md text-sm ${
-            emailGenerationStatus.type === 'success' 
-              ? 'bg-green-100 text-green-800' 
-              : 'bg-red-100 text-red-800'
-          }`}>
-            {emailGenerationStatus.message}
+    <main className="min-h-screen bg-[#F4F6FB] h-auto pb-[16px] relative">
+      {/* Loader overlay - positioned at top section */}
+      {showFullPageLoader && (
+        <div className="absolute top-0 left-0 right-0 h-[400px] bg-[#F4F6FB] z-40 flex items-center justify-center">
+          <Loader 
+            size="xl" 
+            text="Loading Fundraising CRM..." 
+            textColor="text-[#0C2143]"
+            spinnerColor="border-[#0C2143]"
+            className="py-8"
+          />
+        </div>
+      )}
+
+      {/* Main content - always rendered but loader covers it */}
+      <div className={showFullPageLoader ? "opacity-0" : "opacity-100 transition-opacity duration-300"}>
+          <div className="flex bg-[#FFFFFF] items-center bg-[rgba(255, 255, 255, 0.8)] h-[60px] px-5 py-4 border-b border-[#EDEEEF]">
+            <h2 className="not-italic font-bold text-[18px] leading-[24px] tracking-[-0.02em] text-[#0C2143]">Fundraising CRM</h2>
+            
+            {/* Email Generation Status */}
+            {emailGenerationStatus.type && (
+              <div className={`ml-4 px-3 py-1 rounded-md text-sm ${
+                emailGenerationStatus.type === 'success' 
+                  ? 'bg-green-100 text-green-800' 
+                  : 'bg-red-100 text-red-800'
+              }`}>
+                {emailGenerationStatus.message}
+              </div>
+            )}
           </div>
-        )}
-      </div>
 
-      {/* Table Layout */}
-      <div className="mt-6 px-5 py-3">
-        <div className="bg-white rounded-[14px] border border-[#EDEEEF] overflow-hidden">
-          {/* Sticky Table Header */}
-          <div className="sticky top-0 z-20 bg-white px-6 py-4 border-b border-[#EDEEEF]">
-            <h3 className="not-italic font-bold text-[18px] leading-[24px] tracking-[-0.02em] text-[#0C2143]">
-              My List
-            </h3>
-          </div>
+          {/* Table Layout */}
+          <div className="mt-6 px-5 py-3">
+            <div className="bg-white rounded-[14px] border border-[#EDEEEF] overflow-hidden">
+              {/* Sticky Table Header */}
+              <div className="sticky top-0 z-20 bg-white px-6 py-4 border-b border-[#EDEEEF]">
+                <h3 className="not-italic font-bold text-[18px] leading-[24px] tracking-[-0.02em] text-[#0C2143]">
+                  My List
+                </h3>
+              </div>
 
-          {/* Table Content with Scrollable Container */}
-          <div ref={tableScrollContainerRef} className="max-h-[400px] overflow-auto">
-            {user && (
-              <>
-                {loading && (
-                  <div className="px-6 py-8 text-center text-slate-600">
-                    Loading targeted investors…
-                  </div>
-                )}
-
+              {/* Table Content with Scrollable Container */}
+              <div ref={tableScrollContainerRef} className="max-h-[400px] overflow-auto">
                 {error && (
                   <div className="px-6 py-8 text-center text-rose-700">
                     {error}
                   </div>
                 )}
 
-                {!loading && !error && data && shortlist.length === 0 && (
+                {!error && data && shortlist.length === 0 && (
                   <div className="px-6 py-8 text-center text-slate-600">
                     No targeted investors yet.
                   </div>
                 )}
 
-                {!loading && !error && data && shortlistState.length > 0 && (
+                {!error && data && shortlistState.length > 0 && (
                   <table className="w-full table-fixed">
                     <thead className="sticky top-0 z-10 bg-[#F6F6F7]">
                       <tr>
@@ -276,34 +299,35 @@ export default function FundraisingPage() {
                     </tbody>
                   </table>
                 )}
-              </>
-            )}
-          </div>
-        </div>
-      </div>
-      <div className='bg-[#F4F6FB] px-4 h-[800px]'>
-        <div className="bg-[#FFFFFF] border border-[#EDEEEF] rounded-[14px] h-full flex flex-col">
-          <div className="p-5 flex-shrink-0">
-            <h2 className="not-italic font-bold text-[18px] leading-[24px] tracking-[-0.02em] text-[#0C2143]">Mails</h2>
+              </div>
+            </div>
           </div>
           
-          <div className="flex-1 min-h-0">
-            {user?.id ? (
-              <EmailTabsManager 
-                userId={user.id} 
-                refreshTrigger={emailRefreshTrigger} 
-                selectEmailId={selectedEmailId || undefined}
-                onTabSwitch={(tab) => {
-                  console.log('Tab switched to:', tab);
-                }}
-              />
-            ) : (
-              <div className="flex items-center justify-center h-full">
-                <p className="text-gray-500">Please log in to view emails</p>
+          {/* Mails section */}
+          <div className='bg-[#F4F6FB] px-4 h-[800px]'>
+            <div className="bg-[#FFFFFF] border border-[#EDEEEF] rounded-[14px] h-full flex flex-col">
+              <div className="p-5 flex-shrink-0">
+                <h2 className="not-italic font-bold text-[18px] leading-[24px] tracking-[-0.02em] text-[#0C2143]">Mails</h2>
               </div>
-            )}
+              
+              <div className="flex-1 min-h-0">
+                {user?.id ? (
+                  <EmailTabsManager 
+                    userId={user.id} 
+                    refreshTrigger={emailRefreshTrigger} 
+                    selectEmailId={selectedEmailId || undefined}
+                    onTabSwitch={(tab) => {
+                      console.log('Tab switched to:', tab);
+                    }}
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-full">
+                    <p className="text-gray-500">Please log in to view emails</p>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
-        </div>
       </div>
     </main>
   );
