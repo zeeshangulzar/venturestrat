@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { getApiUrl } from '@lib/api';
 import MailTabs, { MailSectionType } from './MailTabs';
 import EmailManagementInterface from './EmailManagementInterface';
@@ -31,6 +31,9 @@ export default function EmailTabsManager({ userId, refreshTrigger, selectEmailId
   const [pendingSave, setPendingSave] = useState(false);
   const [userInitiatedTabChange, setUserInitiatedTabChange] = useState(false);
   const [processedSelectEmailId, setProcessedSelectEmailId] = useState<string | null>(null);
+  
+  // Ref to store the save function from EmailManagementInterface
+  const saveRef = useRef<(() => Promise<void>) | null>(null);
 
   const fetchCounts = async () => {
     if (!userId) return;
@@ -106,15 +109,23 @@ export default function EmailTabsManager({ userId, refreshTrigger, selectEmailId
     // Mark this as a user-initiated tab change
     setUserInitiatedTabChange(true);
     
-    // Only prevent tab switching if there's a pending save and we're switching away from drafts
-    if (pendingSave && activeSection === 'all' && section !== 'all') {
-      setUserInitiatedTabChange(false); // Reset flag if switch is prevented
-      return;
-    }
-    
-    // Clear pending save state when switching tabs (except when staying on 'all')
-    if (section !== 'all') {
-      setPendingSave(false);
+    // If switching away from 'all' tab (drafts), force save before switching
+    if (activeSection === 'all' && section !== 'all') {
+      console.log('Switching away from drafts tab - forcing immediate save...');
+      
+      try {
+        // Force immediate save if save function is available
+        if (saveRef.current) {
+          console.log('Triggering immediate save before tab switch...');
+          await saveRef.current();
+          console.log('Immediate save completed before tab switch');
+        } else {
+          console.log('No save function available, proceeding with tab switch');
+        }
+      } catch (error) {
+        console.error('Error saving before tab switch:', error);
+        // Continue with tab switch even if save fails
+      }
     }
     
     // Add a small delay to prevent viewport jumping
@@ -142,6 +153,11 @@ export default function EmailTabsManager({ userId, refreshTrigger, selectEmailId
     setProcessedSelectEmailId(selectEmailId || null);
   };
 
+  const handleSaveRefReady = (ref: React.MutableRefObject<(() => Promise<void>) | null>) => {
+    saveRef.current = ref.current;
+    console.log('Save ref updated:', saveRef.current ? 'Available' : 'Not available');
+  };
+
 
   return (
     <MailTabs
@@ -161,6 +177,7 @@ export default function EmailTabsManager({ userId, refreshTrigger, selectEmailId
             onSaveEnd={handleSaveEnd}
             selectEmailId={selectEmailId && processedSelectEmailId !== selectEmailId ? selectEmailId : undefined}
             onSelectEmailProcessed={handleSelectEmailProcessed}
+            onSaveRefReady={handleSaveRefReady}
           />
         )}
         
@@ -174,6 +191,7 @@ export default function EmailTabsManager({ userId, refreshTrigger, selectEmailId
             onSaveEnd={handleSaveEnd}
             selectEmailId={selectEmailId && processedSelectEmailId !== selectEmailId ? selectEmailId : undefined}
             onSelectEmailProcessed={handleSelectEmailProcessed}
+            onSaveRefReady={handleSaveRefReady}
           />
         )}
         

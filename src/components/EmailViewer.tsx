@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { getApiUrl } from '@lib/api';
 import '@lib/react-polyfill'; // Import React 19 polyfill for React Quill compatibility
 import QuillEditor from './QuillEditor';
+import Loader from './Loader';
 
 interface EmailDraft {
   id: string;
@@ -25,9 +26,10 @@ interface EmailViewerProps {
   onEmailSaveEnd?: () => void;
   readOnly?: boolean;
   loading?: boolean;
+  saveRef?: React.MutableRefObject<(() => Promise<void>) | null>;
 }
 
-export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmailSaveStart, onEmailSaveEnd, readOnly = false, loading = false }: EmailViewerProps) {
+export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmailSaveStart, onEmailSaveEnd, readOnly = false, loading = false, saveRef }: EmailViewerProps) {
   const [editedSubject, setEditedSubject] = useState('');
   const [editedBody, setEditedBody] = useState('');
   const [editedFrom, setEditedFrom] = useState('');
@@ -155,11 +157,50 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
       clearTimeout(autoSaveTimeoutRef.current);
     }
     
-    // Set new timeout for 1.5 seconds after user stops typing (reduced for better responsiveness)
+    // Set new timeout for 0.5 seconds after user stops typing (reduced for better responsiveness)
     autoSaveTimeoutRef.current = setTimeout(() => {
       autoSave();
-    }, 1500);
+    }, 500);
   }, [autoSave]);
+
+  // Force immediate save function for tab switching
+  const forceSave = useCallback(async () => {
+    if (!email || readOnly) return;
+    
+    // Check if we're currently setting initial data to prevent unwanted saves
+    if (isSettingInitialDataRef.current) {
+      console.log('Skipping forceSave - currently setting initial data');
+      return;
+    }
+    
+    // Check if the current values match the email values to prevent unnecessary saves
+    const currentValues = currentValuesRef.current;
+    const emailSubject = email.subject || '';
+    const emailBody = email.body || '';
+    const emailFrom = email.from || '';
+    
+    if (currentValues.editedSubject === emailSubject && 
+        currentValues.editedBody === emailBody && 
+        currentValues.editedFrom === emailFrom) {
+      console.log('Skipping forceSave - no changes detected');
+      return;
+    }
+    
+    // Clear any pending debounced save
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
+    }
+    
+    // Force immediate save
+    await autoSave();
+  }, [email, readOnly, autoSave]);
+
+  // Expose save function via ref
+  useEffect(() => {
+    if (saveRef) {
+      saveRef.current = forceSave;
+    }
+  }, [forceSave, saveRef]);
 
   // Handle field changes with auto-save
   const handleFieldChange = (field: string, value: string) => {
@@ -265,15 +306,23 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
   if (!email) {
     return (
       <div className="flex-1 flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="text-gray-400 mb-4">
-            <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-            </svg>
+        {loading ? (
+          <Loader 
+            size="lg" 
+            text="Loading email content..." 
+            className="h-64"
+          />
+        ) : (
+          <div className="text-center">
+            <div className="text-gray-400 mb-4">
+              <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Select an email</h3>
+            <p className="text-gray-500">Choose an email from the sidebar to view and edit its content.</p>
           </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Select an email</h3>
-          <p className="text-gray-500">Choose an email from the sidebar to view and edit its content.</p>
-        </div>
+        )}
       </div>
     );
   }
@@ -283,10 +332,10 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
       {/* Loading overlay */}
       {loading && (
         <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-10">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading email...</p>
-          </div>
+          <Loader 
+            size="lg" 
+            text="Loading email content..." 
+          />
         </div>
       )}
       {/* Header */}
