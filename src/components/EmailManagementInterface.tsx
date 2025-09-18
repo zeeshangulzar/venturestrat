@@ -280,7 +280,6 @@ export default function EmailManagementInterface({ userId, mode = 'draft', refre
   const handleEmailSelect = async (emailId: string) => {
     // If we're in draft mode and switching to a different email, wait for save and fetch fresh data
     if (mode === 'draft' && selectedEmailId && selectedEmailId !== emailId) {
-      console.log(`Switching from email ${selectedEmailId} to ${emailId} - waiting for save completion...`);
       
       // Wait for any pending save to complete (max 3 seconds)
       let attempts = 0;
