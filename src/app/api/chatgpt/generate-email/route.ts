@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
             8. Always insert the empty line before closing ("Best Regards")
             9. Use proper paragraph spacing - each paragraph should be wrapped in <p> tags
             10. For signatures, use proper HTML structure with <p> tags.
-            11. Make sure the signature aligns directly with (“Best Regards”)
+            11. Make sure the each signature is wrapped in a seperate <p> without <br> tags
             12. Each paragraph separated by a single blank line <p><br></p>
             13. Do not use \\n characters within HTML content - use proper HTML tags instead
             14. Ensure the signature is properly aligned with proper spacing`
