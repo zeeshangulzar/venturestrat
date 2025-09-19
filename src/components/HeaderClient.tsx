@@ -2,12 +2,14 @@
 
 import { SignOutButton, useUser } from '@clerk/nextjs';
 import { useState, useEffect, useRef } from 'react';
+import { usePathname } from 'next/navigation';
 import Breadcrumbs from './Breadcrumbs';
 
 export default function HeaderClient() {
   const [showDropdown, setShowDropdown] = useState(false);
   const { user } = useUser();
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const pathname = usePathname();
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -22,9 +24,14 @@ export default function HeaderClient() {
     };
   }, []);
 
+  // Check if current route is admin
+  const isAdminRoute = pathname?.startsWith('/admin');
+
   return (
     <header className="flex justify-between items-center px-5 py-4 gap-4 h-16 border-b border-[#EDEEEF]">
-      <Breadcrumbs />
+      <div className="flex-1">
+        {!isAdminRoute && <Breadcrumbs />}
+      </div>
 
       <div className="flex gap-4 items-center">
         <div className="relative" ref={dropdownRef}>
