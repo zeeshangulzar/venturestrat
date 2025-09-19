@@ -460,7 +460,7 @@ export default function EmailManagementInterface({ userId, mode = 'draft', refre
   return (
     <div className="flex h-full bg-gray-50 relative">
       {/* Background loading indicator - only show when not tab switching */}
-      {loading && !isTabSwitching && (
+      {loading && !isTabSwitching && !hasInitialData && (
         <div className="absolute top-2 right-2 z-20">
           <div className="flex items-center space-x-2 bg-white px-3 py-1 rounded-full shadow-sm border">
             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
