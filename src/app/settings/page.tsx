@@ -36,7 +36,7 @@ type OnboardingData = {
   incorporationCountry: string;
   operationalRegions: string[];
   revenue: string;
-  stages: string[];
+  stages: string;
   businessSectors: string[];
   fundingAmount: number;
   fundingCurrency: string;
@@ -61,7 +61,7 @@ export default function SettingsPage() {
     incorporationCountry: '',
     operationalRegions: [],
     revenue: '',
-    stages: [],
+    stages: '',
     businessSectors: [],
     fundingAmount: 0,
     fundingCurrency: '',
@@ -88,7 +88,7 @@ export default function SettingsPage() {
         const filteredOptions = originalStages.filter(option =>
           option.label.toLowerCase().includes(searchLower)
         );
-        const mergedOptions = mergeSelectedWithOptions(filteredOptions, formData.stages, originalStages);
+        const mergedOptions = mergeSelectedWithOptions(filteredOptions, formData.stages ? [formData.stages] : [], originalStages);
         setStages(mergedOptions);
       } else if (type === 'investmentFocuses') {
         const filteredOptions = originalBusinessSectors.filter(option =>
@@ -290,7 +290,7 @@ export default function SettingsPage() {
             incorporationCountry: '',
             operationalRegions: [],
             revenue: '',
-            stages: [],
+            stages: '',
             businessSectors: [],
             fundingAmount: 0,
             fundingCurrency: '',
@@ -315,7 +315,7 @@ export default function SettingsPage() {
             incorporationCountry: actualUserData.publicMetaData?.incorporationCountry || '',
             operationalRegions: actualUserData.publicMetaData?.operationalRegions || [],
             revenue: actualUserData.publicMetaData?.revenue || '',
-            stages: actualUserData.publicMetaData?.stages || [],
+            stages: Array.isArray(actualUserData.publicMetaData?.stages) ? actualUserData.publicMetaData.stages[0] || '' : (actualUserData.publicMetaData?.stages || ''),
             businessSectors: actualUserData.publicMetaData?.businessSectors || [],
             fundingAmount: actualUserData.publicMetaData?.fundingAmount || 0,
             fundingCurrency: actualUserData.publicMetaData?.fundingCurrency || '',
@@ -337,7 +337,7 @@ export default function SettingsPage() {
             incorporationCountry: (metadata.incorporationCountry as string) || '',
             operationalRegions: (metadata.operationalRegions as string[]) || [],
             revenue: (metadata.revenue as string) || '',
-            stages: (metadata.stages as string[]) || [],
+            stages: Array.isArray(metadata.stages) ? (metadata.stages as string[])[0] || '' : (metadata.stages as string) || '',
             businessSectors: (metadata.businessSectors as string[]) || [],
             fundingAmount: (metadata.fundingCurrency as number) || 0,
             fundingCurrency: (metadata.fundingCurrency as string) || '',
@@ -490,7 +490,7 @@ export default function SettingsPage() {
   const restoreOriginalOptionsWithSelected = (type: string) => {
     if (type === 'investmentStages') {
       // Always show all original options, with selected ones at the top
-      const mergedOptions = mergeSelectedWithOptions(originalStages, formData.stages, originalStages);
+      const mergedOptions = mergeSelectedWithOptions(originalStages, formData.stages ? [formData.stages] : [], originalStages);
       setStages(mergedOptions);
     } else if (type === 'investmentFocuses') {
       // Always show all original options, with selected ones at the top
@@ -786,13 +786,13 @@ export default function SettingsPage() {
                         Which investment stage best defines your business?
                       </label>
                       <SearchableDropdown
-                        isMulti={true}
+                        isMulti={false}
                         options={stages}
                         value={formData.stages}
-                        onChange={(value) => handleDropdownChange('stages', Array.isArray(value) ? value : [])}
-                        placeholder="Select business stages"
+                        onChange={(value) => handleDropdownChange('stages', Array.isArray(value) ? value[0] || '' : value)}
+                        placeholder="Select business stage"
                         enableSearch={true}
-                        showApplyButton={true}
+                        showApplyButton={false}
                         onSearch={handleSearch}
                         searchType="investmentStages"
                         onOpen={() => handleDropdownOpen('investmentStages')}

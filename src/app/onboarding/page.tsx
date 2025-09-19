@@ -28,7 +28,7 @@ type OnboardingData = {
   incorporationCountry: string;
   operationalRegions: string[];
   // Step 3
-  stages: string[];
+  stages: string;
   // Step 4
   businessSectors: string[];
   // Step 5
@@ -46,7 +46,7 @@ export default function OnboardingPage() {
     companyName: '',
     incorporationCountry: '',
     operationalRegions: [],
-    stages: [],
+    stages: '',
     businessSectors: [],
     revenue: ''
   });
@@ -95,7 +95,7 @@ export default function OnboardingPage() {
       let completedFields = 0;
       const totalFields = 1; // stages
       
-      if (formData.stages.length > 0) completedFields++;
+      if (formData.stages && formData.stages.trim()) completedFields++;
       
       return 60 + Math.round((completedFields / totalFields) * 20); // 60% + up to 20% for step 4
     } else {
@@ -121,7 +121,7 @@ export default function OnboardingPage() {
       case 3:
         return formData.businessSectors.length > 0;
       case 4:
-        return formData.stages.length > 0;
+        return formData.stages && formData.stages.trim() !== '';
       case 5:
         return formData.revenue.trim() !== '';
       default:
@@ -178,7 +178,7 @@ export default function OnboardingPage() {
                 companyName?: string; 
                 incorporationCountry?: string; 
                 operationalRegions?: string[]; 
-                stages?: string[]; 
+                stages?: string; 
                 businessSectors?: string[]; 
                 revenue?: string; 
               }; 
@@ -188,7 +188,7 @@ export default function OnboardingPage() {
               companyName?: string; 
               incorporationCountry?: string; 
               operationalRegions?: string[]; 
-              stages?: string[]; 
+              stages?: string; 
               businessSectors?: string[]; 
               revenue?: string; 
             }; 
@@ -223,7 +223,7 @@ export default function OnboardingPage() {
               companyName: backendData.companyName || '',
               incorporationCountry: backendData.incorporationCountry || '',
               operationalRegions: backendData.operationalRegions || [],
-              stages: backendData.stages || [],
+              stages: Array.isArray(backendData.stages) ? backendData.stages[0] || '' : (backendData.stages || ''),
               businessSectors: backendData.businessSectors || [],
               revenue: backendData.revenue || ''
             });
@@ -232,13 +232,13 @@ export default function OnboardingPage() {
             if (backendData.companyName && backendData.incorporationCountry && 
                 Array.isArray(backendData.operationalRegions) && backendData.operationalRegions.length > 0 &&
                 Array.isArray(backendData.businessSectors) && backendData.businessSectors.length > 0 &&
-                Array.isArray(backendData.stages) && backendData.stages.length > 0 &&
+                backendData.stages && typeof backendData.stages === 'string' && backendData.stages.trim() &&
                 backendData.revenue) {
               setCurrentStep(5);
             } else if (backendData.companyName && backendData.incorporationCountry && 
                        Array.isArray(backendData.operationalRegions) && backendData.operationalRegions.length > 0 &&
                        Array.isArray(backendData.businessSectors) && backendData.businessSectors.length > 0 &&
-                       Array.isArray(backendData.stages) && backendData.stages.length > 0) {
+                       backendData.stages && typeof backendData.stages === 'string' && backendData.stages.trim()) {
               setCurrentStep(4);
             } else if (backendData.companyName && backendData.incorporationCountry && 
                        Array.isArray(backendData.operationalRegions) && backendData.operationalRegions.length > 0 &&
@@ -263,7 +263,7 @@ export default function OnboardingPage() {
               companyName: existingData.companyName as string || '',
               incorporationCountry: existingData.incorporationCountry as string || '',
               operationalRegions: existingData.operationalRegions as string[] || [],
-              stages: existingData.stages as string[] || [],
+              stages: existingData.stages as string || '',
               businessSectors: existingData.businessSectors as string[] || [],
               revenue: existingData.revenue as string || ''
             });
@@ -272,13 +272,13 @@ export default function OnboardingPage() {
             if (existingData.companyName && existingData.incorporationCountry && 
                 Array.isArray(existingData.operationalRegions) && existingData.operationalRegions.length > 0 &&
                 Array.isArray(existingData.businessSectors) && existingData.businessSectors.length > 0 &&
-                Array.isArray(existingData.stages) && existingData.stages.length > 0 &&
+                existingData.stages && typeof existingData.stages === 'string' && existingData.stages.trim() &&
                 existingData.revenue) {
               setCurrentStep(5);
             } else if (existingData.companyName && existingData.incorporationCountry && 
                        Array.isArray(existingData.operationalRegions) && existingData.operationalRegions.length > 0 &&
                        Array.isArray(existingData.businessSectors) && existingData.businessSectors.length > 0 &&
-                       Array.isArray(existingData.stages) && existingData.stages.length > 0) {
+                       existingData.stages && typeof existingData.stages === 'string' && existingData.stages.trim()) {
               setCurrentStep(4);
             } else if (existingData.companyName && existingData.incorporationCountry && 
                        Array.isArray(existingData.operationalRegions) && existingData.operationalRegions.length > 0 &&
@@ -338,7 +338,7 @@ export default function OnboardingPage() {
       const filteredOptions = originalStages.filter(option =>
         option.label.toLowerCase().includes(searchLower)
       );
-      const mergedOptions = mergeSelectedWithOptions(filteredOptions, formData.stages, originalStages);
+      const mergedOptions = mergeSelectedWithOptions(filteredOptions, formData.stages ? [formData.stages] : [], originalStages);
       setStages(mergedOptions);
     } else if (type === 'investmentFocuses') {
       const filteredOptions = originalBusinessSectors.filter(option =>
@@ -376,7 +376,7 @@ export default function OnboardingPage() {
   const restoreOriginalOptionsWithSelected = (type: string) => {
     if (type === 'investmentStages') {
       // Show all original options, with selected ones at the top
-      const mergedOptions = mergeSelectedWithOptions(originalStages, formData.stages, originalStages);
+      const mergedOptions = mergeSelectedWithOptions(originalStages, formData.stages ? [formData.stages] : [], originalStages);
       setStages(mergedOptions);
     } else if (type === 'investmentFocuses') {
       // Show all original options, with selected ones at the top
@@ -607,7 +607,7 @@ export default function OnboardingPage() {
                     options={businessSectors}
                     value={formData.businessSectors}
                     onChange={(value) => handleDropdownChange('businessSectors', Array.isArray(value) ? value : [])}
-                    placeholder={<span className="text-[#a5a6ac] font-normal text-sm leading-[22px] opacity-80 text-white">Select business sector</span>}
+                    placeholder={<span className="text-[#a5a6ac] font-normal text-sm leading-[22px] opacity-80">Select business sector</span>}
                     enableSearch={true}
                     showApplyButton={true}
                     onSearch={handleSearch}
@@ -640,13 +640,13 @@ export default function OnboardingPage() {
                   </div>
                 ) : (
                   <SearchableDropdown
-                    isMulti={true}
+                    isMulti={false}
                     options={stages}
                     value={formData.stages}
-                    onChange={(value) => handleDropdownChange('stages', Array.isArray(value) ? value : [])}
-                    placeholder={<span className="text-[#a5a6ac] font-normal text-sm leading-[22px] opacity-80 text-white">Select business stage</span>}
+                    onChange={(value) => handleDropdownChange('stages', Array.isArray(value) ? value[0] || '' : value)}
+                    placeholder={<span className="text-[#a5a6ac] font-normal text-sm leading-[22px] opacity-80">Select business stage</span>}
                     enableSearch={true}
-                    showApplyButton={true}
+                    showApplyButton={false}
                     onSearch={handleSearch}
                     searchType="investmentStages"
                     onOpen={() => handleDropdownOpen('investmentStages')}
