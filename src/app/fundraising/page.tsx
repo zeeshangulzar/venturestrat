@@ -25,7 +25,7 @@ export default function FundraisingPage() {
   const [userData, setUserData] = useState<{
     companyName?: string;
     businessSectors?: string[];
-    stages?: string[];
+    stages?: string;
     fundingAmount?: number;
     fundingCurrency?: string;
     revenue?: string;
@@ -107,7 +107,17 @@ export default function FundraisingPage() {
         const userData = await fetchUserData(user.id);
         if (userData && typeof userData === 'object') {
           const actualUserData = (userData as { user?: { publicMetaData?: unknown } }).user || userData;
-          setUserData((actualUserData as { publicMetaData?: unknown }).publicMetaData || {});
+          const publicMetaData = (actualUserData as { publicMetaData?: unknown }).publicMetaData || {};
+          
+          // Transform stages from array to string if needed
+          const transformedData = {
+            ...publicMetaData,
+            stages: Array.isArray((publicMetaData as any).stages) 
+              ? (publicMetaData as any).stages[0] || '' 
+              : (publicMetaData as any).stages || ''
+          };
+          
+          setUserData(transformedData);
         }
       } catch (error) {
         console.error('Failed to load user data:', error);
