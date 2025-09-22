@@ -26,7 +26,7 @@ interface MailTabData {
 
 export default function MailTabs({ activeSection, onSectionChange, children, counts = {}, disabled = false }: MailTabsProps) {
   const mailTabs: MailTabData[] = [
-    { type: 'all', label: 'All Mails', count: counts.all || 0, isClickable: true },
+    { type: 'all', label: 'Drafts', count: counts.all || 0, isClickable: true },
     { type: 'sent', label: 'Sent', count: counts.sent || 0, isClickable: true },
     { type: 'opened', label: 'Opened', count: counts.opened || 0, isClickable: false },
     { type: 'answered', label: 'Answered', count: counts.answered || 0, isClickable: false },

@@ -11,7 +11,7 @@ export default function MailSection({ section, children }: MailSectionProps) {
   const getSectionTitle = (section: MailSectionType) => {
     switch (section) {
       case 'all':
-        return 'All Mails';
+        return 'Drafts';
       case 'sent':
         return 'Sent Mails';
       case 'opened':
