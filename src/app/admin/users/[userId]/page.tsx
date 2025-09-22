@@ -181,15 +181,13 @@ export default async function UserShowPage({
                   </div>
                 </div>
               )}
-              {user.publicMetaData.stages && user.publicMetaData.stages.length > 0 && (
+              {user.publicMetaData.stages && (
                 <div>
                   <label className="text-sm font-medium text-slate-700">Investment Stages</label>
                   <div className="flex flex-wrap gap-2 mt-1">
-                    {user.publicMetaData.stages.map((stage: string, index: number) => (
-                      <span key={index} className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800">
-                        {stage}
+                      <span className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800">
+                        {user.publicMetaData.stages}
                       </span>
-                    ))}
                   </div>
                 </div>
               )}
