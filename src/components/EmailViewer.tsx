@@ -115,10 +115,9 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
       return;
     }
 
-    setIsSaving(true);
-    setSaveStatus('idle');
-    
-    // Notify parent component that save is starting
+
+    // Silent auto-save - don't update UI states that might cause re-renders
+    // Only notify parent for save start/end if explicitly needed
     if (onEmailSaveStart) {
       onEmailSaveStart();
     }
@@ -156,25 +155,16 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
       }
 
       const updatedEmail = await response.json();
-      onEmailUpdate(updatedEmail);
-      setSaveStatus('success');
       
-      // Call refresh function to update sidebar with fresh data from backend
+      // Update sidebar only - don't update the current email state to prevent input focus loss
+      // This will refresh the drafts array (sidebar) without affecting the selectedEmail (input field)
       if (onEmailRefresh) {
         onEmailRefresh();
       }
-      
-      // Clear success status after 2 seconds
-      setTimeout(() => setSaveStatus('idle'), 2000);
     } catch (error) {
       console.error('Auto-save error:', error);
-      setSaveStatus('error');
-      
-      // Clear error status after 3 seconds
-      setTimeout(() => setSaveStatus('idle'), 3000);
+      // Silent error handling - don't update UI to prevent input focus loss
     } finally {
-      setIsSaving(false);
-      
       // Notify parent component that save is complete
       if (onEmailSaveEnd) {
         onEmailSaveEnd();
@@ -188,10 +178,10 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
       clearTimeout(autoSaveTimeoutRef.current);
     }
     
-    // Set new timeout for 0.5 seconds after user stops typing (reduced for better responsiveness)
+    // Set new timeout for 0.6 seconds after user stops typing
     autoSaveTimeoutRef.current = setTimeout(() => {
       autoSave();
-    }, 700);
+    }, 600);
   }, [autoSave]);
 
   // Force immediate save function for tab switching
@@ -245,6 +235,7 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
     if (currentValue === value) {
       return;
     }
+
     
     switch (field) {
       case 'subject':
