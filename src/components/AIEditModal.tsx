@@ -192,8 +192,16 @@ export default function AIEditModal({
                     </div>
                   )}
                   
-                  {/* Right Search Icon */}
-                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                  {/* Right Search Icon - Clickable */}
+                  <div 
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer hover:bg-gray-100 rounded-full p-1 transition-colors"
+                    onClick={() => {
+                      if (prompt.trim() && !isGenerating) {
+                        handleGenerate();
+                      }
+                    }}
+                    title="Search"
+                  >
                     {isGenerating ? (
                       <svg className="animate-spin w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -205,6 +213,17 @@ export default function AIEditModal({
                       </svg>
                     )}
                   </div>
+                  
+                  {/* Extended Clickable Area Below Search Icon */}
+                  <div 
+                    className="absolute right-0 top-1/2 transform -translate-y-1/2 w-12 h-12 cursor-pointer rounded-full transition-colors"
+                    onClick={() => {
+                      if (prompt.trim() && !isGenerating) {
+                        handleGenerate();
+                      }
+                    }}
+                    title="Search"
+                  />
                 </div>
               </div>
             </div>
@@ -255,7 +274,7 @@ export default function AIEditModal({
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
                   onKeyPress={handleKeyPress}
-                  className="w-full p-[7px] pl-12 bg-white border border-[#EDEEEF] rounded-[10px]"
+                  className="w-full p-[7px] pl-12 bg-white border border-[#EDEEEF] rounded-[10px] pr-[40px]"
                   disabled={isGenerating}
                 />
                  {/* Logo - Always visible */}
@@ -274,8 +293,16 @@ export default function AIEditModal({
                    </div>
                  )}
                 
-                {/* Right Search Icon */}
-                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                {/* Right Search Icon - Clickable */}
+                <div 
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer rounded-full p-1 transition-colors"
+                  onClick={() => {
+                    if (prompt.trim() && !isGenerating) {
+                      handleGenerate();
+                    }
+                  }}
+                  title="Search"
+                >
                   {isGenerating ? (
                     <svg className="animate-spin w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -287,6 +314,17 @@ export default function AIEditModal({
                     </svg>
                   )}
                 </div>
+                
+                {/* Extended Clickable Area Below Search Icon */}
+                <div 
+                  className="absolute right-0 top-1/2 transform -translate-y-1/2 w-12 h-12 cursor-pointer rounded-full transition-colors"
+                  onClick={() => {
+                    if (prompt.trim() && !isGenerating) {
+                      handleGenerate();
+                    }
+                  }}
+                  title="Search"
+                />
               </div>
                <button
                  onClick={(e) => handleCopy(e)}
