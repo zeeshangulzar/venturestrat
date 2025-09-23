@@ -24,12 +24,13 @@ interface EmailViewerProps {
   onEmailSent?: () => void;
   onEmailSaveStart?: () => void;
   onEmailSaveEnd?: () => void;
+  onEmailRefresh?: () => void;
   readOnly?: boolean;
   loading?: boolean;
   saveRef?: React.MutableRefObject<(() => Promise<void>) | null>;
 }
 
-export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmailSaveStart, onEmailSaveEnd, readOnly = false, loading = false, saveRef }: EmailViewerProps) {
+export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmailSaveStart, onEmailSaveEnd, onEmailRefresh, readOnly = false, loading = false, saveRef }: EmailViewerProps) {
   const [editedSubject, setEditedSubject] = useState('');
   const [editedBody, setEditedBody] = useState('');
   const [editedFrom, setEditedFrom] = useState('');
@@ -158,6 +159,11 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
       onEmailUpdate(updatedEmail);
       setSaveStatus('success');
       
+      // Call refresh function to update sidebar with fresh data from backend
+      if (onEmailRefresh) {
+        onEmailRefresh();
+      }
+      
       // Clear success status after 2 seconds
       setTimeout(() => setSaveStatus('idle'), 2000);
     } catch (error) {
@@ -185,7 +191,7 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
     // Set new timeout for 0.5 seconds after user stops typing (reduced for better responsiveness)
     autoSaveTimeoutRef.current = setTimeout(() => {
       autoSave();
-    }, 500);
+    }, 700);
   }, [autoSave]);
 
   // Force immediate save function for tab switching
@@ -377,7 +383,7 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
                    type="text"
                    value={editedSubject}
                    onChange={(e) => handleFieldChange('subject', e.target.value)}
-                   className="flex-1 not-italic font-bold text-[16px] leading-[16px] tracking-[-0.02em] capitalize text-[#0C2143] bg-transparent border-none outline-none focus:outline-none focus:ring-0 focus:border-none"
+                   className="flex-1 not-italic font-bold text-[16px] leading-[16px] tracking-[-0.02em] text-[#0C2143] bg-transparent border-none outline-none focus:outline-none focus:ring-0 focus:border-none"
                    placeholder="Email subject"
                  />
                  <svg width="91" height="20" viewBox="0 0 91 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="ml-2 flex-shrink-0">

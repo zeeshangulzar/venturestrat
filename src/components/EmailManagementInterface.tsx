@@ -394,6 +394,41 @@ export default function EmailManagementInterface({ userId, mode = 'draft', refre
     }
   };
 
+  // Function to refresh email data from backend after auto-save
+  const refreshEmailFromBackend = async () => {
+    if (!selectedEmailId || mode !== 'draft') return;
+    
+    try {
+      const response = await fetch(getApiUrl(`/api/message/${selectedEmailId}`), {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch updated email: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const emailData = data.message || data;
+      
+      // Update the drafts array with fresh data from backend
+      setDrafts(prevDrafts => 
+        prevDrafts.map(draft => 
+          draft.id === emailData.id ? emailData : draft
+        )
+      );
+      
+      // Update selected email if it's the same one
+      if (selectedEmailId === emailData.id) {
+        setSelectedEmail(emailData);
+      }
+    } catch (error) {
+      console.error('Error refreshing email from backend:', error);
+    }
+  };
+
   const handleEmailSaveStart = () => {
     setPendingSave(true);
     setIsSaving(true);
@@ -492,6 +527,7 @@ export default function EmailManagementInterface({ userId, mode = 'draft', refre
         onEmailSent={handleEmailSent}
         onEmailSaveStart={mode === 'draft' ? handleEmailSaveStart : undefined}
         onEmailSaveEnd={mode === 'draft' ? handleEmailSaveEnd : undefined}
+        onEmailRefresh={mode === 'draft' ? refreshEmailFromBackend : undefined}
         readOnly={mode === 'sent'}
         loading={isFetchingIndividualEmail || isTransitioning}
         saveRef={saveRef}
