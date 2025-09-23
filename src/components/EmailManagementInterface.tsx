@@ -398,8 +398,11 @@ export default function EmailManagementInterface({ userId, mode = 'draft', refre
   const refreshEmailFromBackend = async () => {
     if (!selectedEmailId || mode !== 'draft') return;
     
+    // Extract actual email ID if it has timestamp suffix (for AI emails)
+    const actualEmailId = selectedEmailId.includes('_') ? selectedEmailId.split('_')[0] : selectedEmailId;
+    
     try {
-      const response = await fetch(getApiUrl(`/api/message/${selectedEmailId}`), {
+      const response = await fetch(getApiUrl(`/api/message/${actualEmailId}`), {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -413,17 +416,17 @@ export default function EmailManagementInterface({ userId, mode = 'draft', refre
       const data = await response.json();
       const emailData = data.message || data;
       
-      // Update the drafts array with fresh data from backend
+      // ONLY update the drafts array for sidebar - don't touch selectedEmail
+      // This prevents input field focus loss while keeping sidebar updated
       setDrafts(prevDrafts => 
         prevDrafts.map(draft => 
-          draft.id === emailData.id ? emailData : draft
+          // Match by the original selectedEmailId (with suffix) or the actual emailData.id
+          (draft.id === selectedEmailId || draft.id === emailData.id) ? emailData : draft
         )
       );
       
-      // Update selected email if it's the same one
-      if (selectedEmailId === emailData.id) {
-        setSelectedEmail(emailData);
-      }
+      // Don't update selectedEmail to prevent input field interference
+      // The input field will keep its current state and focus
     } catch (error) {
       console.error('Error refreshing email from backend:', error);
     }
