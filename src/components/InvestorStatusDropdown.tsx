@@ -211,10 +211,10 @@ export default function InvestorStatusDropdown({
   return (
     <div className="relative" ref={buttonRef}>
       {/* Status Button and Dropdown Icon */}
-      <div className="flex items-center">
+      <div className="flex items-center gap-2">
         {/* Static Status Button - Not clickable */}
         <div 
-          className={`px-4 py-2 rounded-[40px] font-medium text-[14px] not-italic text-sm leading-6 whitespace-nowrap w-32 text-center ${displayColor} ${isUpdating ? 'opacity-50' : ''} ${isRateLimited ? 'opacity-50' : ''}`}
+          className={`px-4 py-2 rounded-[40px] font-medium text-[14px] not-italic text-sm leading-6 whitespace-nowrap w-30 text-center ${displayColor} ${isUpdating ? 'opacity-50' : ''} ${isRateLimited ? 'opacity-50' : ''}`}
         >
           {isUpdating ? 'Updating...' : isRateLimited ? 'Please wait...' : displayText}
         </div>
@@ -231,7 +231,7 @@ export default function InvestorStatusDropdown({
             setIsOpen(!isOpen);
           }}
           disabled={isUpdating || isRateLimited}
-          className="p-1 hover:bg-gray-100 rounded transition-colors ml-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="hover:bg-gray-100 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <svg 
             width="16" 

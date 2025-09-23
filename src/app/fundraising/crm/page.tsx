@@ -262,7 +262,7 @@ export default function FundraisingPage() {
                             </Tooltip>
                           </td>
                           <td className="w-[25%] px-4 py-4">
-                            <div className="flex gap-[20px] flex-wrap items-center">
+                            <div className="flex gap-[10px] items-center flex-wrap">
                               <InvestorStatusDropdown 
                                 status={inv.status}
                                 shortlistId={inv.shortlistId}
