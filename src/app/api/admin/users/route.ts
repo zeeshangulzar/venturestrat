@@ -20,7 +20,7 @@ export async function GET(request: Request) {
     // Build query parameters for backend API
     const backendParams = new URLSearchParams({
       page: page.toString(),
-      pageSize: pageSize.toString(),
+      limit: pageSize.toString(), // Backend expects 'limit' instead of 'pageSize'
     });
     
     if (search) {
@@ -42,7 +42,7 @@ export async function GET(request: Request) {
     const backendData = await backendResponse.json();
 
     // Transform backend data to match frontend expectations
-    const users = backendData.map((user: Record<string, unknown>) => ({
+    const users = backendData.users.map((user: Record<string, unknown>) => ({
       id: user.id,
       firstName: user.firstname,
       lastName: user.lastname,
@@ -57,7 +57,8 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
       users,
-      total: users.length, // Backend might not return total count, using current page length
+      total: backendData.pagination.totalCount,
+      pagination: backendData.pagination,
       success: true
     });
   } catch (error) {

@@ -26,10 +26,10 @@ export const fetchUserData = async (userId: string): Promise<unknown> => {
 };
 
 // Function to fetch users list from the backend
-export const fetchUsersList = async (search?: string, page: number = 1, pageSize: number = 20): Promise<{ users: Record<string, unknown>[], total: number }> => {
+export const fetchUsersList = async (search?: string, page: number = 1, pageSize: number = 20): Promise<{ users: Record<string, unknown>[], total: number, pagination?: Record<string, unknown> }> => {
   const params = new URLSearchParams({
     page: page.toString(),
-    pageSize: pageSize.toString(),
+    limit: pageSize.toString(), // Backend expects 'limit' instead of 'pageSize'
   });
   
   if (search) {
@@ -47,10 +47,11 @@ export const fetchUsersList = async (search?: string, page: number = 1, pageSize
     throw new Error(`Failed to fetch users: ${response.status}`);
   }
 
-  const users = await response.json();
+  const data = await response.json();
   return {
-    users,
-    total: users.length // Backend might not return total count
+    users: data.users || [],
+    total: data.pagination?.totalCount || data.users?.length || 0,
+    pagination: data.pagination
   };
 };
 
