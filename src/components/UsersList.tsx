@@ -39,6 +39,14 @@ export default function UsersList({
 }: UsersListProps) {
   const [users, setUsers] = useState<BackendUser[]>([])
   const [total, setTotal] = useState(0)
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 20,
+    totalCount: 0,
+    totalPages: 1,
+    hasNextPage: false,
+    hasPrevPage: false
+  })
   const [loading, setLoading] = useState(true)
   const [isPending, startTransition] = useTransition()
   const [pendingUpdates, setPendingUpdates] = useState<Set<string>>(new Set())
@@ -64,6 +72,9 @@ export default function UsersList({
           const data = await response.json();
           setUsers(data.users);
           setTotal(data.total);
+          if (data.pagination) {
+            setPagination(data.pagination);
+          }
         } else {
           console.error('Failed to fetch users');
         }
@@ -77,7 +88,7 @@ export default function UsersList({
     fetchUsers()
   }, [search, page, pageSize])
 
-  const totalPages = Math.max(1, Math.ceil(total / pageSize))
+  const totalPages = pagination.totalPages || Math.max(1, Math.ceil(total / pageSize))
 
   // Helper function to titleize role
   const titleizeRole = (role: string | undefined) => {
@@ -269,21 +280,21 @@ export default function UsersList({
       {!loading && users.length > 0 && (
         <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm">
           <div className="text-slate-600">
-            Page {page} of {totalPages} · {total} users
+            Page {pagination.page || page} of {totalPages} · {pagination.totalCount || total} users
           </div>
           <div className="flex items-center gap-2">
             <a
-              href={`?search=${encodeURIComponent(search)}&page=${Math.max(1, page - 1)}`}
+              href={`?search=${encodeURIComponent(search)}&page=${Math.max(1, (pagination.page || page) - 1)}`}
               className={`rounded-md border px-3 py-1.5 ${
-                page <= 1 ? 'pointer-events-none opacity-40' : 'bg-white hover:bg-slate-50'
+                !pagination.hasPrevPage && (pagination.page || page) <= 1 ? 'pointer-events-none opacity-40' : 'bg-white hover:bg-slate-50'
               }`}
             >
               Prev
             </a>
             <a
-              href={`?search=${encodeURIComponent(search)}&page=${Math.min(totalPages, page + 1)}`}
+              href={`?search=${encodeURIComponent(search)}&page=${Math.min(totalPages, (pagination.page || page) + 1)}`}
               className={`rounded-md border px-3 py-1.5 ${
-                page >= totalPages ? 'pointer-events-none opacity-40' : 'bg-white hover:bg-slate-50'
+                !pagination.hasNextPage && (pagination.page || page) >= totalPages ? 'pointer-events-none opacity-40' : 'bg-white hover:bg-slate-50'
               }`}
             >
               Next
