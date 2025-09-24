@@ -188,22 +188,22 @@ export default function FundraisingPage() {
                   <table className="w-full table-fixed">
                     <thead className="sticky top-0 z-10 bg-[#F6F6F7]">
                       <tr>
-                        <th className="w-[20%] px-4 py-4 text-left not-italic font-normal text-[14px] leading-[24px] tracking-[-0.02em] text-[#787F89]">
+                        <th className="w-[13%] lg:w-[13%] xl:w-[14%] 2xl:w-[15%] pl-4 py-4 text-left not-italic font-normal text-[14px] leading-[24px] tracking-[-0.02em] text-[#787F89]">
                           Investor Name
                         </th>
-                        <th className="w-[20%] px-4 py-4 text-left not-italic font-normal text-[14px] leading-[24px] tracking-[-0.02em] text-[#787F89]">
+                        <th className="w-[13%] lg:w-[13%] xl:w-[14%] 2xl:w-[15%] py-4 text-left not-italic font-normal text-[14px] leading-[24px] tracking-[-0.02em] text-[#787F89]">
                           Company Name
                         </th>
-                        <th className="w-[25%] px-4 py-4 text-left not-italic font-normal text-[14px] leading-[24px] tracking-[-0.02em] text-[#787F89]">
+                        <th className="w-[13%] lg:w-[13%] xl:w-[14%] 2xl:w-[15%] py-4 text-left not-italic font-normal text-[14px] leading-[24px] tracking-[-0.02em] text-[#787F89]">
                           Email Address
                         </th>
-                        <th className="w-[15%] px-4 py-4 text-left not-italic font-normal text-[14px] leading-[24px] tracking-[-0.02em] text-[#787F89]">
+                        <th className="w-[13%] lg:w-[13%] xl:w-[14%] 2xl:w-[15%] py-4 text-left not-italic font-normal text-[14px] leading-[24px] tracking-[-0.02em] text-[#787F89]">
                           Position
                         </th>
-                        <th className="w-[15%] px-4 py-4 text-left not-italic font-normal text-[14px] leading-[24px] tracking-[-0.02em] text-[#787F89]">
+                        <th className="w-[13%] lg:w-[13%] xl:w-[14%] 2xl:w-[15%] py-4 text-left not-italic font-normal text-[14px] leading-[24px] tracking-[-0.02em] text-[#787F89]">
                           Location
                         </th>
-                        <th className="w-[25%] px-4 py-4 text-left not-italic font-normal text-[14px] leading-[24px] tracking-[-0.02em] text-[#787F89]">
+                        <th className="w-[35%] lg:w-[38%] xl:w-[30%] 2xl:w-[25%] py-4 text-left not-italic font-normal text-[14px] leading-[24px] tracking-[-0.02em] text-[#787F89]">
                           Actions
                         </th>
                       </tr>
@@ -211,7 +211,7 @@ export default function FundraisingPage() {
                     <tbody className="bg-white divide-y divide-gray-200">
                       {shortlistState.map((inv) => (
                         <tr key={inv.id} className="hover:bg-gray-50">
-                          <td className="w-[20%] px-4 py-4">
+                          <td className="w-[13%] lg:w-[13%] xl:w-[14%] 2xl:w-[15%] pl-4 py-4">
                             <Tooltip content={inv.name}>
                               <div 
                                 className="not-italic font-semibold text-[16px] leading-[24px] text-[#0C2143] truncate max-w-full overflow-hidden"
@@ -221,7 +221,7 @@ export default function FundraisingPage() {
                               </div>
                             </Tooltip>
                           </td>
-                          <td className="w-[20%] px-4 py-4">
+                          <td className="w-[13%] lg:w-[13%] xl:w-[14%] 2xl:w-[15%] py-4">
                             <Tooltip content={inv.companyName || "N/A"}>
                               <div 
                                 className="not-italic font-semibold text-[16px] leading-[24px] text-[#0C2143] truncate max-w-full overflow-hidden"
@@ -231,7 +231,7 @@ export default function FundraisingPage() {
                               </div>
                             </Tooltip>
                           </td>
-                          <td className="w-[25%] px-4 py-4">
+                          <td className="w-[13%] lg:w-[13%] xl:w-[14%] 2xl:w-[15%] py-4">
                             <Tooltip content={inv.emails?.[0]?.email || "N/A"}>
                               <div 
                                 className="not-italic font-medium text-base leading-6 tracking-[-0.02em] text-[#0C2143] truncate max-w-full overflow-hidden"
@@ -241,7 +241,7 @@ export default function FundraisingPage() {
                               </div>
                             </Tooltip>
                           </td>
-                          <td className="w-[15%] px-4 py-4">
+                          <td className="w-[13%] lg:w-[13%] xl:w-[14%] 2xl:w-[15%] py-4">
                             <Tooltip content={inv.title || "—"}>
                               <div 
                                 className="not-italic font-medium text-base leading-6 tracking-[-0.02em] text-[#0C2143] truncate max-w-full overflow-hidden"
@@ -251,7 +251,7 @@ export default function FundraisingPage() {
                               </div>
                             </Tooltip>
                           </td>
-                          <td className="w-[15%] px-4 py-4">
+                          <td className="w-[13%] lg:w-[13%] xl:w-[14%] 2xl:w-[15%] py-4">
                             <Tooltip content={inv.state ? `${inv.state}, ${inv.country}` : inv.country}>
                               <div 
                                 className="not-italic font-medium text-base leading-6 tracking-[-0.02em] text-[#0C2143] truncate max-w-full overflow-hidden"
@@ -261,8 +261,8 @@ export default function FundraisingPage() {
                               </div>
                             </Tooltip>
                           </td>
-                          <td className="w-[25%] px-4 py-4">
-                            <div className="flex gap-[10px] items-center flex-wrap">
+                          <td className="w-[35%] lg:w-[38%] xl:w-[30%] 2xl:w-[25%] py-4 pr-1">
+                            <div className="flex gap-[8px] lg:gap-[6px] xl:gap-[10px] items-center flex-wrap lg:flex-nowrap xl:flex-wrap">
                               <InvestorStatusDropdown 
                                 status={inv.status}
                                 shortlistId={inv.shortlistId}
