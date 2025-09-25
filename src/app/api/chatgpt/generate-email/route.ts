@@ -27,19 +27,20 @@ export async function POST(request: NextRequest) {
 
             IMPORTANT FORMATTING RULES:
             1. Start your response with "Subject: [Your Subject Here]" on the first line
-            2. Write the email body in HTML format with proper tags (e.g., <p>, <ul>, <li>, <strong>)
-            3. Do not return Markdown - use HTML only
-            4. The subject line should be compelling and professional
-            5. The body should be well-structured with proper HTML formatting
-            6. Always insert the empty <p><br></p> after the greeting ("Dear [Name],")
-            7. Always insert the empty line before closing ("Best Regards")
-            8. Use proper paragraph spacing - each paragraph should be wrapped in <p> tags
-            9. Each paragraph separated by a single blank line <p><br></p>
-            10. For signatures, use proper HTML structure with <p> tags.
-            11. Make sure the each signature is wrapped in a seperate <p> without <br> tags
-            12. Do not use \\n characters within HTML content - use proper HTML tags instead
-            13. Ensure the signature is properly aligned with proper spacing
-            14. Remove the phone number from the signature`
+            2. Do not skip this: Always insert <p><br></p> between paragraphs, without exception.
+            3. Write the email body in HTML format with proper tags (e.g., <p>, <ul>, <li>, <strong>)
+            4. Do not return Markdown - use HTML only
+            5. The subject line should be compelling and professional
+            6. The body should be well-structured with proper HTML formatting
+            7. Always insert the empty <p><br></p> after the greeting ("Dear [Name],")
+            8. Always insert the empty line before closing ("Best Regards")
+            9. Use proper paragraph spacing - each paragraph should be wrapped in <p> tags
+            10. After adding all bullet points please add a <p><br></p> before continuing the rest of the email
+            11. For signatures, use proper HTML structure with <p> tags.
+            12. Make sure the each signature is wrapped in a seperate <p> without <br> tags
+            13. Do not use \\n characters within HTML content - use proper HTML tags instead
+            14. Ensure the signature is properly aligned with proper spacing
+            15. Remove the phone number from the signature`
           },
           {
             role: 'user',
