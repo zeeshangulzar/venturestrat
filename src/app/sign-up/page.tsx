@@ -571,8 +571,19 @@ export default function SignUpPage() {
             By creating an account, you&apos;re agreeing to the
           </p>
           <p className="text-sm text-[#FFFFFF]">
-            <span className='font-semibold'>Terms of Service</span> and <span className='font-semibold'>Privacy Policy.</span>
+            <span className="font-semibold">
+              <Link href="/terms-and-conditions">
+                <span className="hover:underline">Terms of Service</span>
+              </Link>
+            </span>{" "}
+            and{" "}
+            <span className="font-semibold">
+              <Link href="/privacy-policy">
+                <span className="hover:underline">Privacy Policy</span>
+              </Link>
+            </span>.
           </p>
+
         </div>
         </div>
       </div>
