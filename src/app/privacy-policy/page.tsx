@@ -111,13 +111,13 @@ const PrivacyPolicy: NextPage = () => {
       <p className="text-sm text-[#FFFFFF]">
         <span className="font-semibold">
           <Link href="/terms-and-conditions">
-            <a className="hover:underline">Terms of Service</a>
+            <span className="hover:underline">Terms of Service</span>
           </Link>
         </span>{" "}
         and{" "}
         <span className="font-semibold">
           <Link href="/privacy-policy">
-            <a className="hover:underline">Privacy Policy</a>
+            <span className="hover:underline">Privacy Policy</span>
           </Link>
         </span>.
       </p>
