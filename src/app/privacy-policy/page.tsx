@@ -1,5 +1,30 @@
 import Link from 'next/link';
 import { NextPage } from "next";
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Privacy Policy - VentureStrat',
+  description: 'VentureStrat Privacy Policy - Learn how we collect, use, and protect your personal information on our fundraising platform.',
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+    },
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'en_US',
+    url: 'https://www.venturestrat.ai/privacy-policy',
+    siteName: 'VentureStrat',
+    title: 'Privacy Policy - VentureStrat',
+    description: 'VentureStrat Privacy Policy - Learn how we collect, use, and protect your personal information.',
+  },
+  alternates: {
+    canonical: 'https://www.venturestrat.ai/privacy-policy',
+  },
+};
 
 const PrivacyPolicy: NextPage = () => {
   return (

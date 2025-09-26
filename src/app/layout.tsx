@@ -5,8 +5,36 @@ import ConditionalSidebar from '@components/ConditionalSidebar';
 import AuthFlowManager from '@components/AuthFlowManager';
 
 export const metadata = {
-  title: 'Investor Directory',
-  description: 'Explore investors and their details',
+  title: 'VentureStrat - Fundraising Platform for Startups',
+  description: 'VentureStrat is a fundraising platform for startup founders and entrepreneurs. Browse investor profiles, track your outreach, and draft AI-assisted emails to maximize your fundraising success.',
+  keywords: 'fundraising, investors, startup, venture capital, AI email, investor database, startup funding',
+  authors: [{ name: 'VentureStrat' }],
+  creator: 'VentureStrat',
+  publisher: 'VentureStrat',
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+    },
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'en_US',
+    url: 'https://www.venturestrat.ai',
+    siteName: 'VentureStrat',
+    title: 'VentureStrat - Fundraising Platform for Startups',
+    description: 'VentureStrat is a fundraising platform for startup founders and entrepreneurs.',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'VentureStrat - Fundraising Platform for Startups',
+    description: 'VentureStrat is a fundraising platform for startup founders and entrepreneurs.',
+  },
+  alternates: {
+    canonical: 'https://www.venturestrat.ai',
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
