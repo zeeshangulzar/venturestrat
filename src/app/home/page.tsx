@@ -2,6 +2,56 @@
 import Logo from '@components/icons/logoIcon';
 import SignInLogo from "@components/icons/SignInLogo";
 import Link from "next/link";
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'VentureStrat - Simplify Your Fundraising',
+  description: 'VentureStrat is a fundraising platform for startup founders and entrepreneurs. Browse investor profiles, track your outreach, and draft AI-assisted emails to maximize your fundraising success.',
+  keywords: 'fundraising, investors, startup, venture capital, AI email, investor database, startup funding',
+  authors: [{ name: 'VentureStrat' }],
+  creator: 'VentureStrat',
+  publisher: 'VentureStrat',
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'en_US',
+    url: 'https://www.venturestrat.ai/home',
+    siteName: 'VentureStrat',
+    title: 'VentureStrat - Simplify Your Fundraising',
+    description: 'VentureStrat is a fundraising platform for startup founders and entrepreneurs. Browse investor profiles, track your outreach, and draft AI-assisted emails to maximize your fundraising success.',
+    images: [
+      {
+        url: 'https://www.venturestrat.ai/og-image.jpg',
+        width: 1200,
+        height: 630,
+        alt: 'VentureStrat - Fundraising Platform',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'VentureStrat - Simplify Your Fundraising',
+    description: 'VentureStrat is a fundraising platform for startup founders and entrepreneurs.',
+    images: ['https://www.venturestrat.ai/og-image.jpg'],
+  },
+  alternates: {
+    canonical: 'https://www.venturestrat.ai/home',
+  },
+  other: {
+    'privacy-policy': 'https://www.venturestrat.ai/privacy-policy',
+    'terms-of-service': 'https://www.venturestrat.ai/terms-and-conditions',
+  },
+};
 
 const HomePage = () => {
   return (
