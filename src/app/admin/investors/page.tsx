@@ -214,7 +214,6 @@ export default function AdminInvestorsPage() {
             investmentStage: filters.investmentStage, // StageEnum values (strings)
             investmentFocus: filters.investmentFocus, // Market titles
             investmentType: filters.investmentType,   // InvestorType values (strings)
-            pastInvestment: filters.pastInvestment,   // Past investment titles
           }}
           setFilters={updateFilters}
         />
