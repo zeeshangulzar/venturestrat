@@ -15,6 +15,8 @@ type PaginationProps = {
   setItemsPerPage: React.Dispatch<React.SetStateAction<number>>;
   totalPages: number;
   totalItems: number;
+  searchQuery?: string;
+  onSearchChange?: (query: string) => void;
 };
 
 const Pagination: React.FC<PaginationProps> = ({
@@ -24,6 +26,8 @@ const Pagination: React.FC<PaginationProps> = ({
   setItemsPerPage,
   totalPages,
   totalItems,
+  searchQuery = '',
+  onSearchChange,
 }) => {
   const [isClient, setIsClient] = useState(false);
 
@@ -58,14 +62,34 @@ const Pagination: React.FC<PaginationProps> = ({
 
         {/* Right side - Controls */}
         <div className="flex items-center gap-4">
-          {/* Select All */}
-          {/* <div className="flex items-center gap-2 border border-[#EDEEEF] rounded-lg px-3 py-2">
-            <input
-              type="checkbox"
-              className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
-            />
-            <span className="text-[14px] font-manrope font-medium text-gray-700">Select All</span>
-          </div> */}
+          {/* Search Box */}
+          {onSearchChange && (
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search investors..."
+                value={searchQuery}
+                onChange={(e) => onSearchChange(e.target.value)}
+                className="w-64 px-4 py-2 pl-10 pr-4 text-sm border border-[#EDEEEF] rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg
+                  className="h-4 w-4 text-gray-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
+                </svg>
+              </div>
+            </div>
+          )}
 
           {/* Profiles Label */}
           <span className="text-sm text-gray-500">Profiles:</span>

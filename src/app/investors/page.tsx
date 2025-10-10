@@ -218,6 +218,8 @@ export default function InvestorsPage() {
           setItemsPerPage={setItemsPerPage}
           totalPages={pagination.totalPages}
           totalItems={pagination.totalItems}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
         />
       </div>
 
@@ -231,7 +233,6 @@ export default function InvestorsPage() {
             investmentStage: filters.investmentStage, // StageEnum values (strings)
             investmentFocus: filters.investmentFocus, // Market titles
             investmentType: filters.investmentType,   // InvestorType values (strings)
-            pastInvestment: filters.pastInvestment,   // Past investment titles
           }}
           setFilters={updateFilters}
         />
