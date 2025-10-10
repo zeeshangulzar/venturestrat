@@ -28,7 +28,7 @@ export default function MailTabs({ activeSection, onSectionChange, children, cou
   const mailTabs: MailTabData[] = [
     { type: 'all', label: 'Drafts', count: counts.all || 0, isClickable: true },
     { type: 'sent', label: 'Sent', count: counts.sent || 0, isClickable: true },
-    { type: 'opened', label: 'Opened', count: counts.opened || 0, isClickable: false },
+    // { type: 'opened', label: 'Opened', count: counts.opened || 0, isClickable: false }, Hide for now
     { type: 'answered', label: 'Answered', count: counts.answered || 0, isClickable: false },
   ];
   return (
