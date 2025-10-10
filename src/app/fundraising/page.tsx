@@ -43,6 +43,7 @@ export default function FundraisingPage() {
   
   // State for selecting a specific email ID
   const [selectedEmailId, setSelectedEmailId] = useState<string | null>(null);
+  const [isAIEmail, setIsAIEmail] = useState<boolean>(false);
 
   // State for shortlist to allow immediate UI updates
   const [shortlistState, setShortlistState] = useState(shortlist);
@@ -87,10 +88,18 @@ export default function FundraisingPage() {
   };
   
   // Function to select a specific email
-  const selectEmail = (emailId: string) => {
+  const selectEmail = (emailId: string, isAI?: boolean) => {
+    if (isAI) {
+      const uniqueId = `${emailId}_${Date.now()}`;
+      setSelectedEmailId(uniqueId);
+      setIsAIEmail(true);
+      return;
+    }
+    
     // Clear current selection first to force fresh data fetch
     // This handles the case where backend returns existing email instead of new one
     setSelectedEmailId(null);
+    setIsAIEmail(false);
     // Use setTimeout to ensure the null state is processed before setting the new ID
     setTimeout(() => {
       setSelectedEmailId(emailId);
@@ -297,9 +306,14 @@ export default function FundraisingPage() {
                                       setEmailGenerationStatus({ type: null, message: '' });
                                     }, 5000);
                                   }}
-                                  onEmailCreated={(emailId) => {
-                                    selectEmail(emailId);
+                                  onEmailCreated={(emailId, isAI) => {
+                                    selectEmail(emailId, isAI);
                                     triggerEmailRefresh();
+                                    setShortlistState(prev =>
+                                      prev.map(item =>
+                                        item.id === inv.id ? { ...item, hasDraft: true } : item
+                                      )
+                                    );
                                   }}
                                 />
                               )}
@@ -327,8 +341,23 @@ export default function FundraisingPage() {
                     userId={user.id} 
                     refreshTrigger={emailRefreshTrigger} 
                     selectEmailId={selectedEmailId || undefined}
+                    isAIEmail={isAIEmail}
                     onTabSwitch={(tab) => {
                       console.log('Tab switched to:', tab);
+                    }}
+                    onEmailProcessed={() => {
+                      setSelectedEmailId(null);
+                      setIsAIEmail(false);
+                    }}
+                    onEmailSent={(investorId) => {
+                      if (!investorId) {
+                        return;
+                      }
+                      setShortlistState(prev =>
+                        prev.map(item =>
+                          item.id === investorId ? { ...item, hasDraft: false } : item
+                        )
+                      );
                     }}
                   />
                 ) : (
@@ -343,4 +372,3 @@ export default function FundraisingPage() {
     </main>
   );
 }
-

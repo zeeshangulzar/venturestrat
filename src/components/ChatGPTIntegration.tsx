@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { getApiUrl } from '@lib/api';
 
 interface ChatGPTIntegrationProps {
@@ -12,6 +12,7 @@ interface ChatGPTIntegrationProps {
     stages: string[];
     markets: Array<{ market: { id: string; title: string } }>;
     pastInvestments: Array<{ pastInvestment: { id: string; title: string } }>;
+    hasDraft?: boolean;
   };
   user: {
     id: string;
@@ -41,6 +42,11 @@ export default function ChatGPTIntegration({
   onEmailCreated
 }: ChatGPTIntegrationProps) {
   const [isGenerating, setIsGenerating] = useState(false);
+  const [hasDraft, setHasDraft] = useState(investor.hasDraft ?? false);
+  
+  useEffect(() => {
+    setHasDraft(investor.hasDraft ?? false);
+  }, [investor.hasDraft]);
 
   const generateEmail = async () => {
     setIsGenerating(true);
@@ -112,7 +118,7 @@ export default function ChatGPTIntegration({
       if (onEmailCreated && emailId) {
         onEmailCreated(emailId, true); // true indicates this is an AI-generated email
       }
-
+      setHasDraft(true);
       onEmailGenerated(emailContent);
     } catch (error) {
       console.error('Error generating email:', error);
@@ -125,10 +131,14 @@ export default function ChatGPTIntegration({
   return (
     <button
       onClick={generateEmail}
-      disabled={isGenerating}
-      className={`w-30 justify-center items-center ${isGenerating ? "px-2" : "px-5"} py-2.5 gap-1 h-[auto] left-4 top-[394px] bg-[#2563EB] rounded-[10px] font-manrope not-italic font-medium text-[14px] leading-[19px] tracking-[-0.02em] text-[#FFFFFF] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer`}
+      disabled={isGenerating || hasDraft}
+      className={`w-min-30 w-auto justify-center items-center ${isGenerating ? "px-2" : "px-5"} py-2.5 gap-1 h-[auto] left-4 top-[394px] bg-[#2563EB] rounded-[10px] font-manrope not-italic font-medium text-[14px] leading-[19px] tracking-[-0.02em] text-[#FFFFFF] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer`}
     >
-      {isGenerating ? 'Loading...' : 'AI Email'}
+      {isGenerating
+        ? 'Loading...'
+        : hasDraft
+          ? 'Email Drafted'
+          : 'AI Email'}
     </button>
   );
 }

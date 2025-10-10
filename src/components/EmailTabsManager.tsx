@@ -12,6 +12,7 @@ interface EmailTabsManagerProps {
   isAIEmail?: boolean; // Add flag to indicate if this is an AI email
   onTabSwitch?: (tab: MailSectionType) => void; // Add callback for tab switching
   onEmailProcessed?: () => void; // Add callback for when email is processed
+  onEmailSent?: (investorId?: string) => void; // Add callback when an email is sent
 }
 
 interface EmailCounts {
@@ -21,7 +22,7 @@ interface EmailCounts {
   answered: number;
 }
 
-export default function EmailTabsManager({ userId, refreshTrigger, selectEmailId, isAIEmail, onTabSwitch, onEmailProcessed }: EmailTabsManagerProps) {
+export default function EmailTabsManager({ userId, refreshTrigger, selectEmailId, isAIEmail, onTabSwitch, onEmailProcessed, onEmailSent }: EmailTabsManagerProps) {
   const [activeSection, setActiveSection] = useState<MailSectionType>('all');
   const [counts, setCounts] = useState<EmailCounts>({
     all: 0,
@@ -137,9 +138,13 @@ export default function EmailTabsManager({ userId, refreshTrigger, selectEmailId
     }, 50);
   };
 
-  const handleEmailSent = () => {
+  const handleEmailSent = (investorId?: string) => {
     // Refresh counts when an email is sent
     fetchCounts();
+    
+    if (onEmailSent) {
+      onEmailSent(investorId);
+    }
   };
 
   const handleSaveStart = () => {
