@@ -10,7 +10,6 @@ import React from 'react';
 import InvestorTypeIcon from './icons/investorTypeIcon';
 import InvestorFocusIcon from './icons/investorFocusIcon';
 import InvestorStageIcon from './icons/investorStageIcon';
-import PastInvestmentIcon from './icons/pastInvestmentIcon';
 import MapPinIcon from './icons/mapPinIcon';
 import CountryIcon from './icons/countryIcon';
 import StateIcon from './icons/stateIcon';
@@ -27,7 +26,6 @@ type InvestorFilters = {
   investmentStage: string[];
   investmentFocus: string[];
   investmentType: string[];
-  pastInvestment: string[];
 };
 
 type Props = {
@@ -45,13 +43,11 @@ export default function InvestorFilter({ filters, setFilters }: Props) {
   const [originalInvestmentStages, setOriginalInvestmentStages] = useState<FilterOption[]>([]);
   const [originalInvestmentFocuses, setOriginalInvestmentFocuses] = useState<FilterOption[]>([]);
   const [originalInvestmentTypes, setOriginalInvestmentTypes] = useState<FilterOption[]>([]);
-  const [originalPastInvestments, setOriginalPastInvestments] = useState<FilterOption[]>([]);
 
   /** Investment state - current options (filtered or original) */
   const [investmentStages, setInvestmentStages] = useState<FilterOption[]>([]);
   const [investmentFocuses, setInvestmentFocuses] = useState<FilterOption[]>([]);
   const [investmentTypes, setInvestmentTypes] = useState<FilterOption[]>([]);
-  const [pastInvestments, setPastInvestments] = useState<FilterOption[]>([]);
   
   const [loading, setLoading] = useState(false);
 
@@ -83,18 +79,15 @@ export default function InvestorFilter({ filters, setFilters }: Props) {
         const stages = data.stages.map((v: string) => ({ label: v, value: v }));
         const focuses = data.investmentFocuses.map((v: string) => ({ label: v, value: v }));
         const types = data.investmentTypes.map((v: string) => ({ label: v, value: v }));
-        const investments = data.pastInvestments.map((v: string) => ({ label: v, value: v }));
         
         // Set both original and current options
         setOriginalInvestmentStages(stages);
         setOriginalInvestmentFocuses(focuses);
         setOriginalInvestmentTypes(types);
-        setOriginalPastInvestments(investments);
         
         setInvestmentStages(stages);
         setInvestmentFocuses(focuses);
         setInvestmentTypes(types);
-        setPastInvestments(investments);
       } catch (err) {
         console.error('Error fetching investment filters:', err);
       }
@@ -192,40 +185,6 @@ export default function InvestorFilter({ filters, setFilters }: Props) {
       return;
     }
 
-    // For pastInvestments, continue using API search
-    if (type === 'pastInvestments') {
-      abortControllerRef.current?.abort();
-      abortControllerRef.current = new AbortController();
-
-      setLoading(true);
-      try {
-        const res = await fetch(
-          getApiUrl(`/api/investment-filters?search=${encodeURIComponent(search)}&type=${type}`
-        ),
-          { signal: abortControllerRef.current.signal,
-          method: 'GET',
-          headers: {
-            'ngrok-skip-browser-warning': 'true',
-          },
-        }
-        );
-
-        if (res.ok) {
-          const data = await res.json();
-          const searchResults = (data.pastInvestments ?? []).map((v: string) => ({ label: v, value: v }));
-          const mergedOptions = mergeSelectedWithOptions(searchResults, filters.pastInvestment, originalPastInvestments);
-          setPastInvestments(mergedOptions);
-        }
-      } catch (err) {
-        if (err instanceof Error && err.name !== 'AbortError') {
-          console.error('Error fetching filtered data:', err);
-        }
-      } finally {
-        setLoading(false);
-      }
-      return;
-    }
-
     // For all other types, use local search
     const searchLower = search.toLowerCase();
     let filteredOptions: FilterOption[] = [];
@@ -253,18 +212,14 @@ export default function InvestorFilter({ filters, setFilters }: Props) {
 
   // Restore original options when search is cleared or dropdown is opened
   const restoreOriginalOptions = (type: string) => {
-    if (type === 'pastInvestments') setPastInvestments(originalPastInvestments);
-    else if (type === 'investmentStages') setInvestmentStages(originalInvestmentStages);
+    if (type === 'investmentStages') setInvestmentStages(originalInvestmentStages);
     else if (type === 'investmentFocuses') setInvestmentFocuses(originalInvestmentFocuses);
     else if (type === 'investmentTypes') setInvestmentTypes(originalInvestmentTypes);
   };
 
   // New function to restore original options while ensuring selected values are visible
   const restoreOriginalOptionsWithSelected = (type: string) => {
-    if (type === 'pastInvestments') {
-      const mergedOptions = mergeSelectedWithOptions(originalPastInvestments, filters.pastInvestment, originalPastInvestments);
-      setPastInvestments(mergedOptions);
-    } else if (type === 'investmentStages') {
+    if (type === 'investmentStages') {
       const mergedOptions = mergeSelectedWithOptions(originalInvestmentStages, filters.investmentStage, originalInvestmentStages);
       setInvestmentStages(mergedOptions);
     } else if (type === 'investmentFocuses') {
@@ -441,29 +396,6 @@ export default function InvestorFilter({ filters, setFilters }: Props) {
           searchType="investmentStages"
           showApplyButton={true} // Enable apply button for multi-select
           onOpen={() => restoreOriginalOptionsWithSelected('investmentStages')}
-        />
-      </div>
-
-      {/* Past Investment - Using SearchableDropdown with Apply Button */}
-      <div className="flex-shrink-0 min-w-fit">
-        <SearchableDropdown
-          isMulti
-          options={pastInvestments}
-          value={filters.pastInvestment}
-          onChange={(value) => setFilters({
-            ...filters,
-            pastInvestment: Array.isArray(value) ? value : []
-          })}
-          placeholder={
-            <div className="flex items-center text-[14px] font-manrope font-medium whitespace-nowrap">
-              <PastInvestmentIcon />
-              <span className="">Past Investment</span>
-            </div>
-          }
-          onSearch={handleSearch}
-          searchType="pastInvestments"
-          showApplyButton={true} // Enable apply button for multi-select
-          onOpen={() => restoreOriginalOptionsWithSelected('pastInvestments')}
         />
       </div>
     </div>
