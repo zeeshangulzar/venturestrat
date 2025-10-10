@@ -132,6 +132,15 @@ export default function HeaderClient() {
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                 disabled={profileUploadStatus === 'uploading'}
               />
+              
+              {/* Edit icon overlay to reinforce editability */}
+              <div className="pointer-events-none absolute -bottom-2 -right-2">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                  <circle cx="12" cy="12" r="11" stroke="rgba(82,90,104,0.25)" strokeWidth="1.2" />
+                  <path d="M8.5 14.75L8 17.5L10.75 17L16.5 11.25C17.1213 10.6287 17.1213 9.62132 16.5 9L15.5 8C14.8787 7.37868 13.8713 7.37868 13.25 8L8.5 12.75" stroke="#1E3A8A" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M12.75 8.5L15.5 11.25" stroke="#1E3A8A" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
             </div>
             
             {/* User Info */}
