@@ -21,7 +21,7 @@ interface EmailDraft {
 interface EmailViewerProps {
   email: EmailDraft | null;
   onEmailUpdate: (updatedEmail: EmailDraft) => void;
-  onEmailSent?: () => void;
+  onEmailSent?: (investorId?: string) => void;
   onEmailSaveStart?: () => void;
   onEmailSaveEnd?: () => void;
   onEmailRefresh?: () => void;
@@ -267,6 +267,7 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
 
   const handleSendEmail = async () => {
     if (!email?.id) return;
+    const investorId = email.investorId;
     
     setIsSending(true);
     setSendStatus('idle');
@@ -297,7 +298,7 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
       
       // Notify parent component that email was sent (to refresh draft list)
       if (onEmailSent) {
-        onEmailSent();
+        onEmailSent(investorId);
       }
       
       // Clear success message after 3 seconds

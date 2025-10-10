@@ -24,6 +24,7 @@ export type Investor = {
   pastInvestments: Array<{ pastInvestment: { id: string; title: string } }>
   status: string
   shortlistId: string
+  hasDraft?: boolean
 }
 
 // Raw shape coming from your API (loose but typed)
@@ -48,6 +49,7 @@ type ApiInvestor = {
   pastInvestments?: Array<{ pastInvestment: { id: string | number; title: string } }> | null
   status?: string
   shortlistId?: string
+  hasDraft?: boolean
 
   // 👇 Add this so you don't need `any`
   sourceData?: {
@@ -128,6 +130,7 @@ export function useUserShortlist(userId: string): UseUserShortlistReturn {
           : sourcePastInvestments,
       status: inv.status ?? 'TARGET',
       shortlistId: inv.shortlistId ?? '',
+      hasDraft: inv.hasDraft ?? false,
     }
   }
 
