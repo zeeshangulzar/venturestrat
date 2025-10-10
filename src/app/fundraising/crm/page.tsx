@@ -286,6 +286,11 @@ export default function FundraisingPage() {
                                   onEmailCreated={(emailId, isAI) => {
                                     selectEmail(emailId, isAI);
                                     triggerEmailRefresh();
+                                    setShortlistState(prev =>
+                                      prev.map(item =>
+                                        item.id === inv.id ? { ...item, hasDraft: true } : item
+                                      )
+                                    );
                                   }}
                                 />
                               )}
@@ -322,6 +327,16 @@ export default function FundraisingPage() {
                       setSelectedEmailId(null);
                       // Don't clear isAIEmail flag here - let it persist for future selections
                     }}
+                    onEmailSent={(investorId) => {
+                      if (!investorId) {
+                        return;
+                      }
+                      setShortlistState(prev =>
+                        prev.map(item =>
+                          item.id === investorId ? { ...item, hasDraft: false } : item
+                        )
+                      );
+                    }}
                   />
                 ) : (
                   <div className="flex items-center justify-center h-full">
@@ -335,4 +350,3 @@ export default function FundraisingPage() {
     </main>
   );
 }
-

@@ -21,7 +21,7 @@ interface EmailManagementInterfaceProps {
   userId: string;
   mode?: 'draft' | 'sent';
   refreshTrigger?: number; // Add refresh trigger prop
-  onEmailSent?: () => void; // Add callback for when email is sent
+  onEmailSent?: (investorId?: string) => void; // Add callback for when email is sent
   onSaveStart?: () => void; // Add callback for when save starts
   onSaveEnd?: () => void; // Add callback for when save ends
   selectEmailId?: string; // Add prop to select a specific email ID
@@ -448,7 +448,7 @@ export default function EmailManagementInterface({ userId, mode = 'draft', refre
     }
   };
 
-  const handleEmailSent = () => {
+  const handleEmailSent = (investorId?: string) => {
     // Refresh the draft list to remove the sent email
     fetchDrafts();
     
@@ -457,7 +457,7 @@ export default function EmailManagementInterface({ userId, mode = 'draft', refre
     
     // Notify parent component if callback provided
     if (onEmailSent) {
-      onEmailSent();
+      onEmailSent(investorId);
     }
   };
 
