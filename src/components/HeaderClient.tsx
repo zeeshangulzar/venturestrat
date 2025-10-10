@@ -7,6 +7,8 @@ import Breadcrumbs from './Breadcrumbs';
 
 export default function HeaderClient() {
   const [showDropdown, setShowDropdown] = useState(false);
+  const [profileUploadStatus, setProfileUploadStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
+  const [uploadProgress, setUploadProgress] = useState(0);
   const { user } = useUser();
   const dropdownRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
@@ -27,6 +29,46 @@ export default function HeaderClient() {
   // Check if current route is admin
   const isAdminRoute = pathname?.startsWith('/admin');
 
+  const handleProfilePictureUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Reset states
+    setProfileUploadStatus('uploading');
+    setUploadProgress(0);
+
+    try {
+      // Simulate upload progress (since Clerk doesn't provide progress callbacks)
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => {
+          if (prev >= 90) {
+            clearInterval(progressInterval);
+            return 90;
+          }
+          return prev + 10;
+        });
+      }, 200);
+
+      // Upload to Clerk's user profile
+      await user?.setProfileImage({ file });
+      
+      // Complete progress
+      setUploadProgress(100);
+      clearInterval(progressInterval);
+      
+      // Force user reload to update the UI
+      await user?.reload();
+      
+      // Show success state
+      setProfileUploadStatus('success');
+      setTimeout(() => setProfileUploadStatus('idle'), 3000);
+    } catch (error) {
+      console.error('Profile picture upload error:', error);
+      setProfileUploadStatus('error');
+      setTimeout(() => setProfileUploadStatus('idle'), 5000);
+    }
+  };
+
   return (
     <header className="flex justify-between items-center px-5 py-4 gap-4 h-16 border-b border-[#EDEEEF]">
       <div className="flex-1">
@@ -40,18 +82,56 @@ export default function HeaderClient() {
             className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors"
           >
             {/* Profile Picture */}
-            <div className="w-10 h-10 rounded-lg bg-blue-100 border border-blue-200 flex items-center justify-center">
+            <div 
+              className="relative w-10 h-10 rounded-lg bg-blue-100 border border-blue-200 flex items-center justify-center"
+              onClick={(e) => e.stopPropagation()}
+            >
               {user?.imageUrl ? (
                 <img 
                   src={user.imageUrl} 
                   alt="Profile" 
-                  className="w-10 h-10 rounded-lg object-cover"
+                  className={`w-10 h-10 rounded-lg object-cover ${
+                    profileUploadStatus === 'uploading' ? 'opacity-50' : ''
+                  }`}
                 />
               ) : (
                 <span className="text-lg font-semibold text-blue-600">
                   {user?.firstName?.charAt(0) || user?.emailAddresses[0]?.emailAddress?.charAt(0) || 'U'}
                 </span>
               )}
+              
+              {/* Upload Progress Overlay */}
+              {profileUploadStatus === 'uploading' && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 rounded-lg">
+                  <div className="text-white text-xs font-medium">{uploadProgress}%</div>
+                </div>
+              )}
+              
+              {/* Success/Error Indicators */}
+              {profileUploadStatus === 'success' && (
+                <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
+                  <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+              )}
+              
+              {profileUploadStatus === 'error' && (
+                <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
+                  <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </div>
+              )}
+              
+              {/* Hidden file input */}
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleProfilePictureUpload}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                disabled={profileUploadStatus === 'uploading'}
+              />
             </div>
             
             {/* User Info */}
