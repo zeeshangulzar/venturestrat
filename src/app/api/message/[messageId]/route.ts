@@ -65,6 +65,9 @@ export async function PUT(
       );
     }
 
+    // Process CC field - split by comma if it's a string
+    const ccArray = cc ? (Array.isArray(cc) ? cc : cc.split(',').map((email: string) => email.trim()).filter((email: string) => email)) : undefined;
+
     // Forward the request to the backend
     const backendResponse = await fetch(getApiUrl(`/api/message/${messageId}`), {
       method: 'PUT',
@@ -75,7 +78,7 @@ export async function PUT(
         subject,
         body,
         to,
-        cc,
+        cc: ccArray,
         from,
       }),
     });
