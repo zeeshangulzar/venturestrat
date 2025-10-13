@@ -3,7 +3,7 @@ import { getApiUrl } from '@lib/api';
 
 export async function POST(request: NextRequest) {
   try {
-    const { userId, investorId, to, from, subject, body } = await request.json();
+    const { userId, investorId, to, cc, from, subject, body } = await request.json();
 
     if (!userId || !investorId || !to || !from || !body) {
       return NextResponse.json(
@@ -14,6 +14,9 @@ export async function POST(request: NextRequest) {
 
     // Ensure 'to' is an array
     const toArray = Array.isArray(to) ? to : [to];
+    
+    // Ensure 'cc' is an array if provided
+    const ccArray = cc ? (Array.isArray(cc) ? cc : [cc]) : undefined;
 
     // Forward the request to the backend
     const backendResponse = await fetch(getApiUrl('/api/message'), {
@@ -25,6 +28,7 @@ export async function POST(request: NextRequest) {
         userId,
         investorId,
         to: toArray,
+        cc: ccArray,
         from,
         subject: subject || 'Partnership Opportunity', // Default subject if not provided
         body,

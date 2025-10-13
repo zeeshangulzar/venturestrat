@@ -49,7 +49,7 @@ export async function PUT(
 ) {
   try {
     const { messageId } = await params;
-    const { subject, body, to, from } = await request.json();
+    const { subject, body, to, cc, from } = await request.json();
 
     if (!messageId) {
       return NextResponse.json(
@@ -58,7 +58,7 @@ export async function PUT(
       );
     }
 
-    if (!subject && !body && !to && !from) {
+    if (!subject && !body && !to && !cc && !from) {
       return NextResponse.json(
         { error: 'At least one field is required' },
         { status: 400 }
@@ -75,6 +75,7 @@ export async function PUT(
         subject,
         body,
         to,
+        cc,
         from,
       }),
     });
