@@ -65,7 +65,7 @@ const InvestorCard: React.FC<{
 
   // Shortlist status is now passed as a prop, no need to fetch individually
 
-  const handleCardClick = () => {
+  const handleViewProfile = () => {
     // Pass current filters and page as URL parameters for back navigation
     const currentFilters = appliedFilters || {
       country: '',
@@ -95,7 +95,7 @@ const InvestorCard: React.FC<{
   };
 
   const handleShortlist = async (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent card click when clicking the button
+    e.stopPropagation(); // Prevent event bubbling
     if (!user?.id || !user.emailAddresses[0]?.emailAddress) return;
     setLoading(true);
     try {
@@ -206,11 +206,10 @@ const InvestorCard: React.FC<{
   const investorTypeChips = getInvestorTypeChips();
   return (
     <div
-      className="group w-full rounded-[14px] border border-[#EDEEEF] bg-white shadow-sm transition-all duration-200 hover:shadow-md cursor-pointer min-h-[103px]"
-      onClick={handleCardClick}
+      className="group w-full rounded-[14px] border border-[#EDEEEF] bg-white shadow-sm transition-all duration-200 hover:shadow-md min-h-[103px]"
     >
       {/* Stack on mobile/tablet; row on large screens */}
-      <div className="flex flex-col xl:flex-row gap-4 xl:gap-6">
+      <div className="flex flex-col xl:flex-row gap-4 xl:gap-6 xl:items-start">
         {/* Column 1: Identity */}
         <div className="flex min-w-0 items-start gap-4 pt-4 pb-2 xl:pb-6 px-4
 +                 xl:flex-[0_0_370px] xl:max-w-none">
@@ -295,35 +294,46 @@ const InvestorCard: React.FC<{
         <div className="mx-4 h-px bg-[var(--Dark-D20,#F6F6F7)] xl:hidden" />
         <div className="hidden xl:block w-px flex-shrink-0 rounded-[14px] border border-[var(--Dark-D20,#F6F6F7)] bg-white" />
 
-        {/* Column 3: Stage + Button */}
-        <div className="flex xl:flex-1 flex-col xl:flex-row items-start xl:items-center justify-between gap-3 xl:gap-6 px-4 pt-2 xl:pt-4 pb-4 xl:pb-6">
-          <div className="flex items-start gap-3 w-full xl:w-auto min-w-0">
+        {/* Column 3: Stage + Buttons */}
+        <div className="flex xl:flex-1 flex-col xl:flex-row items-start xl:items-start justify-between gap-3 xl:gap-4 px-4 pt-2 xl:pt-4 pb-4 xl:pb-6">
+          <div className="flex items-start gap-3 w-full xl:w-auto min-w-0 xl:flex-1">
             <div className="w-full xl:w-auto min-w-0">
               <p className="text-[var(--Dark,#1E293B)] font-manrope text-[13px] sm:text-[14px] font-semibold leading-normal tracking-[-0.26px] sm:tracking-[-0.28px] mb-1">
                 Investment Stage
               </p>
               <div
-                className={`inline-flex rounded-full py-1 font-manrope text-[13px] sm:text-[14px] font-normal leading-[20px] tracking-[-0.26px] sm:tracking-[-0.28px] text-[var(--Dark-D500,#525A68)] break-words max-w-full`}
+                className={`inline-flex rounded-full py-1 font-manrope text-[13px] sm:text-[14px] font-normal leading-[20px] tracking-[-0.26px] sm:tracking-[-0.28px] text-[var(--Dark-D500,#525A68)] break-words max-w-full xl:max-w-[300px]`}
               >
                 {getInvestmentStages()}
               </div>
             </div>
           </div>
 
-          {user && !hideTargetButton && (
+          <div className="flex flex-col sm:flex-row gap-2 w-full xl:w-auto xl:flex-shrink-0">
+            {/* View Profile Button */}
             <button
-              disabled={isShortlisted || loading}
-              onClick={handleShortlist}
-              className={`w-full sm:w-auto inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-medium text-white transition-all duration-200 ${
-                isShortlisted
-                  ? 'bg-emerald-600 hover:bg-emerald-700'
-                  : 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800'
-              } disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0`}
-              title={isShortlisted ? 'Already targeted' : 'Add to target list'}
+              onClick={handleViewProfile}
+              className="w-full sm:w-auto xl:w-auto inline-flex items-center justify-center rounded-lg px-3 py-2 text-xs sm:text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition-all duration-200 flex-shrink-0 cursor-pointer whitespace-nowrap"
+              title="View investor profile"
             >
-              {isShortlisted ? 'Targeted ✓' : loading ? 'Adding…' : 'Target +'}
+              View Profile
             </button>
-          )}
+
+            {user && !hideTargetButton && (
+              <button
+                disabled={isShortlisted || loading}
+                onClick={handleShortlist}
+                className={`w-full sm:w-auto xl:w-auto inline-flex items-center justify-center rounded-lg px-3 py-2 text-xs sm:text-sm font-medium text-white transition-all duration-200 ${
+                  isShortlisted
+                    ? 'bg-emerald-600 hover:bg-emerald-700'
+                    : 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800'
+                } disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0 whitespace-nowrap`}
+                title={isShortlisted ? 'Already shortlisted' : 'Add to shortlist'}
+              >
+                {isShortlisted ? 'Shortlisted ✓' : loading ? 'Adding…' : 'Shortlist +'}
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>

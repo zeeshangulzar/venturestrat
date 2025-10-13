@@ -14,7 +14,7 @@ interface InvestorStatusDropdownProps {
 }
 
 const statusOptions = [
-  { value: 'TARGET', label: 'Target' },
+  { value: 'TARGET', label: 'Shortlist' },
   { value: 'CONTACTED', label: 'Contacted' },
   { value: 'NO_RESPONSE', label: 'No Response' },
   { value: 'NOT_INTERESTED', label: 'Not Interested' },
