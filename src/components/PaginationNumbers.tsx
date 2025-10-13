@@ -112,9 +112,9 @@ const PaginationNumbers: React.FC<PaginationNumbersProps> = ({
       </button>
 
       {/* Total Count */}
-      <span className="ml-3 text-sm text-slate-600">
+      {/* <span className="ml-3 text-sm text-slate-600">
         Page {currentPage} of {totalPages} and total items are {totalItems} (--Test Code--)
-      </span>
+      </span> */}
     </div>
   );
 };

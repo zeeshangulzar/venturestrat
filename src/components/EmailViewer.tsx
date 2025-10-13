@@ -378,7 +378,7 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
                    className="flex-1 not-italic font-bold text-[16px] leading-[16px] tracking-[-0.02em] text-[#0C2143] bg-transparent border-none outline-none focus:outline-none focus:ring-0 focus:border-none"
                    placeholder="Email subject"
                  />
-                 <svg width="91" height="20" viewBox="0 0 91 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="ml-2 flex-shrink-0">
+                 {/* <svg width="91" height="20" viewBox="0 0 91 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="ml-2 flex-shrink-0">
                    <rect width="91" height="20" rx="10" fill="#FFEFD8"/>
                    <g clipPath="url(#clip0_1403_3373)">
                    <path d="M8.66699 15.3335H11.3337L18.3337 8.33345C18.5088 8.15836 18.6476 7.95049 18.7424 7.72171C18.8372 7.49294 18.8859 7.24774 18.8859 7.00012C18.8859 6.7525 18.8372 6.5073 18.7424 6.27853C18.6476 6.04975 18.5088 5.84188 18.3337 5.66679C18.1586 5.49169 17.9507 5.3528 17.7219 5.25804C17.4931 5.16328 17.2479 5.1145 17.0003 5.1145C16.7527 5.1145 16.5075 5.16328 16.2787 5.25804C16.05 5.3528 15.8421 5.49169 15.667 5.66679L8.66699 12.6668V15.3335Z" stroke="#0C2143" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -391,7 +391,7 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
                    <rect width="16" height="16" fill="white" transform="translate(6 2)"/>
                    </clipPath>
                    </defs>
-                 </svg>
+                 </svg> */}
                </div>
             )}
           </div>
