@@ -15,8 +15,8 @@ export async function POST(request: NextRequest) {
     // Ensure 'to' is an array
     const toArray = Array.isArray(to) ? to : [to];
     
-    // Ensure 'cc' is an array if provided
-    const ccArray = cc ? (Array.isArray(cc) ? cc : [cc]) : undefined;
+    // Ensure 'cc' is an array if provided - split by comma if it's a string
+    const ccArray = cc ? (Array.isArray(cc) ? cc : cc.split(',').map((email: string) => email.trim()).filter((email: string) => email)) : undefined;
 
     // Forward the request to the backend
     const backendResponse = await fetch(getApiUrl('/api/message'), {

@@ -442,14 +442,20 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
           {!readOnly && (
             <div>
               <span className="font-medium text-gray-700">CC:</span>
-              <input
-                type="text"
-                value={editedCc}
-                onChange={(e) => handleFieldChange('cc', e.target.value)}
-                className="ml-2 border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full max-w-md min-w-0"
-                placeholder="cc@example.com"
-                style={{ minWidth: '200px' }}
-              />
+              <div className="ml-2 inline-block">
+                <input
+                  type="text"
+                  value={editedCc}
+                  onChange={(e) => handleFieldChange('cc', e.target.value)}
+                  className="border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full max-w-md min-w-0"
+                  placeholder="cc1@example.com, cc2@example.com"
+                  style={{ minWidth: '200px' }}
+                  title="Separate multiple emails with commas"
+                />
+                <div className="text-xs text-gray-500 mt-1">
+                  Separate multiple emails with commas
+                </div>
+              </div>
             </div>
           )}
           
