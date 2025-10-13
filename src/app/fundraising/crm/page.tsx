@@ -85,6 +85,17 @@ export default function FundraisingPage() {
       )
     );
   };
+
+  // Function to update investor status by investor ID
+  const updateInvestorStatusByInvestorId = (investorId: string, newStatus: string) => {
+    setShortlistState(prev => 
+      prev.map(inv => 
+        inv.id === investorId 
+          ? { ...inv, status: newStatus }
+          : inv
+      )
+    );
+  };
   
   // Function to select a specific email
   const selectEmail = (emailId: string, isAI?: boolean) => {
@@ -336,6 +347,8 @@ export default function FundraisingPage() {
                           item.id === investorId ? { ...item, hasDraft: false } : item
                         )
                       );
+                      // Update the shortlist status to CONTACTED when email is sent successfully
+                      updateInvestorStatusByInvestorId(investorId, 'CONTACTED');
                     }}
                   />
                 ) : (

@@ -17,6 +17,7 @@ import HelpCenterIcon from './icons/HelpCenterIcon';
 import SettingsIcon from './icons/SettingsIcon';
 import LogoutIcon from './icons/LogoutIcon';
 import LogoIcon from './icons/logoIcon';
+import LogoWithText from './icons/LogoWithText';
 import RIcon from './icons/rtystIcon';
 import UsersIcon from './icons/UsersIcon';
 import InvestorFocusIcon from './icons/investorFocusIcon';
@@ -28,32 +29,32 @@ const AdminSidebar = () => {
   // Helper function to apply active class based on current route
   const getLinkClass = (path: string) => {
     return pathname === path
-      ? 'bg-[#e9effd] text-blue-600 font-semibold pl-6'
-      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50 pl-6';
+      ? 'bg-white/20 text-white font-semibold pl-6'
+      : 'text-white/80 hover:text-white hover:bg-white/10 pl-6';
   };
 
   // Helper function to get active wrapper class
   const getActiveWrapperClass = (path: string) => {
-    return pathname === path ? 'border-l-4 border-l-[#2563EB]' : '';
+    return pathname === path ? 'border-l-4 border-l-white' : '';
   };
 
   return (
-    <div className="w-full sm:w-[237px] h-auto sm:h-[1024px] flex-shrink-0 bg-white text-gray-800 sticky top-0 overflow-y-auto pb-6 hidden lg:block border-r border-[#EDEEEF]">
-      <div className="flex items-center justify-between border-b border-[#EDEEEF] pb-4 mb-6 px-6 pt-6">
-        {/* Blue Logo */}
+    <div className="w-full sm:w-[237px] h-auto sm:h-[1024px] flex-shrink-0 bg-[#0c2143] text-white sticky top-0 overflow-y-auto pb-6 hidden lg:block border-r border-[#EDEEEF]">
+      <div className="border-b border-[#EDEEEF] pb-4 mb-6 px-6 pt-6">
+        {/* Logo */}
         <div className="flex items-center">
-          <LogoIcon />
+          <LogoWithText />
         </div>
         
         {/* Collapse Button */}
-        <button className="p-1 rounded-lg hover:bg-gray-100 transition-colors">
+        {/* <button className="p-1 rounded-lg hover:bg-white/10 transition-colors">
           <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect x="0.5" y="0.5" width="31" height="31" rx="9.5" fill="white" stroke="#EDEEEF"/>
+            <rect x="0.5" y="0.5" width="31" height="31" rx="9.5" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.2)"/>
             <g clipPath="url(#clip0_295_1260)">
-              <path d="M9.33325 16H17.6666" stroke="#5F6774" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M9.33325 16L12.6666 19.3333" stroke="#5F6774" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M9.33325 16L12.6666 12.6666" stroke="#5F6774" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M22.6667 9.33337V22.6667" stroke="#5F6774" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M9.33325 16H17.6666" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M9.33325 16L12.6666 19.3333" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M9.33325 16L12.6666 12.6666" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M22.6667 9.33337V22.6667" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
             </g>
             <defs>
               <clipPath id="clip0_295_1260">
@@ -61,22 +62,22 @@ const AdminSidebar = () => {
               </clipPath>
             </defs>
           </svg>
-        </button>
+        </button> */}
       </div>
 
       {/* Title Section */}
       <div className="px-6 mb-4">
-        <div className="inline-flex items-center gap-2 bg-white border border-[#EDEEEF] px-3 py-2 rounded-lg shadow-sm w-full">
+        <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 px-3 py-2 rounded-lg shadow-sm w-full">
           <RIcon />
           <div className="flex flex-col flex-1">
-            <span className="font-semibold text-[14px]">RTYST</span>
+            <span className="font-semibold text-[14px] text-white">RTYST</span>
             <div className="flex items-center gap-1">
               <span className="h-2 w-2 rounded-full bg-green-500"></span>
-              <p className="text-gray-500 text-xs">Active</p>
+              <p className="text-white/70 text-xs">Free Trial</p>
             </div>
           </div>
           <svg 
-            className="w-4 h-4 text-gray-400 flex-shrink-0" 
+            className="w-4 h-4 text-white/60 flex-shrink-0" 
             fill="none" 
             stroke="currentColor" 
             viewBox="0 0 24 24"
@@ -93,7 +94,7 @@ const AdminSidebar = () => {
 
       {/* Main Menu */}
       <div className="">
-        <div className="px-6 h-[16px] font-manrope font-medium text-[12px] leading-[16px] tracking-[-0.02em] text-[#787F89]">
+        <div className="px-6 h-[16px] font-manrope font-medium text-[12px] leading-[16px] tracking-[-0.02em] text-white/70">
           ADMIN MENU
         </div>
         <div className="space-y-4 mt-6">
@@ -212,7 +213,7 @@ const AdminSidebar = () => {
           </div>
         </div> */}
         <SignOutButton redirectUrl="/sign-in">
-          <button className="ml-2.5 mr-2.5 block text-lg py-2 rounded-lg transition-colors cursor-pointer text-gray-600 hover:text-gray-900 hover:bg-gray-50 w-full text-left pl-6">
+          <button className="ml-2.5 mr-2.5 block text-lg py-2 rounded-lg transition-colors cursor-pointer text-white/80 hover:text-white hover:bg-white/10 w-full text-left pl-6">
             <div className="flex items-center">
               <LogoutIcon className="h-6 w-6 mr-2" />
               <span className='font-medium text-[14px]'>Log Out</span>
