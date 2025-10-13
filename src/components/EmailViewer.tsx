@@ -9,6 +9,7 @@ import Loader from './Loader';
 interface EmailDraft {
   id: string;
   to: string | string[];
+  cc?: string | string[];
   from: string;
   subject?: string;
   body: string;
@@ -34,6 +35,7 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
   const [editedSubject, setEditedSubject] = useState('');
   const [editedBody, setEditedBody] = useState('');
   const [editedFrom, setEditedFrom] = useState('');
+  const [editedCc, setEditedCc] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
@@ -47,7 +49,8 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
   const currentValuesRef = useRef({
     editedSubject: '',
     editedBody: '',
-    editedFrom: ''
+    editedFrom: '',
+    editedCc: ''
   });
   
   // Ref to store previous body length for deletion detection
@@ -64,10 +67,12 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
       // Handle both HTML and plain text body content
       const body = email.body || '';
       const from = email.from || '';
+      const cc = Array.isArray(email.cc) ? email.cc.join(', ') : (email.cc || '');
       
       setEditedSubject(subject);
       setEditedBody(body);
       setEditedFrom(from);
+      setEditedCc(cc);
       setSaveStatus('idle');
       
       // Clear any pending auto-save timeout when switching emails
@@ -80,7 +85,8 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
       currentValuesRef.current = {
         editedSubject: subject,
         editedBody: body,
-        editedFrom: from
+        editedFrom: from,
+        editedCc: cc
       };
       
       // Initialize previous body length
@@ -129,11 +135,13 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
       const emailSubject = email.subject || '';
       const emailBody = email.body || '';
       const emailFrom = email.from || '';
+      const emailCc = Array.isArray(email.cc) ? email.cc.join(', ') : (email.cc || '');
       
       // Only save if the current values are actually different from the email values
       if (currentValues.editedSubject === emailSubject && 
           currentValues.editedBody === emailBody && 
-          currentValues.editedFrom === emailFrom) {
+          currentValues.editedFrom === emailFrom &&
+          currentValues.editedCc === emailCc) {
         console.log('Skipping autoSave - no changes detected');
         return;
       }
@@ -147,6 +155,7 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
           subject: currentValues.editedSubject,
           body: currentValues.editedBody, // This will be HTML from React Quill
           from: currentValues.editedFrom,
+          cc: currentValues.editedCc,
         }),
       });
 
@@ -199,10 +208,12 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
     const emailSubject = email.subject || '';
     const emailBody = email.body || '';
     const emailFrom = email.from || '';
+    const emailCc = Array.isArray(email.cc) ? email.cc.join(', ') : (email.cc || '');
     
     if (currentValues.editedSubject === emailSubject && 
         currentValues.editedBody === emailBody && 
-        currentValues.editedFrom === emailFrom) {
+        currentValues.editedFrom === emailFrom &&
+        currentValues.editedCc === emailCc) {
       console.log('Skipping forceSave - no changes detected');
       return;
     }
@@ -259,6 +270,10 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
       case 'from':
         setEditedFrom(value);
         currentValuesRef.current.editedFrom = value;
+        break;
+      case 'cc':
+        setEditedCc(value);
+        currentValuesRef.current.editedCc = value;
         break;
     }
     // Use debounced auto-save (same pattern as settings page)
@@ -422,6 +437,29 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
             <span className="font-medium text-gray-700">To:</span>
             <span className="ml-2 text-gray-900">{getRecipients(email.to)}</span>
           </div>
+          
+          {/* CC Field */}
+          {!readOnly && (
+            <div>
+              <span className="font-medium text-gray-700">CC:</span>
+              <input
+                type="text"
+                value={editedCc}
+                onChange={(e) => handleFieldChange('cc', e.target.value)}
+                className="ml-2 border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full max-w-md min-w-0"
+                placeholder="cc@example.com"
+                style={{ minWidth: '200px' }}
+              />
+            </div>
+          )}
+          
+          {/* CC Field - Display Only (when readOnly) */}
+          {readOnly && email.cc && (
+            <div>
+              <span className="font-medium text-gray-700">CC:</span>
+              <span className="ml-2 text-gray-900">{getRecipients(email.cc)}</span>
+            </div>
+          )}
         </div>
       </div>
 
