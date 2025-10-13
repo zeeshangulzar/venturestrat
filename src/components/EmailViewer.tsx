@@ -412,8 +412,8 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
           </div>
         </div>
 
-        {/* Email Metadata */}
-        <div className="space-y-4 text-sm">
+      {/* Email Metadata */}
+      <div className="space-y-3 text-sm">
           {/* From Field - First */}
           {/* <div>
             <span className="font-medium text-gray-700">From:</span>
@@ -440,21 +440,21 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
           
           {/* CC Field */}
           {!readOnly && (
-            <div>
-              <span className="font-medium text-gray-700">CC:</span>
-              <div className="ml-2 inline-block">
+            <div className="flex flex-col">
+              <div className="flex items-center">
+                <span className="font-medium text-gray-700">CC:</span>
                 <input
                   type="text"
                   value={editedCc}
                   onChange={(e) => handleFieldChange('cc', e.target.value)}
-                  className="border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full max-w-md min-w-0"
+                  className="ml-2 border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full max-w-md min-w-0"
                   placeholder="cc1@example.com, cc2@example.com"
                   style={{ minWidth: '200px' }}
                   title="Separate multiple emails with commas"
                 />
-                <div className="text-xs text-gray-500 mt-1">
-                  Separate multiple emails with commas
-                </div>
+              </div>
+              <div className="text-xs text-gray-500 mt-1 ml-0">
+                Separate multiple emails with commas
               </div>
             </div>
           )}
@@ -470,8 +470,8 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
       </div>
 
       {/* Email Content */}
-      <div className="flex-1 p-4 flex flex-col min-h-0 overflow-y-auto">
-        <div className="flex-1 flex flex-col min-h-0">
+      <div className="flex-1 p-4 flex flex-col min-h-0">
+        <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
           {readOnly ? (
             <div className="w-full h-full min-h-[400px] border border-gray-200 rounded-md px-3 py-2 bg-gray-50 overflow-y-auto">
               <div 
