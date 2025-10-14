@@ -96,6 +96,42 @@ export default function FundraisingPage() {
       )
     );
   };
+
+  // Function to download CSV
+  const downloadCSV = () => {
+    if (!shortlistState || shortlistState.length === 0) {
+      alert('No data to export');
+      return;
+    }
+
+    // CSV headers
+    const headers = ['Name', 'Company Name', 'Email', 'Location', 'Phone Number'];
+    
+    // CSV data rows
+    const csvData = shortlistState.map(inv => [
+      inv.name || '',
+      inv.companyName || 'N/A',
+      inv.emails?.[0]?.email || 'N/A',
+      inv.state ? `${inv.state}, ${inv.country}` : inv.country || 'N/A',
+      inv.phone || 'N/A' // Add phone number if available in the data
+    ]);
+
+    // Combine headers and data
+    const csvContent = [headers, ...csvData]
+      .map(row => row.map(field => `"${field}"`).join(','))
+      .join('\n');
+
+    // Create and download file
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `investors_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
   
   // Function to select a specific email
   const selectEmail = (emailId: string, isAI?: boolean) => {
@@ -176,9 +212,20 @@ export default function FundraisingPage() {
             <div className="bg-white rounded-[14px] border border-[#EDEEEF] overflow-hidden">
               {/* Sticky Table Header */}
               <div className="sticky top-0 z-20 bg-white px-6 py-4 border-b border-[#EDEEEF]">
-                <h3 className="not-italic font-bold text-[18px] leading-[24px] tracking-[-0.02em] text-[#0C2143]">
-                  My List
-                </h3>
+                <div className="flex justify-between items-center">
+                  <h3 className="not-italic font-bold text-[18px] leading-[24px] tracking-[-0.02em] text-[#0C2143]">
+                    My List
+                  </h3>
+                  <button
+                    onClick={downloadCSV}
+                    className="w-min-30 w-auto justify-center items-center px-5 py-2.5 gap-1 h-[auto] bg-[#2563EB] rounded-[10px] font-manrope not-italic font-medium text-[14px] leading-[19px] tracking-[-0.02em] text-[#FFFFFF] cursor-pointer flex"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Download CSV
+                  </button>
+                </div>
               </div>
 
               {/* Table Content with Scrollable Container */}
