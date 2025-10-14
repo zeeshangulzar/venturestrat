@@ -36,6 +36,7 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
   const [editedBody, setEditedBody] = useState('');
   const [editedFrom, setEditedFrom] = useState('');
   const [editedCc, setEditedCc] = useState('');
+  const [attachments, setAttachments] = useState<File[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
@@ -289,11 +290,21 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
     setSendMessage('');
     
     try {
-      const response = await fetch(getApiUrl(`/api/message/${email.id}/send`), {
+      // Create FormData to handle attachments
+      const formData = new FormData();
+      
+      // Add attachments to FormData
+      attachments.forEach((file, index) => {
+        formData.append(`attachment_${index}`, file);
+      });
+      
+      // Add other email data
+      formData.append('messageId', email.id);
+      formData.append('attachments', JSON.stringify(attachments.map(f => ({ name: f.name, size: f.size, type: f.type }))));
+      
+      const response = await fetch(`/api/message/${email.id}`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        body: formData,
       });
 
       const result = await response.json();
@@ -492,6 +503,8 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
                 style={{ minHeight: '400px' }}
                 className="flex-1"
                 enableAIEditing={true}
+                onAttachmentsChange={setAttachments}
+                attachments={attachments}
               />
             </div>
           )}

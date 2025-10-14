@@ -3,6 +3,7 @@
 import { SignOutButton, useUser } from '@clerk/nextjs';
 import { useState, useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
+import { useUserCompany } from '@hooks/useUserCompany';
 import Breadcrumbs from './Breadcrumbs';
 
 export default function HeaderClient() {
@@ -10,6 +11,7 @@ export default function HeaderClient() {
   const [profileUploadStatus, setProfileUploadStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
   const [uploadProgress, setUploadProgress] = useState(0);
   const { user } = useUser();
+  const { companyName, isLoading: companyLoading } = useUserCompany();
   const dropdownRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
 
@@ -149,7 +151,7 @@ export default function HeaderClient() {
                 {user?.firstName} {user?.lastName}
               </div>
               <div className="text-gray-500 text-sm">
-                @{user?.username || user?.emailAddresses[0]?.emailAddress?.split('@')[0] || 'user'}
+                {companyLoading ? 'Loading...' : companyName}
               </div>
             </div>
             
