@@ -21,10 +21,12 @@ import LogoWithText from './icons/LogoWithText';
 import RIcon from './icons/rtystIcon';
 import UsersIcon from './icons/UsersIcon';
 import InvestorFocusIcon from './icons/investorFocusIcon';
+import { useUserCompany } from '@hooks/useUserCompany';
 
 // Admin Sidebar component
 const AdminSidebar = () => {
   const pathname = usePathname(); // Get the current pathname
+  const { companyName, companyLogo, userProfileImage, isLoading } = useUserCompany(); // Get user company data
 
   // Helper function to apply active class based on current route
   const getLinkClass = (path: string) => {
@@ -68,9 +70,27 @@ const AdminSidebar = () => {
       {/* Title Section */}
       <div className="px-6 mb-4">
         <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 px-3 py-2 rounded-lg shadow-sm w-full">
-          <RIcon />
+          {isLoading ? (
+            <div className="w-6 h-6 bg-white/20 rounded animate-pulse"></div>
+          ) : companyLogo ? (
+            <img 
+              src={companyLogo} 
+              alt={`${companyName} logo`}
+              className="w-6 h-6 rounded object-contain"
+            />
+          ) : userProfileImage ? (
+            <img 
+              src={userProfileImage} 
+              alt={`${companyName} profile`}
+              className="w-6 h-6 rounded-full object-cover"
+            />
+          ) : (
+            <RIcon />
+          )}
           <div className="flex flex-col flex-1">
-            <span className="font-semibold text-[14px] text-white">RTYST</span>
+            <span className="font-semibold text-[14px] text-white">
+              {isLoading ? 'Loading...' : companyName}
+            </span>
             <div className="flex items-center gap-1">
               <span className="h-2 w-2 rounded-full bg-green-500"></span>
               <p className="text-white/70 text-xs">Free Trial</p>

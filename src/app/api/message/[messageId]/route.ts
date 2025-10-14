@@ -102,3 +102,119 @@ export async function PUT(
     );
   }
 }
+
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ messageId: string }> }
+) {
+  try {
+    const { messageId } = await params;
+
+    if (!messageId) {
+      return NextResponse.json(
+        { error: 'Message ID is required' },
+        { status: 400 }
+      );
+    }
+
+    // Parse FormData to handle attachments
+    const formData = await request.formData();
+    const attachmentsData = formData.get('attachments');
+    
+    let attachments = [];
+    if (attachmentsData) {
+      try {
+        attachments = JSON.parse(attachmentsData as string);
+      } catch (e) {
+        console.error('Error parsing attachments:', e);
+      }
+    }
+
+    // Get the message from backend first
+    const messageResponse = await fetch(getApiUrl(`/api/message/${messageId}`), {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!messageResponse.ok) {
+      return NextResponse.json(
+        { error: 'Message not found' },
+        { status: 404 }
+      );
+    }
+
+    const message = await messageResponse.json();
+
+    // Prepare email data with attachments
+    const emailData = {
+      to: Array.isArray(message.to) ? message.to : [message.to],
+      ...(message.cc && message.cc.length > 0 && {
+        cc: message.cc
+      }),
+      from: {
+        email: 'info@venturestrat.ai',
+        name: message.user.firstname + ' ' + message.user.lastname
+      },
+      replyTo: message.from,
+      subject: message.subject,
+      text: message.body,
+      html: `
+        <div>
+          <div>
+            ${message.body}
+          </div>
+        </div>
+      `,
+      // Add attachments if any
+      ...(attachments.length > 0 && {
+        attachments: await Promise.all(attachments.map(async (attachment: any, index: number) => {
+          const file = formData.get(`attachment_${index}`);
+          if (file instanceof File) {
+            return {
+              content: Buffer.from(await file.arrayBuffer()).toString('base64'),
+              filename: attachment.name,
+              type: attachment.type,
+              disposition: 'attachment'
+            };
+          }
+          return null;
+        })).then(results => results.filter(Boolean))
+      })
+    };
+
+    console.log('Email data with attachments:', JSON.stringify(emailData, null, 2));
+
+    // Send email via SendGrid
+    const sgMail = require('@sendgrid/mail');
+    sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+    
+    await sgMail.send(emailData);
+
+    // Update message status to SENT
+    const updateResponse = await fetch(getApiUrl(`/api/message/${messageId}`), {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ status: 'SENT' }),
+    });
+
+    if (!updateResponse.ok) {
+      console.error('Failed to update message status');
+    }
+
+    return NextResponse.json({
+      message: 'Email sent successfully with attachments',
+      data: { status: 'SENT' }
+    });
+
+  } catch (error: any) {
+    console.error('Error sending email:', error);
+    return NextResponse.json(
+      { error: 'Failed to send email', details: error.message },
+      { status: 500 }
+    );
+  }
+}

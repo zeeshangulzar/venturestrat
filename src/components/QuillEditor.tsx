@@ -17,6 +17,8 @@ interface QuillEditorProps {
   className?: string;
   style?: React.CSSProperties;
   enableAIEditing?: boolean;
+  onAttachmentsChange?: (files: File[]) => void;
+  attachments?: File[];
 }
 
 const QuillEditor: React.FC<QuillEditorProps> = ({
@@ -29,7 +31,9 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
   formats,
   className = '',
   style = {},
-  enableAIEditing = false
+  enableAIEditing = false,
+  onAttachmentsChange,
+  attachments: externalAttachments
 }) => {
   const [isClient, setIsClient] = useState(false);
   const [ReactQuill, setReactQuill] = useState<React.ComponentType<Record<string, unknown>> | null>(null);
@@ -37,9 +41,18 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
   const [selectedRange, setSelectedRange] = useState<any>(null);
   const [showFloatingButton, setShowFloatingButton] = useState(false);
   const [buttonPosition, setButtonPosition] = useState({ top: 0, left: 0 });
+  const [attachments, setAttachments] = useState<File[]>([]);
   const editorRef = useRef<HTMLDivElement>(null);
   const quillRef = useRef<any>(null);
   const quillContentRef = useRef<HTMLDivElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Sync external attachments if provided
+  useEffect(() => {
+    if (externalAttachments) {
+      setAttachments(externalAttachments);
+    }
+  }, [externalAttachments]);
   
   // Use global modal state directly
   const { openModal, closeModal, isModalOpen } = useModal();
@@ -53,10 +66,26 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
     }
   }, [isAIModalOpen]);
 
-  // Default modules configuration
+  // Default modules configuration - UPDATED with all fonts
   const defaultModules = {
     toolbar: [
-      [{ 'font': [] }],
+      [{ 'font': [
+        false, // default font
+        'sans-serif',
+        'serif', 
+        'monospace',
+        'arial',
+        'times-new-roman',
+        'courier-new',
+        'georgia',
+        'verdana',
+        'helvetica',
+        'tahoma',
+        'trebuchet-ms',
+        'comic-sans-ms',
+        'impact',
+        'lucida-console'
+      ] }],
       [{ 'size': ['small', false, 'large', 'huge'] }],
       ['bold', 'italic', 'underline', 'strike'],
       [{ 'color': [] }, { 'background': [] }],
@@ -66,7 +95,7 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
     ],
   };
 
-  // Default formats
+  // Default formats - UPDATED with font
   const defaultFormats = [
     'font', 'size',
     'bold', 'italic', 'underline', 'strike',
@@ -79,6 +108,28 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
     // Only load ReactQuill on client side to avoid SSR issues
     if (typeof window !== 'undefined') {
       import('react-quill').then((module) => {
+        const Quill = module.default.Quill;
+        
+        // Register custom fonts
+        const Font = Quill.import('formats/font');
+        Font.whitelist = [
+          'sans-serif',
+          'serif',
+          'monospace',
+          'arial',
+          'times-new-roman',
+          'courier-new',
+          'georgia',
+          'verdana',
+          'helvetica',
+          'tahoma',
+          'trebuchet-ms',
+          'comic-sans-ms',
+          'impact',
+          'lucida-console'
+        ];
+        Quill.register(Font, true);
+        
         setReactQuill(() => module.default);
         setIsClient(true);
       }).catch((error) => {
@@ -86,6 +137,58 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
       });
     }
   }, []);
+
+  // Add custom attachment button to toolbar after Quill is loaded
+  useEffect(() => {
+    if (quillRef.current && !readOnly) {
+      const quill = quillRef.current.getEditor();
+      const toolbar = quill.getModule('toolbar');
+      
+      if (toolbar && toolbar.container) {
+        // Check if attachment button already exists
+        const existingButton = toolbar.container.querySelector('.ql-attachment');
+        if (!existingButton) {
+          // Find the clean button (Tx button) to insert after it
+          const cleanButton = toolbar.container.querySelector('.ql-clean');
+          
+          // Create a span wrapper for the attachment button
+          const buttonWrapper = document.createElement('span');
+          buttonWrapper.className = 'ql-formats';
+          
+          // Create attachment button
+          const attachmentBtn = document.createElement('button');
+          attachmentBtn.className = 'ql-attachment';
+          attachmentBtn.type = 'button';
+          attachmentBtn.innerHTML = `
+            <svg viewBox="0 0 24 24" width="18" height="18">
+              <path fill="currentColor" d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5c0-1.38 1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V5c0-2.21-1.79-4-4-4S7 2.79 7 5v12.5c0 3.04 2.46 5.5 5.5 5.5s5.5-2.46 5.5-5.5V6h-1.5z"/>
+            </svg>
+          `;
+          attachmentBtn.title = 'Attach Files';
+          
+          // Add click handler
+          attachmentBtn.addEventListener('click', () => {
+            fileInputRef.current?.click();
+          });
+          
+          buttonWrapper.appendChild(attachmentBtn);
+          
+          // Insert after the clean button's parent span
+          if (cleanButton && cleanButton.parentElement) {
+            const cleanButtonWrapper = cleanButton.parentElement;
+            if (cleanButtonWrapper.nextSibling) {
+              toolbar.container.insertBefore(buttonWrapper, cleanButtonWrapper.nextSibling);
+            } else {
+              toolbar.container.appendChild(buttonWrapper);
+            }
+          } else {
+            // Fallback: append at the end
+            toolbar.container.appendChild(buttonWrapper);
+          }
+        }
+      }
+    }
+  }, [isClient, readOnly]);
 
   // Update quillContentRef when quillRef changes
   useEffect(() => {
@@ -113,6 +216,35 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
       window.removeEventListener('resize', updatePosition);
     };
   }, [showFloatingButton, selectedRange]);
+
+  // Handle file attachments
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    const newAttachments = [...attachments, ...files];
+    setAttachments(newAttachments);
+    if (onAttachmentsChange) {
+      onAttachmentsChange(newAttachments);
+    }
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handleRemoveAttachment = (index: number) => {
+    const newAttachments = attachments.filter((_, i) => i !== index);
+    setAttachments(newAttachments);
+    if (onAttachmentsChange) {
+      onAttachmentsChange(newAttachments);
+    }
+  };
+
+  const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+  };
 
   // Function to calculate button position at the end of selected text
   const calculateButtonPosition = (range: any) => {
@@ -327,7 +459,7 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
 
   return (
     <div className={`quill-editor-wrapper relative ${className}`}>
-      <div ref={editorRef}>
+      <div ref={editorRef} className="relative z-10">
         <ReactQuill
           ref={quillRef}
           value={value}
@@ -340,6 +472,47 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
           theme="snow"
         />
       </div>
+
+      {/* Attachment Section - Hidden file input */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            onChange={handleFileSelect}
+            className="hidden"
+            id="quill-file-upload"
+          />
+
+          {/* Attachments List */}
+          {!readOnly && attachments.length > 0 && (
+            <div className="mt-3 space-y-2 relative z-20">
+              {attachments.map((file, index) => (
+                <div
+                  key={index}
+                  className="flex items-center justify-between p-2 bg-gray-50 border border-gray-200 rounded-lg group hover:bg-gray-100 transition-colors"
+                >
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <svg className="w-4 h-4 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 truncate">{file.name}</p>
+                    </div>
+                    <p className="text-xs text-gray-500 flex-shrink-0">{formatFileSize(file.size)}</p>
+                  </div>
+                  <button
+                    onClick={() => handleRemoveAttachment(index)}
+                    className="ml-2 p-1 text-gray-400 hover:text-red-600 transition-colors flex-shrink-0 rounded hover:bg-red-50"
+                    title="Remove attachment"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              ))}
+        </div>
+      )}
       
       {/* AI Editing Components */}
       {enableAIEditing && !readOnly && (
