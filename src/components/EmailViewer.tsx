@@ -302,7 +302,11 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
       formData.append('messageId', email.id);
       formData.append('attachments', JSON.stringify(attachments.map(f => ({ name: f.name, size: f.size, type: f.type }))));
       
-      const response = await fetch(`/api/message/${email.id}`, {
+      console.log('=== FRONTEND DEBUGGING ===');
+      console.log('Attachments being sent:', attachments);
+      console.log('FormData entries:', Array.from(formData.entries()));
+      
+      const response = await fetch(`/api/message/${email.id}/send`, {
         method: 'POST',
         body: formData,
       });
