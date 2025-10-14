@@ -1,5 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getApiUrl } from '@lib/api';
+import { randomUUID } from 'crypto';
+
+// Function to extract inline images from HTML and convert them to CID attachments
+function extractInlineImages(html: string) {
+  const inlineAttachments: any[] = [];
+  let processedHtml = html;
+  const imgRegex = /<img[^>]+src="data:([^;]+);base64,([^"]+)"[^>]*>/g;
+
+  processedHtml = processedHtml.replace(imgRegex, (match, mimeType, base64Data) => {
+    const cid = randomUUID() + '@inline';
+    inlineAttachments.push({
+      content: base64Data,
+      filename: `inline-${cid}.${mimeType.split('/')[1]}`,
+      type: mimeType,
+      disposition: 'inline',
+      content_id: cid,
+    });
+    return match.replace(/src="[^"]+"/, `src="cid:${cid}"`);
+  });
+
+  return { html: processedHtml, attachments: inlineAttachments };
+}
 
 export async function GET(
   request: NextRequest,
@@ -147,7 +169,24 @@ export async function POST(
 
     const message = await messageResponse.json();
 
-    // Prepare email data with attachments
+    // Extract inline images from HTML content
+    const { html: processedHtml, attachments: inlineAttachments } = extractInlineImages(message.body);
+
+    // Process regular file attachments
+    const formDataAttachments = attachments.length > 0 ? await Promise.all(attachments.map(async (attachment: any, index: number) => {
+      const file = formData.get(`attachment_${index}`);
+      if (file instanceof File) {
+        return {
+          content: Buffer.from(await file.arrayBuffer()).toString('base64'),
+          filename: attachment.name,
+          type: attachment.type,
+          disposition: 'attachment'
+        };
+      }
+      return null;
+    })).then(results => results.filter(Boolean)) : [];
+
+    // Prepare email data with both inline and regular attachments
     const emailData = {
       to: Array.isArray(message.to) ? message.to : [message.to],
       ...(message.cc && message.cc.length > 0 && {
@@ -160,28 +199,12 @@ export async function POST(
       replyTo: message.from,
       subject: message.subject,
       text: message.body,
-      html: `
-        <div>
-          <div>
-            ${message.body}
-          </div>
-        </div>
-      `,
-      // Add attachments if any
-      ...(attachments.length > 0 && {
-        attachments: await Promise.all(attachments.map(async (attachment: any, index: number) => {
-          const file = formData.get(`attachment_${index}`);
-          if (file instanceof File) {
-            return {
-              content: Buffer.from(await file.arrayBuffer()).toString('base64'),
-              filename: attachment.name,
-              type: attachment.type,
-              disposition: 'attachment'
-            };
-          }
-          return null;
-        })).then(results => results.filter(Boolean))
-      })
+      html: processedHtml,
+      // Combine inline and regular attachments
+      attachments: [
+        ...(inlineAttachments || []),
+        ...(formDataAttachments || [])
+      ]
     };
 
     console.log('Email data with attachments:', JSON.stringify(emailData, null, 2));
