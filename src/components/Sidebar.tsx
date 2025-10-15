@@ -44,7 +44,11 @@ const Sidebar = () => {
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (fundraisingRef.current && !fundraisingRef.current.contains(event.target as Node)) {
-        setIsFundraisingOpen(false);
+        // Check if the click is on a navigation link - if so, don't close dropdown immediately
+        const target = event.target as HTMLElement;
+        const isNavigationLink = target.closest('a[href]') || target.closest('button');
+        
+        if (!isNavigationLink) { setIsFundraisingOpen(false); }
       }
     };
 
@@ -130,19 +134,6 @@ const Sidebar = () => {
               <p className="text-white/70 text-xs">Free Trial</p>
             </div>
           </div>
-          <svg 
-            className="w-4 h-4 text-white/60 flex-shrink-0" 
-            fill="none" 
-            stroke="currentColor" 
-            viewBox="0 0 24 24"
-          >
-            <path 
-              strokeLinecap="round" 
-              strokeLinejoin="round" 
-              strokeWidth={2} 
-              d="M19 9l-7 7-7-7" 
-            />
-          </svg>
         </div>
       </div>
 
@@ -153,7 +144,7 @@ const Sidebar = () => {
         </div>
         <div className="space-y-4 mt-6">
           <div className={getActiveWrapperClass('/')}>
-            <Link href="/" className={`ml-2.5 mr-2.5 block text-lg py-2 rounded-lg transition-colors ${getLinkClass('/')}`}>
+            <Link href="/" className={`ml-2.5 mr-2.5 block text-lg py-2 rounded-lg transition-colors ${getLinkClass('/')}`} onClick={() => setIsFundraisingOpen(false)} >
               <div className="flex items-center">
                 <HomeIcon className="h-6 w-6 mr-2" />
                 <span className='font-medium text-[14px]'>Home</span>
@@ -291,13 +282,17 @@ const Sidebar = () => {
       {/* Other Section */}
       <div className="mt-8 px-0">
         <h3 className="px-6 text-xs font-medium text-white/70 mb-4 font-manrope">OTHER</h3>
-        <div className={`ml-2.5 mr-2.5 block text-lg py-2 rounded-lg transition-colors cursor-pointer ${getLinkClass('/my-files')}`}>
+        <div className={`ml-2.5 mr-2.5 block text-lg py-2 rounded-lg transition-colors cursor-pointer ${getLinkClass('/my-files')}`}
+          onClick={() => setIsFundraisingOpen(false)}
+        >
           <div className="flex items-center">
             <MyFilesIcon className="h-6 w-6 mr-2" />
             <span className='font-medium text-[14px]'>My Files</span>
           </div>
         </div>
-        <div className={`ml-2.5 mr-2.5 block text-lg py-2 rounded-lg transition-colors cursor-pointer ${getLinkClass('/help-center')}`}>
+        <div className={`ml-2.5 mr-2.5 block text-lg py-2 rounded-lg transition-colors cursor-pointer ${getLinkClass('/help-center')}`}
+          onClick={() => setIsFundraisingOpen(false)}
+        >
           <div className="flex items-center">
             <HelpCenterIcon className="h-6 w-6 mr-2" />
             <span className='font-medium text-[14px]'>Help Center</span>
@@ -307,7 +302,7 @@ const Sidebar = () => {
 
       {/* Settings and Log Out */}
       <div className="mt-6 px-0">
-        <Link href="/settings" className={`ml-2.5 mr-2.5 block text-lg py-2 rounded-lg transition-colors ${getLinkClass('/settings')}`}>
+        <Link href="/settings" className={`ml-2.5 mr-2.5 block text-lg py-2 rounded-lg transition-colors ${getLinkClass('/settings')}`} onClick={() => setIsFundraisingOpen(false)} >
           <div className="flex items-center">
             <SettingsIcon className="h-6 w-6 mr-2" />
             <span className='font-medium text-[14px]'>Settings</span>

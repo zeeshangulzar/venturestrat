@@ -3,6 +3,7 @@
 import { useUser } from '@clerk/nextjs';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { useUserDataRefresh } from '../../contexts/UserDataContext';
 import { Country } from 'country-state-city';
 import { buildRegionCountryOptions, buildCountryOptions } from '@lib/regions';
 
@@ -46,6 +47,7 @@ type OnboardingData = {
 export default function SettingsPage() {
   const { user, isLoaded } = useUser();
   const router = useRouter();
+  const { triggerRefresh } = useUserDataRefresh();
   const [currentCategory, setCurrentCategory] = useState('financials');
   const [isUserDataLoaded, setIsUserDataLoaded] = useState(false);
 
@@ -153,6 +155,8 @@ export default function SettingsPage() {
               // Check if the backend save was successful
         if (result && result.success !== false) {
           console.log('Auto-save result:', result);
+          // Trigger refresh of user data in sidebar and header
+          triggerRefresh();
         } else {
         // Backend save failed
         const errorMessage = result?.error || result?.message || 'Backend save failed';
