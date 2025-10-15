@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { fetchUserData } from '@lib/api';
+import { useUserDataRefresh } from '../contexts/UserDataContext';
 
 interface UserCompanyData {
   companyName: string;
@@ -8,21 +9,23 @@ interface UserCompanyData {
   userProfileImage?: string;
   isLoading: boolean;
   error: string | null;
+  refetch: () => void;
 }
 
 export const useUserCompany = (): UserCompanyData => {
   const { user, isLoaded } = useUser();
+  const { refreshTrigger } = useUserDataRefresh();
   const [companyData, setCompanyData] = useState<UserCompanyData>({
     companyName: '',
     companyLogo: undefined,
     userProfileImage: undefined,
     isLoading: true,
-    error: null
+    error: null,
+    refetch: () => {}
   });
 
-  useEffect(() => {
-    if (isLoaded && user?.id) {
-      const loadUserCompanyData = async () => {
+  const loadUserCompanyData = async () => {
+    if (!isLoaded || !user?.id) return;
         try {
           setCompanyData(prev => ({ ...prev, isLoading: true, error: null }));
           
@@ -45,7 +48,8 @@ export const useUserCompany = (): UserCompanyData => {
               companyName: 'RTYST',
               companyLogo: undefined,
               isLoading: false,
-              error: null
+              error: null,
+              refetch: loadUserCompanyData
             });
             return;
           }
@@ -58,7 +62,8 @@ export const useUserCompany = (): UserCompanyData => {
             companyLogo: publicMetaData.companyLogo,
             userProfileImage: user.imageUrl,
             isLoading: false,
-            error: null
+            error: null,
+            refetch: loadUserCompanyData
           });
         } catch (error) {
           console.error('Failed to load user company data:', error);
@@ -67,11 +72,14 @@ export const useUserCompany = (): UserCompanyData => {
             companyLogo: undefined,
             userProfileImage: user?.imageUrl,
             isLoading: false,
-            error: error instanceof Error ? error.message : 'Failed to load company data'
+            error: error instanceof Error ? error.message : 'Failed to load company data',
+            refetch: loadUserCompanyData
           });
         }
       };
 
+  useEffect(() => {
+    if (isLoaded && user?.id) {
       loadUserCompanyData();
     } else if (isLoaded && !user) {
       // User not logged in, use default values
@@ -80,10 +88,11 @@ export const useUserCompany = (): UserCompanyData => {
         companyLogo: undefined,
         userProfileImage: undefined,
         isLoading: false,
-        error: null
+        error: null,
+        refetch: loadUserCompanyData
       });
     }
-  }, [isLoaded, user?.id]);
+  }, [isLoaded, user?.id, refreshTrigger]);
 
   return companyData;
 };

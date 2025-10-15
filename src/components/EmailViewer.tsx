@@ -543,7 +543,7 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
           <div className="flex justify-end">
             {!readOnly ? (
             <div
-              className={`flex items-center gap-2 px-6 py-2 rounded-md font-medium transition-colors mt-[50px] ${
+              className={`flex items-center gap-2 px-6 py-2 rounded-md font-medium transition-colors ${
                 isSending
                   ? 'bg-gray-400 text-gray-700 cursor-not-allowed'
                   : 'bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
