@@ -8,7 +8,8 @@ import EmailTabsManager from '@components/EmailTabsManager'
 import InvestorStatusDropdown from '@components/InvestorStatusDropdown'
 import Tooltip from '@components/Tooltip'
 import Loader from '@components/Loader'
-import { fetchUserData } from '@lib/api'
+import InvestorDetails from '@components/InvestorDetails'
+import { fetchUserData, getApiUrl } from '@lib/api'
 
 export default function FundraisingPage() {
   const { user } = useUser();
@@ -18,7 +19,7 @@ export default function FundraisingPage() {
     loading,
     error,
     totalShortlisted,
-  } = useUserShortlist(user?.id ?? "");
+  } = useUserShortlist(user?.id ?? ""); 
 
   
   // State for user data
@@ -47,6 +48,10 @@ export default function FundraisingPage() {
   // State for shortlist to allow immediate UI updates
   const [shortlistState, setShortlistState] = useState(shortlist);
 
+  // State for selected investor
+  const [selectedInvestor, setSelectedInvestor] = useState<any>(null);
+  const [selectedInvestorLoading, setSelectedInvestorLoading] = useState(false);
+
   // State for full-page loader
   const [showFullPageLoader, setShowFullPageLoader] = useState(true);
 
@@ -57,6 +62,12 @@ export default function FundraisingPage() {
   useEffect(() => {
     setShortlistState(shortlist);
   }, [shortlist.length, shortlist.map(inv => inv.id).join(',')]);
+
+  // Debug selected investor state
+  useEffect(() => {
+    console.log('selectedInvestor state changed:', selectedInvestor);
+    console.log('selectedInvestorLoading state changed:', selectedInvestorLoading);
+  }, [selectedInvestor, selectedInvestorLoading]);
 
   // Hide full-page loader when table is ready with timeout
   useEffect(() => {
@@ -95,6 +106,40 @@ export default function FundraisingPage() {
           : inv
       )
     );
+  };
+
+  // Function to handle investor selection
+  const handleInvestorClick = async (investorId: string) => {
+    console.log('Investor clicked:', investorId);
+    setSelectedInvestorLoading(true);
+    try {
+      const response = await fetch(getApiUrl(`/api/investors/${investorId}`), {
+        method: 'GET',
+        headers: {
+          'ngrok-skip-browser-warning': 'true',
+        },
+      });
+      if (response.ok) {
+        const responseData = await response.json();
+        console.log('API response received:', responseData);
+        // The API returns data nested under 'investor' property
+        const investorData = responseData.investor || responseData;
+        console.log('Investor data extracted:', investorData);
+        setSelectedInvestor(investorData);
+      } else {
+        const errorText = await response.text();
+        console.error('Failed to fetch investor data:', response.status, response.statusText, errorText);
+      }
+    } catch (error) {
+      console.error('Error fetching investor data:', error);
+    } finally {
+      setSelectedInvestorLoading(false);
+    }
+  };
+
+  // Function to go back to investor list
+  const handleBackToList = () => {
+    setSelectedInvestor(null);
   };
 
   // Function to download CSV
@@ -213,34 +258,59 @@ export default function FundraisingPage() {
               {/* Sticky Table Header */}
               <div className="sticky top-0 z-20 bg-white px-6 py-4 border-b border-[#EDEEEF]">
                 <div className="flex justify-between items-center">
-                  <h3 className="not-italic font-bold text-[18px] leading-[24px] tracking-[-0.02em] text-[#0C2143]">
-                    My List
-                  </h3>
-                  <button
-                    onClick={downloadCSV}
-                    className="w-min-30 w-auto justify-center items-center px-5 py-2.5 gap-1 h-[auto] bg-[#2563EB] rounded-[10px] font-manrope not-italic font-medium text-[14px] leading-[19px] tracking-[-0.02em] text-[#FFFFFF] cursor-pointer flex"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    Download CSV
-                  </button>
+                  {selectedInvestor ? (
+                    <button
+                      onClick={handleBackToList}
+                      className="text-sm text-slate-600 hover:underline flex items-center gap-2"
+                    >
+                      ← Back to my list
+                    </button>
+                  ) : (
+                    <>
+                      <h3 className="not-italic font-bold text-[18px] leading-[24px] tracking-[-0.02em] text-[#0C2143]">
+                        My List
+                      </h3>
+                      <button
+                        onClick={downloadCSV}
+                        className="w-min-30 w-auto justify-center items-center px-5 py-2.5 gap-1 h-[auto] bg-[#2563EB] rounded-[10px] font-manrope not-italic font-medium text-[14px] leading-[19px] tracking-[-0.02em] text-[#FFFFFF] cursor-pointer flex"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        Download CSV
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
 
               {/* Table Content with Scrollable Container */}
               <div ref={tableScrollContainerRef} className="max-h-[400px] overflow-auto">
-                {error && (
-                  <div className="px-6 py-8 text-center text-rose-700">
-                    {error}
+                {selectedInvestor ? (
+                  // Individual investor view
+                  <div className="p-6">
+                    {selectedInvestorLoading ? (
+                      <div className="flex justify-center items-center py-8">
+                        <Loader />
+                      </div>
+                    ) : (
+                      <InvestorDetails investor={selectedInvestor} />
+                    )}
                   </div>
-                )}
+                ) : (
+                  // Investor list view
+                  <>
+                    {error && (
+                      <div className="px-6 py-8 text-center text-rose-700">
+                        {error}
+                      </div>
+                    )}
 
-                {!error && data && shortlist.length === 0 && (
-                  <div className="px-6 py-8 text-center text-slate-600">
-                    No targeted investors yet.
-                  </div>
-                )}
+                    {!error && data && shortlist.length === 0 && (
+                      <div className="px-6 py-8 text-center text-slate-600">
+                        No targeted investors yet.
+                      </div>
+                    )}
 
                 {!error && data && shortlistState.length > 0 && (
                   <table className="w-full table-fixed">
@@ -265,7 +335,9 @@ export default function FundraisingPage() {
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                       {shortlistState.map((inv) => (
-                        <tr key={inv.id} className="hover:bg-gray-50">
+                        <tr key={inv.id} className="hover:bg-gray-50 cursor-pointer"
+                          onClick={() => handleInvestorClick(inv.id)}
+                        >
                           <td className="w-[16%] lg:w-[16%] xl:w-[17%] 2xl:w-[18%] pl-4 py-4 px-4">
                             <Tooltip content={inv.name}>
                               <div 
@@ -358,6 +430,8 @@ export default function FundraisingPage() {
                       ))}
                     </tbody>
                   </table>
+                    )}
+                  </>
                 )}
               </div>
             </div>
