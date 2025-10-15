@@ -42,6 +42,8 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
   const [showFloatingButton, setShowFloatingButton] = useState(false);
   const [buttonPosition, setButtonPosition] = useState({ top: 0, left: 0 });
   const [attachments, setAttachments] = useState<File[]>([]);
+  const [highlightedText, setHighlightedText] = useState('');
+  const [highlightRange, setHighlightRange] = useState<any>(null);
   const editorRef = useRef<HTMLDivElement>(null);
   const quillRef = useRef<any>(null);
   const quillContentRef = useRef<HTMLDivElement | null>(null);
@@ -58,9 +60,26 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
   const { openModal, closeModal, isModalOpen } = useModal();
   const isAIModalOpen = isModalOpen('ai-edit-modal');
 
+  const removeCustomHighlight = () => {
+    if (!quillRef.current || !highlightRange) return;
+
+    const quillEditor = quillRef.current.getEditor();
+    if (!quillEditor) return;
+
+    // Remove the custom highlight
+    quillEditor.formatText(highlightRange.index, highlightRange.length, 'background', false);
+    quillEditor.formatText(highlightRange.index, highlightRange.length, 'color', false);
+
+    // Clear highlight state
+    setHighlightedText('');
+    setHighlightRange(null);
+  };
+
   // Clear selection when modal closes
   useEffect(() => {
     if (!isAIModalOpen) {
+      // Remove custom highlight when modal closes
+      removeCustomHighlight();
       setSelectedText('');
       setSelectedRange(null);
     }
@@ -366,9 +385,31 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
     }
   };
 
+  const createCustomHighlight = () => {
+    if (!quillRef.current || !selectedRange) return;
+    
+    const quillEditor = quillRef.current.getEditor();
+    if (!quillEditor) return;
+
+    // Store the highlight info
+    setHighlightedText(selectedText);
+    setHighlightRange(selectedRange);
+
+    // Create a custom highlight by wrapping the text with a span
+    const delta = quillEditor.getContents(selectedRange.index, selectedRange.length);
+
+    // Insert a custom highlight span with default selection colors
+    quillEditor.formatText(selectedRange.index, selectedRange.length, 'background', '#b0d3fd');
+    quillEditor.formatText(selectedRange.index, selectedRange.length, 'color', 'black');
+  };
+
   const handleEditWithAI = () => {
+    // Create custom highlight before opening modal
+    createCustomHighlight();
+
     openModal('ai-edit-modal', () => {
-      // Modal closed - no state updates here to avoid conflicts
+      // Modal closed - remove highlight
+      removeCustomHighlight();
     });
     setShowFloatingButton(false);
   };
