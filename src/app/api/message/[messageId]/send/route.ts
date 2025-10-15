@@ -34,6 +34,14 @@ export async function POST(
 
     console.log('=== FORWARDING TO BACKEND ===');
     console.log('Attachments being sent to backend:', attachments);
+    console.log('FormData entries being sent to backend:');
+    for (const [key, value] of formData.entries()) {
+      if (value instanceof File) {
+        console.log(`  ${key}: File(${value.name}, ${value.size} bytes, ${value.type})`);
+      } else {
+        console.log(`  ${key}: ${value}`);
+      }
+    }
 
     // Create FormData for backend request
     const backendFormData = new FormData();
@@ -43,11 +51,29 @@ export async function POST(
       const attachment = formData.get(`attachment_${i}`);
       if (attachment instanceof File) {
         backendFormData.append(`attachment_${i}`, attachment);
+        console.log(`Added attachment_${i}:`, attachment.name, attachment.size, attachment.type);
       }
     }
     
     // Add attachments metadata
     backendFormData.append('attachments', JSON.stringify(attachments));
+    
+    // Add all other form data fields
+    for (const [key, value] of formData.entries()) {
+      if (key !== 'attachments' && !key.startsWith('attachment_')) {
+        backendFormData.append(key, value);
+      }
+    }
+
+    console.log('=== SENDING TO BACKEND ===');
+    console.log('Backend FormData entries:');
+    for (const [key, value] of backendFormData.entries()) {
+      if (value instanceof File) {
+        console.log(`  ${key}: File(${value.name}, ${value.size} bytes, ${value.type})`);
+      } else {
+        console.log(`  ${key}: ${value}`);
+      }
+    }
 
     // Forward the request to the backend send endpoint /api/message/${email.id}/send
     const backendResponse = await fetch(getApiUrl(`/api/message/${messageId}/send`), {
