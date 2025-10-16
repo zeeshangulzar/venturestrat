@@ -8,8 +8,8 @@ import EmailTabsManager from '@components/EmailTabsManager'
 import InvestorStatusDropdown from '@components/InvestorStatusDropdown'
 import Tooltip from '@components/Tooltip'
 import Loader from '@components/Loader'
-import InvestorDetails from '@components/InvestorDetails'
-import { fetchUserData, getApiUrl } from '@lib/api'
+import { fetchUserData } from '@lib/api'
+import InvestorDetailsPage from '@components/InvestorDetailsPage'
 
 export default function FundraisingPage() {
   const { user } = useUser();
@@ -50,7 +50,6 @@ export default function FundraisingPage() {
 
   // State for selected investor
   const [selectedInvestor, setSelectedInvestor] = useState<any>(null);
-  const [selectedInvestorLoading, setSelectedInvestorLoading] = useState(false);
 
   // State for full-page loader
   const [showFullPageLoader, setShowFullPageLoader] = useState(true);
@@ -63,11 +62,6 @@ export default function FundraisingPage() {
     setShortlistState(shortlist);
   }, [shortlist.length, shortlist.map(inv => inv.id).join(',')]);
 
-  // Debug selected investor state
-  useEffect(() => {
-    console.log('selectedInvestor state changed:', selectedInvestor);
-    console.log('selectedInvestorLoading state changed:', selectedInvestorLoading);
-  }, [selectedInvestor, selectedInvestorLoading]);
 
   // Hide full-page loader when table is ready with timeout
   useEffect(() => {
@@ -109,32 +103,10 @@ export default function FundraisingPage() {
   };
 
   // Function to handle investor selection
-  const handleInvestorClick = async (investorId: string) => {
+  const handleInvestorClick = (investorId: string) => {
     console.log('Investor clicked:', investorId);
-    setSelectedInvestorLoading(true);
-    try {
-      const response = await fetch(getApiUrl(`/api/investors/${investorId}`), {
-        method: 'GET',
-        headers: {
-          'ngrok-skip-browser-warning': 'true',
-        },
-      });
-      if (response.ok) {
-        const responseData = await response.json();
-        console.log('API response received:', responseData);
-        // The API returns data nested under 'investor' property
-        const investorData = responseData.investor || responseData;
-        console.log('Investor data extracted:', investorData);
-        setSelectedInvestor(investorData);
-      } else {
-        const errorText = await response.text();
-        console.error('Failed to fetch investor data:', response.status, response.statusText, errorText);
-      }
-    } catch (error) {
-      console.error('Error fetching investor data:', error);
-    } finally {
-      setSelectedInvestorLoading(false);
-    }
+    // Set the investor ID - the InvestorDetailsPage component will handle fetching the data
+    setSelectedInvestor({ id: investorId });
   };
 
   // Function to go back to investor list
@@ -287,16 +259,10 @@ export default function FundraisingPage() {
               {/* Table Content with Scrollable Container */}
               <div ref={tableScrollContainerRef} className="max-h-[400px] overflow-auto">
                 {selectedInvestor ? (
-                  // Individual investor view
-                  <div className="p-6">
-                    {selectedInvestorLoading ? (
-                      <div className="flex justify-center items-center py-8">
-                        <Loader />
-                      </div>
-                    ) : (
-                      <InvestorDetails investor={selectedInvestor} />
-                    )}
-                  </div>
+                  // Individual investor view - render the actual investor page component
+                  <InvestorDetailsPage 
+                    investorId={selectedInvestor.id}
+                  />
                 ) : (
                   // Investor list view
                   <>
