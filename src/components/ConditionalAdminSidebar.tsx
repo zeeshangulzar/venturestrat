@@ -1,7 +1,7 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { SignedIn } from '@clerk/nextjs';
+// import { SignedIn } from '@clerk/nextjs';
 import AdminSidebar from './AdminSidebar';
 
 export default function ConditionalAdminSidebar() {
@@ -12,10 +12,10 @@ export default function ConditionalAdminSidebar() {
   }
 
   return (
-    <SignedIn>
+    // <SignedIn>
       <div className="hidden lg:block">
         <AdminSidebar />
       </div>
-    </SignedIn>
+    // </SignedIn>
   );
 }
