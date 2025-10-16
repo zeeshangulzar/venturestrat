@@ -345,7 +345,9 @@ export default function FundraisingPage() {
                             </Tooltip>
                           </td>
                           <td className="w-[36%] lg:w-[39%] xl:w-[32%] 2xl:w-[24%] py-4 pr-1">
-                            <div className="flex gap-[8px] lg:gap-[6px] xl:gap-[10px] items-center flex-wrap lg:flex-nowrap xl:flex-wrap">
+                            <div className="flex gap-[8px] lg:gap-[6px] xl:gap-[10px] items-center flex-wrap lg:flex-nowrap xl:flex-wrap"
+                              onClick={(e) => e.stopPropagation()}
+                            >
                               <InvestorStatusDropdown 
                                 status={inv.status}
                                 shortlistId={inv.shortlistId}
