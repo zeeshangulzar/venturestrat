@@ -209,12 +209,6 @@ export async function POST(
 
     console.log('Email data with attachments:', JSON.stringify(emailData, null, 2));
 
-    // Send email via SendGrid
-    const sgMail = require('@sendgrid/mail');
-    sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-    
-    await sgMail.send(emailData);
-
     // Update message status to SENT
     const updateResponse = await fetch(getApiUrl(`/api/message/${messageId}`), {
       method: 'PUT',
