@@ -1,10 +1,15 @@
+import { checkRole } from '@utils/roles';
+import { redirect } from 'next/navigation';
 import AdminSidebar from '@components/AdminSidebar';
 
-export default function AdminLayout({
+export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const isAdmin = await checkRole('admin');
+  if (!isAdmin) redirect('/');
+
   return (
     <div className="flex min-h-screen bg-gray-50">
       {/* Admin Sidebar */}
