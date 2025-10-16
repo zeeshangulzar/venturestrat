@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { SignOutButton } from '@clerk/nextjs';
+import { SignOutButton, useUser } from '@clerk/nextjs';
 
 // Import custom icons
 import HomeIcon from './icons/HomeIcon';
@@ -26,6 +26,7 @@ import { useUserCompany } from '@hooks/useUserCompany';
 // Admin Sidebar component
 const AdminSidebar = () => {
   const pathname = usePathname(); // Get the current pathname
+  const { isSignedIn } = useUser(); // Check if user is authenticated
   const { companyName, companyLogo, userProfileImage, isLoading } = useUserCompany(); // Get user company data
 
   // Helper function to apply active class based on current route
@@ -89,12 +90,12 @@ const AdminSidebar = () => {
           )}
           <div className="flex flex-col flex-1">
             <span className="font-semibold text-[14px] text-white">
-              {isLoading ? 'Loading...' : companyName}
+              Admin Panel
             </span>
-            <div className="flex items-center gap-1">
+            {/* <div className="flex items-center gap-1">
               <span className="h-2 w-2 rounded-full bg-green-500"></span>
               <p className="text-white/70 text-xs">Free Trial</p>
-            </div>
+            </div> */}
           </div>
           <svg 
             className="w-4 h-4 text-white/60 flex-shrink-0" 
@@ -232,14 +233,16 @@ const AdminSidebar = () => {
             <span className='font-medium text-[14px]'>Settings</span>
           </div>
         </div> */}
-        <SignOutButton redirectUrl="/sign-in">
-          <button className="ml-2.5 mr-2.5 block text-lg py-2 rounded-lg transition-colors cursor-pointer text-white/80 hover:text-white hover:bg-white/10 w-full text-left pl-6">
-            <div className="flex items-center">
-              <LogoutIcon className="h-6 w-6 mr-2" />
-              <span className='font-medium text-[14px]'>Log Out</span>
-            </div>
-          </button>
-        </SignOutButton>
+        {isSignedIn &&
+          <SignOutButton redirectUrl="/sign-in">
+            <button className="ml-2.5 mr-2.5 block text-lg py-2 rounded-lg transition-colors cursor-pointer text-white/80 hover:text-white hover:bg-white/10 w-full text-left pl-6">
+              <div className="flex items-center">
+                <LogoutIcon className="h-6 w-6 mr-2" />
+                <span className='font-medium text-[14px]'>Log Out</span>
+              </div>
+            </button>
+          </SignOutButton>
+        }
       </div>
     </div>
   );
