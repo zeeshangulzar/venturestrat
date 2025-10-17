@@ -55,8 +55,14 @@ export default function EmailTabsManager({ userId, refreshTrigger, selectEmailId
         headers: { 'Content-Type': 'application/json' },
       });
 
+      const answeredResponse = await fetch(getApiUrl(`/api/messages/answered/${userId}`), {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
       let draftCount = 0;
       let sentCount = 0;
+      let answeredCount = 0;
 
       if (draftResponse.ok) {
         const draftData = await draftResponse.json();
@@ -67,12 +73,16 @@ export default function EmailTabsManager({ userId, refreshTrigger, selectEmailId
         const sentData = await sentResponse.json();
         sentCount = sentData.data?.length || sentData.count || 0;
       }
+      if (answeredResponse.ok) {
+        const answeredData = await answeredResponse.json();
+        answeredCount = answeredData.data?.length || answeredData.count || 0;
+      }
 
       setCounts({
         all: draftCount,
         sent: sentCount,
         opened: 0, // Placeholder for future implementation
-        answered: 0, // Placeholder for future implementation
+        answered: answeredCount, // Placeholder for future implementation
       });
     } catch (error) {
       console.error('Error fetching email counts:', error);
@@ -227,17 +237,17 @@ export default function EmailTabsManager({ userId, refreshTrigger, selectEmailId
         )}
         
         {activeSection === 'answered' && (
-          <div className="flex items-center justify-center h-full">
-            <div className="text-center">
-              <div className="text-green-400 mb-4">
-                <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Answered Emails</h3>
-              <p className="text-gray-500">This section will show emails that have received responses.</p>
-            </div>
-          </div>
+          <EmailManagementInterface 
+            userId={userId} 
+            mode="answered" 
+            refreshTrigger={refreshTrigger} 
+            onEmailSent={handleEmailSent}
+            onSaveStart={handleSaveStart}
+            onSaveEnd={handleSaveEnd}
+            selectEmailId={undefined}
+            onSelectEmailProcessed={handleSelectEmailProcessed}
+            onSaveRefReady={handleSaveRefReady}
+          />
         )}
       </div>
     </MailTabs>
