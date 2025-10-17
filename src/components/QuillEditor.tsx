@@ -475,6 +475,8 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
 
   const handleAddNew = (text: string) => {
     insertTextAtCursor(text);
+    // Remove custom highlight after adding new text
+    removeCustomHighlight();
     // Clear the selection after adding new text
     if (quillRef.current) {
       const quillEditor = quillRef.current.getEditor();
@@ -487,6 +489,8 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
 
   const handleReplace = (text: string) => {
     replaceSelectedText(text);
+    // Remove custom highlight after replacing text
+    removeCustomHighlight();
   };
 
   if (!isClient || !ReactQuill) {
