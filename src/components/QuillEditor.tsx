@@ -2,6 +2,20 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import 'react-quill/dist/quill.snow.css';
+import '../styles/quill-fonts.css';
+const EMAIL_SAFE_FONTS = [
+  'sans-serif',
+  'serif',
+  'monospace',
+  'arial',
+  'georgia',
+  'times-new-roman',
+  'tahoma',
+  'verdana',
+  'courier-new',
+] as const;
+
+const FONT_PICKER_OPTIONS: (string | false)[] = [false, ...EMAIL_SAFE_FONTS];
 import AIEditModal from './AIEditModal';
 import QuillAISelectionHandler from './QuillAISelectionHandler';
 import { useModal } from '../contexts/ModalContext';
@@ -104,26 +118,10 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
     }
   }, [isClient]);
 
-  // Default modules configuration - UPDATED with all fonts
+  // Default modules configuration - email safe fonts
   const defaultModules = {
     toolbar: [
-      [{ 'font': [
-        false, // default font
-        'sans-serif',
-        'serif', 
-        'monospace',
-        'arial',
-        'times-new-roman',
-        'courier-new',
-        'georgia',
-        'verdana',
-        'helvetica',
-        'tahoma',
-        'trebuchet-ms',
-        'comic-sans-ms',
-        'impact',
-        'lucida-console'
-      ] }],
+      [{ font: FONT_PICKER_OPTIONS }],
       [{ 'size': ['small', false, 'large', 'huge'] }],
       ['bold', 'italic', 'underline', 'strike'],
       [{ 'color': [] }, { 'background': [] }],
@@ -150,22 +148,7 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
         
         // Register custom fonts
         const Font = Quill.import('formats/font');
-        Font.whitelist = [
-          'sans-serif',
-          'serif',
-          'monospace',
-          'arial',
-          'times-new-roman',
-          'courier-new',
-          'georgia',
-          'verdana',
-          'helvetica',
-          'tahoma',
-          'trebuchet-ms',
-          'comic-sans-ms',
-          'impact',
-          'lucida-console'
-        ];
+        Font.whitelist = Array.from(EMAIL_SAFE_FONTS);
         Quill.register(Font, true);
         
         setReactQuill(() => module.default);
