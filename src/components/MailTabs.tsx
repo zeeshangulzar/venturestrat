@@ -29,7 +29,7 @@ export default function MailTabs({ activeSection, onSectionChange, children, cou
     { type: 'all', label: 'Drafts', count: counts.all || 0, isClickable: true },
     { type: 'sent', label: 'Sent', count: counts.sent || 0, isClickable: true },
     // { type: 'opened', label: 'Opened', count: counts.opened || 0, isClickable: false }, Hide for now
-    { type: 'answered', label: 'Answered', count: counts.answered || 0, isClickable: false },
+    { type: 'answered', label: 'Answered', count: counts.answered || 0, isClickable: true },
   ];
   return (
     <div className='p-[15px] h-full flex flex-col pt-0'>

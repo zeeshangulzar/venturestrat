@@ -19,7 +19,7 @@ interface EmailDraft {
 
 interface EmailManagementInterfaceProps {
   userId: string;
-  mode?: 'draft' | 'sent';
+  mode?: 'draft' | 'sent' | 'answered';
   refreshTrigger?: number; // Add refresh trigger prop
   onEmailSent?: (investorId?: string) => void; // Add callback for when email is sent
   onSaveStart?: () => void; // Add callback for when save starts
@@ -113,9 +113,24 @@ export default function EmailManagementInterface({ userId, mode = 'draft', refre
 
   const performFetch = async () => {
     try {
-      const endpoint = mode === 'sent' 
-        ? `/api/messages/sent/${userId}` 
-        : `/api/messages/draft/${userId}`;
+      let endpoint;
+
+      switch (mode) {
+        case 'sent':
+          endpoint = `/api/messages/sent/${userId}`;
+          break;
+
+        case 'draft':
+          endpoint = `/api/messages/draft/${userId}`;
+          break;
+
+        case 'answered':
+          endpoint = `/api/messages/answered/${userId}`;
+          break;
+
+        default:
+          throw new Error(`Unknown mode: ${mode}`);
+      }
         
       const response = await fetch(getApiUrl(endpoint), {
         method: 'GET',
@@ -294,7 +309,7 @@ export default function EmailManagementInterface({ userId, mode = 'draft', refre
         }
 
         // For sent emails, just show cached data immediately
-        if (mode === 'sent') {
+        if (mode === 'sent' || mode === 'answered') {
           const emailFromList = drafts.find(draft => draft.id === selectedEmailId);
           if (emailFromList) {
             setSelectedEmail(emailFromList);
@@ -531,7 +546,7 @@ export default function EmailManagementInterface({ userId, mode = 'draft', refre
         onEmailSaveStart={mode === 'draft' ? handleEmailSaveStart : undefined}
         onEmailSaveEnd={mode === 'draft' ? handleEmailSaveEnd : undefined}
         onEmailRefresh={mode === 'draft' ? refreshEmailFromBackend : undefined}
-        readOnly={mode === 'sent'}
+        readOnly={mode === 'sent' || mode === 'answered'}
         loading={isFetchingIndividualEmail || isTransitioning}
         saveRef={saveRef}
       />
