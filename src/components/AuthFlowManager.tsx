@@ -170,7 +170,14 @@ const AuthFlowManager: React.FC<AuthFlowManagerProps> = ({ children }) => {
           (typeof account.provider === 'string' && account.provider.includes('google')),
       ) ?? false;
 
-    if (!hasGoogleAccount) {
+    const hasMicrosoftAccount =
+      user.externalAccounts?.some(
+        account =>
+          account.provider === 'microsoft' ||
+          (typeof account.provider === 'string' && account.provider.includes('microsoft')),
+      ) ?? false;
+
+    if (!hasGoogleAccount && !hasMicrosoftAccount) {
       gmailWatchAttemptRef.current = user.id;
       return;
     }
@@ -205,8 +212,44 @@ const AuthFlowManager: React.FC<AuthFlowManagerProps> = ({ children }) => {
       }
     };
 
+    const startMicrosoftWatch = async () => {
+      try {
+        console.log('Initializing Microsoft Graph watch for user', user.id);
+        const response = await fetch('/api/microsoft/watch', {
+          method: 'POST',
+          credentials: 'include',
+        });
+
+        if (!response.ok) {
+          const details = await response.json().catch(() => ({}));
+          console.error('Failed to initialize Microsoft Graph watch', details);
+          gmailWatchAttemptRef.current = null;
+        } else {
+          const payload = await response.json().catch(() => null);
+          console.log('Microsoft Graph watch initialized', payload);
+          try {
+            await user.reload?.();
+          } catch (reloadError) {
+            console.warn(
+              'Failed to reload user after Microsoft Graph watch initialization',
+              reloadError,
+            );
+          }
+        }
+      } catch (error) {
+        console.error('Unexpected error starting Microsoft Graph watch', error);
+        gmailWatchAttemptRef.current = null;
+      }
+    };
+
     gmailWatchAttemptRef.current = user.id;
-    void startGmailWatch();
+    
+    // Start the appropriate watch based on the user's OAuth provider
+    if (hasGoogleAccount) {
+      void startGmailWatch();
+    } else if (hasMicrosoftAccount) {
+      void startMicrosoftWatch();
+    }
   }, [isLoaded, user]);
 
   // Show loading screen only when processing authentication, checking onboarding status, or redirecting

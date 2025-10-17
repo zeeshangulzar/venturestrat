@@ -11,6 +11,10 @@ export default function SSOCallback() {
   const [roleSet, setRoleSet] = useState(false)
 
   useEffect(() => {
+    console.log('SSO Callback - User state:', { user: !!user, isLoaded, roleSet })
+    console.log('SSO Callback - Current URL:', window.location.href)
+    console.log('SSO Callback - URL params:', window.location.search)
+    
     if (isLoaded && user && !roleSet) {
       const ensureDefaultRole = async () => {
         try {
