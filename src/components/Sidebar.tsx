@@ -24,6 +24,7 @@ import UsersIcon from './icons/UsersIcon';
 import { useRole } from '@hooks/useRole'
 import { useUserCompany } from '@hooks/useUserCompany';
 import FundraisingIcon from './icons/Fundraising';
+import InitialsAvatar from './InitialsAvatar';
 
 // Sidebar component
 const Sidebar = () => {
@@ -116,14 +117,12 @@ const Sidebar = () => {
               alt={`${companyName} logo`}
               className="w-6 h-6 rounded object-contain"
             />
-          ) : userProfileImage ? (
-            <img 
-              src={userProfileImage} 
-              alt={`${companyName} profile`}
-              className="w-6 h-6 rounded-full object-cover"
-            />
           ) : (
-            <RIcon />
+            <InitialsAvatar 
+              name={companyName || 'Company'} 
+              size="sm"
+              textColor="#ffffff"
+            />
           )}
           <div className="flex flex-col flex-1">
             <span className="font-semibold text-[14px] text-white">
