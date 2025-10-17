@@ -64,7 +64,7 @@ export default function InvestorDetailsPage({
     fetchInvestorDetails();
   }, [investorId]);
 
-  if (loading) return <p>Loading...</p>;
+  if (loading) return <p className='m-5 text-center'>Loading...</p>;
   if (!investor) return <p>Investor not found</p>;
 
   const verified = investor.emails?.some((e) => e.status === 'VALID') ?? false;
