@@ -166,9 +166,8 @@ const AuthFlowManager: React.FC<AuthFlowManagerProps> = ({ children }) => {
     const hasGoogleAccount =
       user.externalAccounts?.some(
         account =>
-          account.provider === 'oauth_google' ||
           account.provider === 'google' ||
-          account.provider?.includes('google'),
+          (typeof account.provider === 'string' && account.provider.includes('google')),
       ) ?? false;
 
     if (!hasGoogleAccount) {
