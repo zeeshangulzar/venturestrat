@@ -85,6 +85,25 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
     }
   }, [isAIModalOpen]);
 
+  // Clear any existing highlights on component mount (page refresh)
+  useEffect(() => {
+    if (quillRef.current && isClient) {
+      const quillEditor = quillRef.current.getEditor();
+      if (quillEditor) {
+        // Clear any existing custom highlights on page load
+        // Use a timeout to ensure Quill is fully initialized
+        setTimeout(() => {
+          const length = quillEditor.getLength();
+          if (length > 1) { // Only if there's content
+            // Remove all background and color formatting that might be from highlights
+            quillEditor.formatText(0, length - 1, 'background', false);
+            quillEditor.formatText(0, length - 1, 'color', false);
+          }
+        }, 100);
+      }
+    }
+  }, [isClient]);
+
   // Default modules configuration - UPDATED with all fonts
   const defaultModules = {
     toolbar: [
@@ -473,6 +492,14 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
 
   const handleAddNew = (text: string) => {
     insertTextAtCursor(text);
+    // Clear the selection after adding new text
+    if (quillRef.current) {
+      const quillEditor = quillRef.current.getEditor();
+      quillEditor.setSelection(null);
+    }
+    setShowFloatingButton(false);
+    setSelectedText('');
+    setSelectedRange(null);
   };
 
   const handleReplace = (text: string) => {

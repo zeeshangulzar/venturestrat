@@ -149,6 +149,13 @@ export default function FundraisingInvestorsPage() {
     }
   };
 
+  const handleSearchChange = (query: string) => {
+    setSearchQuery(query);
+    if (currentPage !== 1) {
+      setCurrentPage(1);
+    }
+  };
+
   const fetchInvestors = async () => {
     setLoading(true);
     setError(null);
@@ -219,7 +226,7 @@ export default function FundraisingInvestorsPage() {
           totalPages={pagination.totalPages}
           totalItems={pagination.totalItems}
           searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
+          onSearchChange={handleSearchChange}
         />
       </div>
 
