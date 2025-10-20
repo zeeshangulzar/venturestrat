@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { useRouter, usePathname } from 'next/navigation';
 import { useGlobalLoading } from './GlobalLoadingProvider';
@@ -20,6 +20,7 @@ const AuthFlowManager: React.FC<AuthFlowManagerProps> = ({ children }) => {
   const [isCompletingOnboarding, setIsCompletingOnboarding] = useState(false);
   const [onboardingStatus, setOnboardingStatus] = useState<boolean | null>(null);
   const [isRedirecting, setIsRedirecting] = useState(false);
+  const gmailWatchAttemptRef = useRef<string | null>(null);
 
   // Check if current route is onboarding or auth-related
   const isOnboardingRoute = pathname === '/onboarding';
@@ -145,6 +146,69 @@ const AuthFlowManager: React.FC<AuthFlowManagerProps> = ({ children }) => {
     setIsProcessingAuth(false);
   }, [user, isLoaded, router, showLoading, hideLoading, isOnboardingRoute, isAuthRoute, hasShownLoading, isCompletingOnboarding, isRedirecting, onboardingStatus]);
 
+  useEffect(() => {
+    if (!isLoaded || !user) {
+      return;
+    }
+
+    const metadata =
+      (user.publicMetadata as { gmailWatchInitialized?: boolean } | undefined) ?? {};
+
+    if (metadata.gmailWatchInitialized) {
+      gmailWatchAttemptRef.current = user.id;
+      return;
+    }
+
+    if (gmailWatchAttemptRef.current === user.id) {
+      return;
+    }
+
+    const hasGoogleAccount =
+      user.externalAccounts?.some(
+        account =>
+          account.provider === 'google' ||
+          (typeof account.provider === 'string' && account.provider.includes('google')),
+      ) ?? false;
+
+    if (!hasGoogleAccount) {
+      gmailWatchAttemptRef.current = user.id;
+      return;
+    }
+
+    const startGmailWatch = async () => {
+      try {
+        console.log('Initializing Gmail watch for user', user.id);
+        const response = await fetch('/api/gmail/watch', {
+          method: 'POST',
+          credentials: 'include',
+        });
+
+        if (!response.ok) {
+          const details = await response.json().catch(() => ({}));
+          console.error('Failed to initialize Gmail watch', details);
+          gmailWatchAttemptRef.current = null;
+        } else {
+          const payload = await response.json().catch(() => null);
+          console.log('Gmail watch initialized', payload);
+          try {
+            await user.reload?.();
+          } catch (reloadError) {
+            console.warn(
+              'Failed to reload user after Gmail watch initialization',
+              reloadError,
+            );
+          }
+        }
+      } catch (error) {
+        console.error('Unexpected error starting Gmail watch', error);
+        gmailWatchAttemptRef.current = null;
+      }
+    };
+
+    gmailWatchAttemptRef.current = user.id;
+    void startGmailWatch();
+  }, [isLoaded, user]);
+
   // Show loading screen only when processing authentication, checking onboarding status, or redirecting
   if (!isLoaded || isProcessingAuth || isRedirecting || (user && onboardingStatus === null)) {
     return null; // Let the GlobalLoadingProvider handle the loading display
@@ -158,4 +222,3 @@ const AuthFlowManager: React.FC<AuthFlowManagerProps> = ({ children }) => {
   return <>{children}</>;
 };
 export default AuthFlowManager;
-
