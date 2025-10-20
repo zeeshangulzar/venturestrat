@@ -96,19 +96,6 @@ const AdminSidebar = () => {
               <p className="text-white/70 text-xs">Free Trial</p>
             </div>
           </div>
-          <svg 
-            className="w-4 h-4 text-white/60 flex-shrink-0" 
-            fill="none" 
-            stroke="currentColor" 
-            viewBox="0 0 24 24"
-          >
-            <path 
-              strokeLinecap="round" 
-              strokeLinejoin="round" 
-              strokeWidth={2} 
-              d="M19 9l-7 7-7-7" 
-            />
-          </svg>
         </div>
       </div>
 
