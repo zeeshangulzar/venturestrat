@@ -42,6 +42,7 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
   const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [sendStatus, setSendStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [sendMessage, setSendMessage] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   
   // Debounced auto-save functionality (same pattern as settings page)
   const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -59,6 +60,26 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
   
   // Ref to track if we're setting initial data (to prevent auto-save)
   const isSettingInitialDataRef = useRef(false);
+  
+  // Email validation function
+  const validateEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const validateCCEmails = (ccValue: string): string | null => {
+    if (!ccValue.trim()) return null; // CC is optional
+    
+    const emails = ccValue.split(',').map(email => email.trim()).filter(email => email);
+    
+    for (const email of emails) {
+      if (!validateEmail(email)) {
+        return `Invalid email format: ${email}`;
+      }
+    }
+    
+    return null;
+  };
   
   // Note: QuillRef removed as we're using a wrapper component for React 19 compatibility
 
@@ -248,6 +269,14 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
       return;
     }
 
+    // Clear field error when user starts typing (same pattern as settings page)
+    if (fieldErrors[field]) {
+      setFieldErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
+    }
     
     switch (field) {
       case 'subject':
@@ -275,6 +304,15 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
       case 'cc':
         setEditedCc(value);
         currentValuesRef.current.editedCc = value;
+        
+        // Validate CC emails
+        const ccError = validateCCEmails(value);
+        if (ccError) {
+          setFieldErrors(prev => ({
+            ...prev,
+            cc: ccError
+          }));
+        }
         break;
     }
     // Use debounced auto-save (same pattern as settings page)
@@ -284,6 +322,18 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
   const handleSendEmail = async () => {
     if (!email?.id) return;
     const investorId = email.investorId;
+    
+    // Validate CC emails before sending
+    const ccError = validateCCEmails(editedCc);
+    if (ccError) {
+      setFieldErrors(prev => ({
+        ...prev,
+        cc: ccError
+      }));
+      setSendStatus('error');
+      setSendMessage('Please fix CC email validation errors before sending');
+      return;
+    }
     
     setIsSending(true);
     setSendStatus('idle');
@@ -462,15 +512,23 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
                   type="text"
                   value={editedCc}
                   onChange={(e) => handleFieldChange('cc', e.target.value)}
-                  className="ml-2 border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full max-w-md min-w-0"
+                  className={`ml-2 h-[46px] w-full max-w-md min-w-0 px-3 py-2 bg-[#F6F6F7] border rounded-[10px] focus:ring-2 focus:ring-blue-500 focus:border-blue-500 not-italic font-medium text-sm leading-6 text-[#0C2143] ${
+                    fieldErrors.cc 
+                      ? 'border-red-500 focus:border-red-500 focus:ring-red-500' 
+                      : 'border-[#EDEEEF]'
+                  }`}
                   placeholder="cc1@example.com, cc2@example.com"
                   style={{ minWidth: '200px' }}
                   title="Separate multiple emails with commas"
                 />
               </div>
-              <div className="text-xs text-gray-500 mt-1 ml-0">
-                Separate multiple emails with commas
-              </div>
+              {fieldErrors.cc ? (
+                <p className="text-red-500 text-xs mt-1 ml-2">{fieldErrors.cc}</p>
+              ) : (
+                <div className="text-xs text-gray-500 mt-1 ml-2">
+                  Separate multiple emails with commas
+                </div>
+              )}
             </div>
           )}
           
