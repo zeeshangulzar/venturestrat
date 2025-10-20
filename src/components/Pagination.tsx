@@ -1,11 +1,28 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Select, { ActionMeta, SingleValue } from 'react-select';
 
 type OptionType = {
   value: number;
   label: string;
+};
+
+// Custom hook for debouncing
+const useDebounce = (value: string, delay: number) => {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
 };
 
 type PaginationProps = {
@@ -17,6 +34,7 @@ type PaginationProps = {
   totalItems: number;
   searchQuery?: string;
   onSearchChange?: (query: string) => void;
+  searchDebounceDelay?: number; // Optional debounce delay in milliseconds
 };
 
 const Pagination: React.FC<PaginationProps> = ({
@@ -28,11 +46,36 @@ const Pagination: React.FC<PaginationProps> = ({
   totalItems,
   searchQuery = '',
   onSearchChange,
+  searchDebounceDelay = 500, // Default 500ms delay
 }) => {
   const [isClient, setIsClient] = useState(false);
+  const [localSearchQuery, setLocalSearchQuery] = useState(searchQuery);
+  const [isSearching, setIsSearching] = useState(false);
+  
+  // Debounce the search query with configurable delay
+  const debouncedSearchQuery = useDebounce(localSearchQuery, searchDebounceDelay);
 
   useEffect(() => {
     setIsClient(true);
+  }, []);
+
+  // Update the parent component when debounced value changes
+  useEffect(() => {
+    if (onSearchChange && debouncedSearchQuery !== searchQuery) {
+      onSearchChange(debouncedSearchQuery);
+      setIsSearching(false);
+    }
+  }, [debouncedSearchQuery, onSearchChange, searchQuery]);
+
+  // Update local state when searchQuery prop changes (e.g., from external filters)
+  useEffect(() => {
+    setLocalSearchQuery(searchQuery);
+  }, [searchQuery]);
+
+  // Handle search input change
+  const handleSearchChange = useCallback((value: string) => {
+    setLocalSearchQuery(value);
+    setIsSearching(true);
   }, []);
 
   // Options for the items per page dropdown
@@ -68,25 +111,29 @@ const Pagination: React.FC<PaginationProps> = ({
               <input
                 type="text"
                 placeholder="Search investors..."
-                value={searchQuery}
-                onChange={(e) => onSearchChange(e.target.value)}
+                value={localSearchQuery}
+                onChange={(e) => handleSearchChange(e.target.value)}
                 className="w-64 px-4 py-2 pl-10 pr-4 text-sm border border-[#EDEEEF] rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg
-                  className="h-4 w-4 text-gray-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
+                {isSearching ? (
+                  <div className="animate-spin h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+                ) : (
+                  <svg
+                    className="h-4 w-4 text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                    />
+                  </svg>
+                )}
               </div>
             </div>
           )}
