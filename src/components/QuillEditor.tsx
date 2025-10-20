@@ -3,16 +3,126 @@
 import React, { useState, useEffect, useRef } from 'react';
 import 'react-quill/dist/quill.snow.css';
 import '../styles/quill-fonts.css';
+/**
+ * Comprehensive font list for Quill Editor with email client compatibility
+ * 
+ * This list includes:
+ * - Generic font families (sans-serif, serif, monospace)
+ * - Web-safe fonts (universally supported across email clients)
+ * - Microsoft Office fonts (Outlook compatibility)
+ * - Apple system fonts (Mac compatibility)
+ * - Google Fonts (Gmail and modern email client support)
+ * - Specialty fonts (script, display, monospace variants)
+ * 
+ * All fonts include proper fallbacks for maximum compatibility.
+ * Web fonts are loaded via Google Fonts in layout.tsx
+ */
 const EMAIL_SAFE_FONTS = [
+  // Generic font families
   'sans-serif',
   'serif',
   'monospace',
+  
+  // Web-safe fonts (universally supported)
   'arial',
+  'helvetica',
+  'verdana',
+  'tahoma',
+  'trebuchet-ms',
   'georgia',
   'times-new-roman',
-  'tahoma',
-  'verdana',
   'courier-new',
+  'lucida-console',
+  'lucida-sans-unicode',
+  
+  // Additional web-safe fonts
+  'calibri',
+  'cambria',
+  'candara',
+  'consolas',
+  'constantia',
+  'corbel',
+  'garamond',
+  'impact',
+  'palatino',
+  'book-antiqua',
+  'century-gothic',
+  'franklin-gothic-medium',
+  'gill-sans',
+  'helvetica-neue',
+  'lucida-grande',
+  'ms-sans-serif',
+  'ms-serif',
+  'segoe-ui',
+  'trebuchet-ms',
+  'comic-sans-ms',
+  'arial-black',
+  'arial-narrow',
+  'arial-rounded-mt-bold',
+  'baskerville',
+  'bodoni-mt',
+  'brush-script-mt',
+  'copperplate',
+  'copperplate-gothic-bold',
+  'didot',
+  'futura',
+  'geneva',
+  'goudy-old-style',
+  'hoefler-text',
+  'lucida-bright',
+  'lucida-calligraphy',
+  'lucida-handwriting',
+  'lucida-typewriter',
+  'monaco',
+  'optima',
+  'papyrus',
+  'rockwell',
+  'snell-roundhand',
+  'symbol',
+  'webdings',
+  'wingdings',
+  'wingdings-2',
+  'wingdings-3',
+  
+  // Google Fonts (supported in Gmail and some clients)
+  'roboto',
+  'open-sans',
+  'lato',
+  'montserrat',
+  'source-sans-pro',
+  'raleway',
+  'pt-sans',
+  'oswald',
+  'lora',
+  'merriweather',
+  'playfair-display',
+  'nunito',
+  'dancing-script',
+  'indie-flower',
+  'pacifico',
+  'lobster',
+  'shadows-into-light',
+  'kaushan-script',
+  'righteous',
+  'bangers',
+  'fredoka-one',
+  'comfortaa',
+  'quicksand',
+  'poppins',
+  'ubuntu',
+  'noto-sans',
+  'noto-serif',
+  'crimson-text',
+  'libre-baskerville',
+  'work-sans',
+  'inter',
+  'dm-sans',
+  'dm-serif',
+  'space-grotesk',
+  'space-mono',
+  'jetbrains-mono',
+  'fira-code',
+  'source-code-pro'
 ] as const;
 
 const FONT_PICKER_OPTIONS: (string | false)[] = [false, ...EMAIL_SAFE_FONTS];
@@ -150,6 +260,8 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
         const Font = Quill.import('formats/font');
         Font.whitelist = Array.from(EMAIL_SAFE_FONTS);
         Quill.register(Font, true);
+        console.log('Registered fonts:', Font.whitelist);
+        console.log('Font whitelist length:', Font.whitelist.length);
         
         setReactQuill(() => module.default);
         setIsClient(true);
@@ -515,10 +627,22 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
   return (
     <div className={`quill-editor-wrapper relative ${className}`}>
       <div ref={editorRef} className="relative z-10">
-        <ReactQuill
-          ref={quillRef}
-          value={value}
-          onChange={(content: string) => onChange(content)}
+          <ReactQuill
+            ref={quillRef}
+            value={value}
+            onChange={(content: string) => {
+              console.log('Quill content changed:', content);
+              console.log('Content length:', content.length);
+              // Check if content contains font classes
+              if (content.includes('ql-font-')) {
+                console.log('Font classes detected in content!');
+                const fontMatches = content.match(/ql-font-[a-zA-Z0-9-]+/g);
+                if (fontMatches) {
+                  console.log('Font classes found:', fontMatches);
+                }
+              }
+              onChange(content);
+            }}
           modules={modules || defaultModules}
           formats={formats || defaultFormats}
           placeholder={placeholder}
