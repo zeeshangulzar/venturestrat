@@ -10,6 +10,7 @@ interface UserCompanyData {
   isLoading: boolean;
   error: string | null;
   refetch: () => void;
+  refreshLogoUrl: () => Promise<void>;
 }
 
 export const useUserCompany = (): UserCompanyData => {
@@ -21,7 +22,8 @@ export const useUserCompany = (): UserCompanyData => {
     userProfileImage: undefined,
     isLoading: true,
     error: null,
-    refetch: () => {}
+    refetch: () => {},
+    refreshLogoUrl: async () => {}
   });
 
   const loadUserCompanyData = async () => {
@@ -33,13 +35,13 @@ export const useUserCompany = (): UserCompanyData => {
             user?: { 
               publicMetaData?: { 
                 companyName?: string;
-                companyLogo?: string;
-              }; 
+              };
+              companyLogo?: string;
             }; 
             publicMetaData?: { 
               companyName?: string;
-              companyLogo?: string;
-            }; 
+            };
+            companyLogo?: string;
           } | null;
 
           if (userData === null) {
@@ -49,7 +51,8 @@ export const useUserCompany = (): UserCompanyData => {
               companyLogo: undefined,
               isLoading: false,
               error: null,
-              refetch: loadUserCompanyData
+              refetch: loadUserCompanyData,
+              refreshLogoUrl: async () => {}
             });
             return;
           }
@@ -59,11 +62,12 @@ export const useUserCompany = (): UserCompanyData => {
           
           setCompanyData({
             companyName: publicMetaData.companyName || 'RTYST',
-            companyLogo: publicMetaData.companyLogo,
+            companyLogo: actualUserData.companyLogo,
             userProfileImage: user.imageUrl,
             isLoading: false,
             error: null,
-            refetch: loadUserCompanyData
+            refetch: loadUserCompanyData,
+            refreshLogoUrl: async () => {}
           });
         } catch (error) {
           console.error('Failed to load user company data:', error);
@@ -73,7 +77,8 @@ export const useUserCompany = (): UserCompanyData => {
             userProfileImage: user?.imageUrl,
             isLoading: false,
             error: error instanceof Error ? error.message : 'Failed to load company data',
-            refetch: loadUserCompanyData
+            refetch: loadUserCompanyData,
+            refreshLogoUrl: async () => {}
           });
         }
       };
@@ -89,7 +94,8 @@ export const useUserCompany = (): UserCompanyData => {
         userProfileImage: undefined,
         isLoading: false,
         error: null,
-        refetch: loadUserCompanyData
+        refetch: loadUserCompanyData,
+        refreshLogoUrl: async () => {}
       });
     }
   }, [isLoaded, user?.id, refreshTrigger]);
