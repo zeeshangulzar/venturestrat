@@ -494,51 +494,6 @@
   font-family: 'Snell Roundhand', cursive;
 }
 
-.ql-snow .ql-picker.ql-font .ql-picker-item[data-value="symbol"]::before,
-.ql-snow .ql-picker.ql-font .ql-picker-label[data-value="symbol"]::before {
-  content: 'Symbol';
-  font-family: Symbol, sans-serif;
-}
-.ql-font-symbol {
-  font-family: Symbol, sans-serif;
-}
-
-.ql-snow .ql-picker.ql-font .ql-picker-item[data-value="webdings"]::before,
-.ql-snow .ql-picker.ql-font .ql-picker-label[data-value="webdings"]::before {
-  content: 'Webdings';
-  font-family: Webdings, sans-serif;
-}
-.ql-font-webdings {
-  font-family: Webdings, sans-serif;
-}
-
-.ql-snow .ql-picker.ql-font .ql-picker-item[data-value="wingdings"]::before,
-.ql-snow .ql-picker.ql-font .ql-picker-label[data-value="wingdings"]::before {
-  content: 'Wingdings';
-  font-family: Wingdings, sans-serif;
-}
-.ql-font-wingdings {
-  font-family: Wingdings, sans-serif;
-}
-
-.ql-snow .ql-picker.ql-font .ql-picker-item[data-value="wingdings-2"]::before,
-.ql-snow .ql-picker.ql-font .ql-picker-label[data-value="wingdings-2"]::before {
-  content: 'Wingdings 2';
-  font-family: 'Wingdings 2', sans-serif;
-}
-.ql-font-wingdings-2 {
-  font-family: 'Wingdings 2', sans-serif;
-}
-
-.ql-snow .ql-picker.ql-font .ql-picker-item[data-value="wingdings-3"]::before,
-.ql-snow .ql-picker.ql-font .ql-picker-label[data-value="wingdings-3"]::before {
-  content: 'Wingdings 3';
-  font-family: 'Wingdings 3', sans-serif;
-}
-.ql-font-wingdings-3 {
-  font-family: 'Wingdings 3', sans-serif;
-}
-
 /* Google Fonts (supported in Gmail and some clients) */
 .ql-snow .ql-picker.ql-font .ql-picker-item[data-value="roboto"]::before,
 .ql-snow .ql-picker.ql-font .ql-picker-label[data-value="roboto"]::before {

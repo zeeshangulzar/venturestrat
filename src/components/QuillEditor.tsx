@@ -78,12 +78,7 @@ const EMAIL_SAFE_FONTS = [
   'papyrus',
   'rockwell',
   'snell-roundhand',
-  'symbol',
-  'webdings',
-  'wingdings',
-  'wingdings-2',
-  'wingdings-3',
-  
+
   // Google Fonts (supported in Gmail and some clients)
   'roboto',
   'open-sans',
