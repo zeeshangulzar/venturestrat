@@ -37,7 +37,7 @@ const Sidebar = () => {
   // Auto-open fundraising dropdown if on CRM or Investors pages
   useEffect(() => {
     if (pathname === '/fundraising/crm' || pathname === '/fundraising/investors') {
-      setIsFundraisingOpen(true);
+      setTimeout(() => setIsFundraisingOpen(true), 0);
     }
   }, [pathname]);
 
