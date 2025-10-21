@@ -33,6 +33,8 @@ type OnboardingData = {
   lastName: string;
   companyName: string;
   siteUrl: string;
+  companyWebsite: string;
+  companyLogo: string;
   userCountry: string;
   incorporationCountry: string;
   operationalRegions: string[];
@@ -53,12 +55,15 @@ export default function SettingsPage() {
 
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [profileUploadStatus, setProfileUploadStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
+  const [logoUploadStatus, setLogoUploadStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
   const [uploadProgress, setUploadProgress] = useState(0);
   const [formData, setFormData] = useState<OnboardingData>({
     firstName: '',
     lastName: '',
     companyName: '',
     siteUrl: '',
+    companyWebsite: '',
+    companyLogo: '',
     userCountry: '',
     incorporationCountry: '',
     operationalRegions: [],
@@ -263,7 +268,9 @@ export default function SettingsPage() {
               fundingCurrency?: string; 
               currency?: string; 
             }; 
-            onboardingComplete?: boolean 
+            onboardingComplete?: boolean;
+            companyWebsite?: string;
+            companyLogo?: string;
           }; 
           publicMetaData?: { 
             companyName?: string; 
@@ -278,7 +285,9 @@ export default function SettingsPage() {
             fundingCurrency?: string; 
             currency?: string; 
           }; 
-          onboardingComplete?: boolean 
+          onboardingComplete?: boolean;
+          companyWebsite?: string;
+          companyLogo?: string;
         } | null;
         console.log('Loaded user data from backend:', userData);
         
@@ -290,6 +299,8 @@ export default function SettingsPage() {
             lastName: user.lastName || '',
             companyName: '',
             siteUrl: '',
+            companyWebsite: '',
+            companyLogo: '',
             userCountry: '',
             incorporationCountry: '',
             operationalRegions: [],
@@ -315,6 +326,8 @@ export default function SettingsPage() {
             // All other data from backend
             companyName: actualUserData.publicMetaData?.companyName || '',
             siteUrl: actualUserData.publicMetaData?.siteUrl || '',
+            companyWebsite: actualUserData.companyWebsite || '',
+            companyLogo: actualUserData.companyLogo || '',
             userCountry: actualUserData.publicMetaData?.userCountry || '',
             incorporationCountry: actualUserData.publicMetaData?.incorporationCountry || '',
             operationalRegions: actualUserData.publicMetaData?.operationalRegions || [],
@@ -337,6 +350,8 @@ export default function SettingsPage() {
             lastName: user.lastName || '',
             companyName: (metadata.companyName as string) || '',
             siteUrl: (metadata.siteUrl as string) || '',
+            companyWebsite: (metadata.companyWebsite as string) || '',
+            companyLogo: (metadata.companyLogo as string) || '',
             userCountry: (metadata.userCountry as string) || '',
             incorporationCountry: (metadata.incorporationCountry as string) || '',
             operationalRegions: (metadata.operationalRegions as string[]) || [],
@@ -387,6 +402,60 @@ export default function SettingsPage() {
       debouncedAutoSave(newData);
       return newData;
     });
+  };
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('File size must be less than 5MB');
+      return;
+    }
+
+    try {
+      setLogoUploadStatus('uploading');
+      
+      // Create FormData for file upload
+      const formData = new FormData();
+      formData.append('logo', file);
+      formData.append('userId', user?.id || '');
+
+      // Upload to backend
+      const response = await fetch(getApiUrl('/api/user/upload-logo'), {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Upload failed');
+      }
+
+      const result = await response.json();
+      
+      // Update form data with new logo URL
+      setFormData(prev => ({
+        ...prev,
+        companyLogo: result.logoUrl
+      }));
+
+      setLogoUploadStatus('success');
+      
+      // Trigger refresh to update sidebar
+      triggerRefresh();
+      
+    } catch (error) {
+      console.error('Logo upload error:', error);
+      setLogoUploadStatus('error');
+      alert('Failed to upload logo. Please try again.');
+    }
   };
 
   const handleDropdownChange = (field: keyof OnboardingData, value: string | string[]) => {
@@ -702,6 +771,90 @@ export default function SettingsPage() {
               {fieldErrors.companyName && (
                 <p className="text-red-500 text-xs mt-1 ml-1">{fieldErrors.companyName}</p>
               )}
+            </div>
+            <div>
+              <label className="not-italic font-medium text-sm leading-6 text-[#525A68] mb-2">Company Website</label>
+              <input
+                type="text"
+                name="companyWebsite"
+                value={formData.companyWebsite}
+                onChange={handleInputChange}
+                className="h-[46px] w-full px-3 py-2 bg-[#F6F6F7] border border-[#EDEEEF] rounded-[10px] focus:ring-2 focus:ring-blue-500 focus:border-blue-500 not-italic font-medium text-sm leading-6 text-[#0C2143]"
+                placeholder="https://example.com"
+              />
+            </div>
+            <div>
+              <label className="not-italic font-medium text-sm leading-6 text-[#525A68] mb-2">Company Logo</label>
+              <div className="flex items-center space-x-4">
+                <div className="relative">
+                  <div className={`w-12 h-12 rounded border border-gray-300 flex items-center justify-center overflow-hidden ${
+                    logoUploadStatus === 'uploading' ? 'opacity-50' : ''
+                  }`}>
+                    {formData.companyLogo ? (
+                      <img 
+                        src={formData.companyLogo} 
+                        alt="Company Logo" 
+                        className="w-full h-full object-contain"
+                      />
+                    ) : (
+                      <span className="text-gray-500 text-sm font-medium">
+                        {formData.companyName ? formData.companyName.charAt(0).toUpperCase() : '?'}
+                      </span>
+                    )}
+                  </div>
+                  
+                  {/* Upload Status Indicators */}
+                  {logoUploadStatus === 'uploading' && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 rounded">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    </div>
+                  )}
+                  
+                  {logoUploadStatus === 'success' && (
+                    <div className="absolute -top-2 -right-2 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                  )}
+                  
+                  {logoUploadStatus === 'error' && (
+                    <div className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
+                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="flex-1">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleLogoUpload}
+                    disabled={logoUploadStatus === 'uploading'}
+                    className={`h-[46px] w-full px-3 py-2 bg-[#F6F6F7] border border-[#EDEEEF] rounded-[10px] focus:ring-2 focus:ring-blue-500 focus:border-blue-500 not-italic font-medium text-sm leading-6 text-[#0C2143] ${
+                      logoUploadStatus === 'uploading' ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Upload a logo image file (PNG, JPG, GIF)
+                  </p>
+                  
+                  {/* Upload Status Messages */}
+                  {logoUploadStatus === 'uploading' && (
+                    <p className="text-xs text-blue-600 mt-1">
+                      Uploading logo...
+                    </p>
+                  )}
+                  
+                  {logoUploadStatus === 'error' && (
+                    <p className="text-xs text-red-600 mt-1">
+                      Failed to upload logo. Please try again.
+                    </p>
+                  )}
+                </div>
+              </div>
             </div>
             <div>
               <label className="not-italic font-medium text-sm leading-6 text-[#525A68] mb-2">Country</label>

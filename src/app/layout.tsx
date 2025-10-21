@@ -2,6 +2,7 @@ import './globals.css';
 import Providers from '@components/providers';
 import ConditionalHeader from '@components/ConditionalHeader';
 import ConditionalSidebar from '@components/ConditionalSidebar';
+import ConditionalAdminSidebar from '@components/ConditionalAdminSidebar';
 import AuthFlowManager from '@components/AuthFlowManager';
 import { UserDataProvider } from '../contexts/UserDataContext';
 
@@ -56,6 +57,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <AuthFlowManager>
               <div className="flex min-h-screen bg-gray-50">
                 {/* Conditional Sidebar - only shows for non-admin, non-onboarding routes */}
+                <ConditionalAdminSidebar />
                 <ConditionalSidebar />
                 
                 {/* Main content area */}

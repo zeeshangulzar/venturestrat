@@ -1,6 +1,6 @@
 // app/admin/users/[userId]/page.tsx
-import { checkRole } from '@utils/roles'
-import { redirect } from 'next/navigation'
+// import { checkRole } from '@utils/roles'
+// import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import UserShortlist from '@components/UserShortlist'
 import { fetchUserData } from '@lib/api'
@@ -31,9 +31,8 @@ export default async function UserShowPage({
   params: Promise<{ userId: string }>
 }) {
   const { userId } = await params
-
-  const isAdmin = await checkRole('admin')
-  if (!isAdmin) redirect('/')
+  // const isAdmin = await checkRole('admin')
+  // if (!isAdmin) redirect('/')
 
   try {
     const userData = await fetchUserData(userId)
