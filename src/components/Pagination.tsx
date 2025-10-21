@@ -46,7 +46,7 @@ const Pagination: React.FC<PaginationProps> = ({
   totalItems,
   searchQuery = '',
   onSearchChange,
-  searchDebounceDelay = 500, // Default 500ms delay
+  searchDebounceDelay = 1000, // Default 1.5 seconds delay
 }) => {
   const [isClient, setIsClient] = useState(false);
   const [localSearchQuery, setLocalSearchQuery] = useState(searchQuery);
