@@ -149,8 +149,8 @@ const HomePage = () => {
               VentureStrat requires access to your Gmail or Microsoft Office 365 account to provide the following essential fundraising features:
             </p>
             <ul className="list-disc list-inside space-y-2 text-gray-700 mb-4">
-              <li><strong>Send Emails:</strong> We use the "send" scope to send personalized outreach emails to investors on your behalf</li>
-              <li><strong>Read Emails:</strong> We use the "readonly" scope to monitor incoming responses from investors and automatically update your fundraising pipeline</li>
+              <li><strong>Send Emails:</strong> We use the &quot;send&quot; scope to send personalized outreach emails to investors on your behalf</li>
+              <li><strong>Read Emails:</strong> We use the &quot;readonly&quot; scope to monitor incoming responses from investors and automatically update your fundraising pipeline</li>
               <li><strong>Email Management:</strong> Track which investors have responded, manage follow-ups, and maintain a complete communication history</li>
               <li><strong>AI Integration:</strong> Process email content to provide intelligent suggestions and automated responses</li>
             </ul>
