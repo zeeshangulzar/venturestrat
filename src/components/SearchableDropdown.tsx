@@ -26,9 +26,9 @@ const Dropdown: React.FC<DropdownProps> = ({ children, isOpen, target, onClose, 
       
       // If not enough space below but enough above, open upward
       if (spaceBelow < menuHeight && spaceAbove > menuHeight) {
-        setPosition('top');
+        setTimeout(() => setPosition('top'), 0);
       } else {
-        setPosition('bottom');
+        setTimeout(() => setPosition('bottom'), 0);
       }
     }
   }, [isOpen]);
@@ -151,7 +151,7 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
 
   // Update temp value when actual value changes
   useEffect(() => {
-    setTempValue(value);
+    setTimeout(() => setTempValue(value), 0);
   }, [value]);
 
   // Update filtered options when options or selection change
@@ -183,12 +183,12 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
     const selectedValues = getSelectedValues();
 
     if (searchTerm.trim() === '') {
-      setFilteredOptions(reorderWithSelectedOnTop(options, selectedValues));
+      setTimeout(() => setFilteredOptions(reorderWithSelectedOnTop(options, selectedValues)), 0);
     } else {
       const filtered = options.filter(option =>
         option.label.toLowerCase().includes(searchTerm.toLowerCase())
       );
-      setFilteredOptions(reorderWithSelectedOnTop(filtered, selectedValues));
+      setTimeout(() => setFilteredOptions(reorderWithSelectedOnTop(filtered, selectedValues)), 0);
     }
   }, [options, value, searchTerm]);
 

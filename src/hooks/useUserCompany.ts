@@ -86,18 +86,20 @@ export const useUserCompany = (): UserCompanyData => {
   useEffect(() => {
     if (isLoaded && user?.id) {
       loadUserCompanyData();
-    } else if (isLoaded && !user) {
-      // User not logged in, use default values
-      setCompanyData({
-        companyName: 'RTYST',
-        companyLogo: undefined,
-        userProfileImage: undefined,
-        isLoading: false,
-        error: null,
-        refetch: loadUserCompanyData,
-        refreshLogoUrl: async () => {}
-      });
-    }
+      } else if (isLoaded && !user) {
+        // User not logged in, use default values
+        setTimeout(() => {
+          setCompanyData({
+            companyName: 'RTYST',
+            companyLogo: undefined,
+            userProfileImage: undefined,
+            isLoading: false,
+            error: null,
+            refetch: loadUserCompanyData,
+            refreshLogoUrl: async () => {}
+          });
+        }, 0);
+      }
   }, [isLoaded, user?.id, refreshTrigger]);
 
   return companyData;
