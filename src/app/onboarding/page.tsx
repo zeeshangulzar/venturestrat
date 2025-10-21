@@ -109,13 +109,15 @@ export default function OnboardingPage() {
       if (formData.stages && formData.stages.trim()) completedFields++;
       
       return 64 + Math.round((completedFields / totalFields) * 16); // 64% + up to 16% for step 5
-    } else {
+    } else if (currentStep === 6) {
       let completedFields = 0;
       const totalFields = 1; // revenue
       
-      if (formData.revenue.trim()) completedFields++;
+      if (formData.revenue && formData.revenue.trim()) completedFields++;
       
       return 80 + Math.round((completedFields / totalFields) * 20); // 80% + up to 20% for step 6
+    } else {
+      return 100; // Fallback for any other step
     }
   };
 
@@ -837,7 +839,7 @@ export default function OnboardingPage() {
                     </span>
                   </button>
                 )}
-                {currentStep < 5 ? (
+                {currentStep < 6 ? (
                   <button
                     type="button"
                     onClick={() => nextStep()}
