@@ -32,24 +32,30 @@ export const useAuthState = () => {
   useEffect(() => {
     // Show loading when user state is changing
     if (!isLoaded) {
-      setIsAuthenticating(true);
-      setAuthMessage('Loading authentication...');
+      setTimeout(() => {
+        setIsAuthenticating(true);
+        setAuthMessage('Loading authentication...');
+      }, 0);
     } else if (user) {
       // User is authenticated, check onboarding status from backend
       if (onboardingStatus === null) {
         // Still loading onboarding status
-        setIsAuthenticating(true);
-        setAuthMessage('Checking account status...');
+        setTimeout(() => {
+          setIsAuthenticating(true);
+          setAuthMessage('Checking account status...');
+        }, 0);
       } else if (!onboardingStatus) {
-        setIsAuthenticating(true);
-        setAuthMessage('Setting up your account...');
+        setTimeout(() => {
+          setIsAuthenticating(true);
+          setAuthMessage('Setting up your account...');
+        }, 0);
         // This will be handled by the middleware redirect
       } else {
-        setIsAuthenticating(false);
+        setTimeout(() => setIsAuthenticating(false), 0);
       }
     } else {
       // User is not authenticated
-      setIsAuthenticating(false);
+      setTimeout(() => setIsAuthenticating(false), 0);
     }
   }, [user, isLoaded, onboardingStatus]);
 

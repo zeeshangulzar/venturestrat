@@ -12,7 +12,7 @@ export default function ConditionalHeader() {
   
   useEffect(() => {
     // Immediately update render state when authentication changes
-    setShouldRender(isLoaded && isSignedIn);
+    setTimeout(() => setShouldRender(isLoaded && isSignedIn), 0);
   }, [isLoaded, isSignedIn]);
 
   // Don't render header for onboarding (focused process)
