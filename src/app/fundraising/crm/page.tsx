@@ -1,13 +1,11 @@
 'use client';
 
 import { useUser } from "@clerk/nextjs";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useUserShortlist } from '@hooks/useUserShortlist'
-import ChatGPTIntegration from '@components/ChatGPTIntegration'
 import EmailTabsManager from '@components/EmailTabsManager'
-import InvestorStatusDropdown from '@components/InvestorStatusDropdown'
-import Tooltip from '@components/Tooltip'
 import Loader from '@components/Loader'
+import KanbanBoard from '@components/KanbanBoard'
 import { fetchUserData } from '@lib/api'
 import InvestorDetailsPage from '@components/InvestorDetailsPage'
 
@@ -18,7 +16,6 @@ export default function FundraisingPage() {
     shortlist,
     loading,
     error,
-    totalShortlisted,
   } = useUserShortlist(user?.id ?? ""); 
 
   
@@ -54,8 +51,6 @@ export default function FundraisingPage() {
   // State for full-page loader
   const [showFullPageLoader, setShowFullPageLoader] = useState(true);
 
-  // Ref for the table's scroll container
-  const tableScrollContainerRef = useRef<HTMLDivElement>(null);
 
   // Update shortlist state when data changes
   useEffect(() => {
@@ -209,7 +204,8 @@ export default function FundraisingPage() {
 
       {/* Main content - always rendered but loader covers it */}
       <div className={showFullPageLoader ? "opacity-0" : "opacity-100 transition-opacity duration-300"}>
-          <div className="flex bg-[#FFFFFF] items-center bg-[rgba(255, 255, 255, 0.8)] h-[60px] px-5 py-4 border-b border-[#EDEEEF]">
+          <div className="flex bg-[#FFFFFF] items-center bg-[rgba(255, 255, 255, 0.8)] h-[60px] px-5 py-4 border-b border-[#EDEEEF] justify-between">
+            <div className="flex items-center">
             <h2 className="not-italic font-bold text-[18px] leading-[24px] tracking-[-0.02em] text-[#0C2143]">Fundraising CRM</h2>
             
             {/* Email Generation Status */}
@@ -224,47 +220,41 @@ export default function FundraisingPage() {
             )}
           </div>
 
-          {/* Table Layout */}
-          <div className="mt-6 px-5 py-3">
-            <div className="bg-white rounded-[14px] border border-[#EDEEEF] overflow-hidden">
-              {/* Sticky Table Header */}
-              <div className="sticky top-0 z-20 bg-white px-6 py-4 border-b border-[#EDEEEF]">
-                <div className="flex justify-between items-center">
-                  {selectedInvestor ? (
-                    <button
-                      onClick={handleBackToList}
-                      className="text-sm text-slate-600 hover:underline flex items-center gap-2"
-                    >
-                      ← Back to my list
-                    </button>
-                  ) : (
-                    <>
-                      <h3 className="not-italic font-bold text-[18px] leading-[24px] tracking-[-0.02em] text-[#0C2143]">
-                        My List
-                      </h3>
-                      <button
-                        onClick={downloadCSV}
-                        className="w-min-30 w-auto justify-center items-center px-5 py-2.5 gap-1 h-[auto] bg-[#2563EB] rounded-[10px] font-manrope not-italic font-medium text-[14px] leading-[19px] tracking-[-0.02em] text-[#FFFFFF] cursor-pointer flex"
+            {/* Download CSV Button */}
+            <button onClick={downloadCSV}
+              className="w-auto justify-center items-center px-5 py-2.5 gap-1 h-[auto] bg-[#2563EB] rounded-[10px] font-manrope not-italic font-medium text-[14px] leading-[19px] tracking-[-0.02em] text-[#FFFFFF] cursor-pointer flex"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
                         Download CSV
                       </button>
-                    </>
-                  )}
-                </div>
-              </div>
+          </div>
 
-              {/* Table Content with Scrollable Container */}
-              <div ref={tableScrollContainerRef} className="max-h-[400px] overflow-auto">
+          {/* Kanban Board Layout */}
+          <div className="bg-[#F4F6FB]">
+            <div className="bg-[#F4F6FB]">
+              {/* Header */}
+              {selectedInvestor && (
+                <div className="sticky top-0 z-20 bg-white px-6 py-4 border-b border-[#EDEEEF]">
+                  <button
+                    onClick={handleBackToList}
+                    className="text-sm text-slate-600 hover:underline flex items-center gap-2"
+                  >
+                    ← Back to my list
+                  </button>
+                </div>
+              )}
+
+              {/* Kanban Board Content */}
+              <div className="min-h-[500px]">
                 {selectedInvestor ? (
                   // Individual investor view - render the actual investor page component
                   <InvestorDetailsPage 
                     investorId={selectedInvestor.id}
                   />
                 ) : (
-                  // Investor list view
+                  // Kanban board view
                   <>
                     {error && (
                       <div className="px-6 py-8 text-center text-rose-700">
@@ -279,94 +269,18 @@ export default function FundraisingPage() {
                     )}
 
                 {!error && data && shortlistState.length > 0 && (
-                  <table className="w-full table-fixed">
-                    <thead className="sticky top-0 z-10 bg-[#F6F6F7]">
-                      <tr>
-                        <th className="w-[16%] lg:w-[16%] xl:w-[17%] 2xl:w-[18%] pl-4 py-4 text-left not-italic font-normal text-[14px] leading-[24px] tracking-[-0.02em] text-[#787F89] px-4">
-                          Investor Name
-                        </th>
-                        <th className="w-[16%] lg:w-[16%] xl:w-[17%] 2xl:w-[18%] py-4 text-left not-italic font-normal text-[14px] leading-[24px] tracking-[-0.02em] text-[#787F89] px-4">
-                          Company Name
-                        </th>
-                        <th className="w-[16%] lg:w-[16%] xl:w-[17%] 2xl:w-[18%] py-4 text-left not-italic font-normal text-[14px] leading-[24px] tracking-[-0.02em] text-[#787F89] px-4">
-                          Email Address
-                        </th>
-                        <th className="w-[16%] lg:w-[16%] xl:w-[17%] 2xl:w-[18%] py-4 text-left not-italic font-normal text-[14px] leading-[24px] tracking-[-0.02em] text-[#787F89] px-4">
-                          Location
-                        </th>
-                        <th className="w-[36%] lg:w-[36%] xl:w-[32%] 2xl:w-[24%] py-4 text-left not-italic font-normal text-[14px] leading-[24px] tracking-[-0.02em] text-[#787F89]">
-                          Actions
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {shortlistState.map((inv) => (
-                        <tr key={inv.id} className="hover:bg-gray-50 cursor-pointer"
-                          onClick={() => handleInvestorClick(inv.id)}
-                        >
-                          <td className="w-[16%] lg:w-[16%] xl:w-[17%] 2xl:w-[18%] pl-4 py-4 px-4">
-                            <Tooltip content={inv.name}>
-                              <div 
-                                className="not-italic font-semibold text-[16px] leading-[24px] text-[#0C2143] truncate max-w-full overflow-hidden"
-                                style={{ maxWidth: '200px' }}
-                              >
-                                {inv.name}
-                              </div>
-                            </Tooltip>
-                          </td>
-                          <td className="w-[16%] lg:w-[16%] xl:w-[17%] 2xl:w-[18%] py-4 px-4">
-                            <Tooltip content={inv.companyName || "N/A"}>
-                              <div 
-                                className="not-italic font-semibold text-[16px] leading-[24px] text-[#0C2143] truncate max-w-full overflow-hidden"
-                                style={{ maxWidth: '200px' }}
-                              >
-                                {inv.companyName || "N/A"}
-                              </div>
-                            </Tooltip>
-                          </td>
-                          <td className="w-[16%] lg:w-[16%] xl:w-[17%] 2xl:w-[18%] py-4 px-4">
-                            <Tooltip content={inv.emails?.[0]?.email || "N/A"}>
-                              <div 
-                                className="not-italic font-medium text-base leading-6 tracking-[-0.02em] text-[#0C2143] truncate max-w-full overflow-hidden"
-                                style={{ maxWidth: '250px' }}
-                              >
-                                {inv.emails?.[0]?.email || "N/A"}
-                              </div>
-                            </Tooltip>
-                          </td>
-                          <td className="w-[16%] lg:w-[16%] xl:w-[17%] 2xl:w-[18%] py-4 px-4">
-                            <Tooltip content={inv.state ? `${inv.state}, ${inv.country}` : inv.country}>
-                              <div 
-                                className="not-italic font-medium text-base leading-6 tracking-[-0.02em] text-[#0C2143] truncate max-w-full overflow-hidden"
-                                style={{ maxWidth: '150px' }}
-                              >
-                                {inv.state ? `${inv.state}, ${inv.country}` : inv.country}
-                              </div>
-                            </Tooltip>
-                          </td>
-                          <td className="w-[36%] lg:w-[39%] xl:w-[32%] 2xl:w-[24%] py-4 pr-1">
-                            <div className="flex gap-[8px] lg:gap-[6px] xl:gap-[10px] items-center flex-wrap lg:flex-nowrap xl:flex-wrap"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <InvestorStatusDropdown 
-                                status={inv.status}
-                                shortlistId={inv.shortlistId}
-                                onStatusChange={(newStatus) => {
-                                  updateInvestorStatus(inv.shortlistId, newStatus);
-                                }}
-                                scrollContainerRef={tableScrollContainerRef}
-                              />
-                              {user && userData && !userDataLoading && inv.emails.length > 0 && (
-                                <ChatGPTIntegration
-                                  investor={inv}
+                      <KanbanBoard
+                        investors={shortlistState}
+                        onStatusChange={updateInvestorStatus}
+                        onInvestorClick={handleInvestorClick}
                                   user={user}
                                   userData={userData}
-                                  onEmailGenerated={(emailContent) => {
+                        userDataLoading={userDataLoading}
+                        onEmailGenerated={(message) => {
                                     setEmailGenerationStatus({
                                       type: 'success',
-                                      message: 'Email generated successfully!'
+                            message: message
                                     });
-                                    // Auto-hide success message after 3 seconds
                                     setTimeout(() => {
                                       setEmailGenerationStatus({ type: null, message: '' });
                                     }, 3000);
@@ -376,28 +290,28 @@ export default function FundraisingPage() {
                                       type: 'error',
                                       message: error
                                     });
-                                    // Auto-hide error message after 5 seconds
                                     setTimeout(() => {
                                       setEmailGenerationStatus({ type: null, message: '' });
                                     }, 5000);
                                   }}
-                                  onEmailCreated={(emailId, isAI) => {
+                        onEmailCreated={(emailId, isAI, investorId) => {
                                     selectEmail(emailId, isAI);
                                     triggerEmailRefresh();
                                     setShortlistState(prev =>
                                       prev.map(item =>
-                                        item.id === inv.id ? { ...item, hasDraft: true } : item
+                              item.id === investorId ? { ...item, hasDraft: true } : item
                                       )
                                     );
                                   }}
-                                />
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                        onEmailSent={(investorId) => {
+                          setShortlistState(prev =>
+                            prev.map(item =>
+                              item.id === investorId ? { ...item, hasDraft: false } : item
+                            )
+                          );
+                          updateInvestorStatusByInvestorId(investorId, 'CONTACTED');
+                        }}
+                      />
                     )}
                   </>
                 )}
