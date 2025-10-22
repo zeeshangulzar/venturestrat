@@ -53,13 +53,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ alreadyInitialized: true }, { status: 200 })
     }
 
-    console.log('Gmail watch request received', {
-      userId: user.id,
-      labelIds,
-      configuredTopic: topicName,
-      configuredProject: projectId,
-    })
-
     let tokensResponse
     try {
       tokensResponse = await client.users.getUserOauthAccessToken(

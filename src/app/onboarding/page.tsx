@@ -25,13 +25,15 @@ type OnboardingData = {
   // Step 1
   companyName: string;
   // Step 2
+  companyWebsite: string;
+  // Step 3
   incorporationCountry: string;
   operationalRegions: string[];
-  // Step 3
-  stages: string;
   // Step 4
-  businessSectors: string[];
+  stages: string;
   // Step 5
+  businessSectors: string[];
+  // Step 6
   revenue: string;
 };
 
@@ -44,6 +46,7 @@ export default function OnboardingPage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<OnboardingData>({
     companyName: '',
+    companyWebsite: '',
     incorporationCountry: '',
     operationalRegions: [],
     stages: '',
@@ -75,36 +78,46 @@ export default function OnboardingPage() {
       
       if (formData.companyName.trim()) completedFields++;
       
-      return Math.round((completedFields / totalFields) * 20); // Max 20% for step 1
+      return Math.round((completedFields / totalFields) * 16); // Max 16% for step 1
     } else if (currentStep === 2) {
+      let completedFields = 0;
+      const totalFields = 1; // companyWebsite (optional)
+      
+      // Website is optional, so always consider it complete
+      completedFields = 1;
+      
+      return 16 + Math.round((completedFields / totalFields) * 16); // 16% + 16% for step 2
+    } else if (currentStep === 3) {
       let completedFields = 0;
       const totalFields = 2; // incorporationCountry, operationalRegions
       
       if (formData.incorporationCountry) completedFields++;
       if (formData.operationalRegions.length > 0) completedFields++;
       
-      return 20 + Math.round((completedFields / totalFields) * 20); // 20% + up to 20% for step 2
-    } else if (currentStep === 3) {
+      return 32 + Math.round((completedFields / totalFields) * 16); // 32% + up to 16% for step 3
+    } else if (currentStep === 4) {
       let completedFields = 0;
       const totalFields = 1; // businessSectors
       
       if (formData.businessSectors.length > 0) completedFields++;
       
-      return 40 + Math.round((completedFields / totalFields) * 20); // 40% + up to 20% for step 3
-    } else if (currentStep === 4) {
+      return 48 + Math.round((completedFields / totalFields) * 16); // 48% + up to 16% for step 4
+    } else if (currentStep === 5) {
       let completedFields = 0;
       const totalFields = 1; // stages
       
       if (formData.stages && formData.stages.trim()) completedFields++;
       
-      return 60 + Math.round((completedFields / totalFields) * 20); // 60% + up to 20% for step 4
-    } else {
+      return 64 + Math.round((completedFields / totalFields) * 16); // 64% + up to 16% for step 5
+    } else if (currentStep === 6) {
       let completedFields = 0;
       const totalFields = 1; // revenue
       
-      if (formData.revenue.trim()) completedFields++;
+      if (formData.revenue && formData.revenue.trim()) completedFields++;
       
-      return 80 + Math.round((completedFields / totalFields) * 20); // 80% + up to 20% for step 5
+      return 80 + Math.round((completedFields / totalFields) * 20); // 80% + up to 20% for step 6
+    } else {
+      return 100; // Fallback for any other step
     }
   };
 
@@ -117,12 +130,14 @@ export default function OnboardingPage() {
       case 1:
         return formData.companyName.trim() !== '';
       case 2:
-        return formData.incorporationCountry !== '' && formData.operationalRegions.length > 0;
+        return true; // Website is optional
       case 3:
-        return formData.businessSectors.length > 0;
+        return formData.incorporationCountry !== '' && formData.operationalRegions.length > 0;
       case 4:
-        return formData.stages && formData.stages.trim() !== '';
+        return formData.businessSectors.length > 0;
       case 5:
+        return formData.stages && formData.stages.trim() !== '';
+      case 6:
         return formData.revenue.trim() !== '';
       default:
         return false;
@@ -182,7 +197,9 @@ export default function OnboardingPage() {
                 businessSectors?: string[]; 
                 revenue?: string; 
               }; 
-              onboardingComplete?: boolean 
+              onboardingComplete?: boolean;
+              companyWebsite?: string;
+              companyLogo?: string;
             }; 
             publicMetaData?: { 
               companyName?: string; 
@@ -192,7 +209,9 @@ export default function OnboardingPage() {
               businessSectors?: string[]; 
               revenue?: string; 
             }; 
-            onboardingComplete?: boolean 
+            onboardingComplete?: boolean;
+            companyWebsite?: string;
+            companyLogo?: string;
           } | null;
           console.log('Loaded user data from backend:', userData);
           
@@ -221,6 +240,7 @@ export default function OnboardingPage() {
             console.log('Restoring onboarding data from backend:', backendData);
             setFormData({
               companyName: backendData.companyName || '',
+              companyWebsite: actualUserData.companyWebsite || '',
               incorporationCountry: backendData.incorporationCountry || '',
               operationalRegions: backendData.operationalRegions || [],
               stages: Array.isArray(backendData.stages) ? backendData.stages[0] || '' : (backendData.stages || ''),
@@ -261,6 +281,7 @@ export default function OnboardingPage() {
           if (existingData.companyName && !existingData.onboardingComplete) {
             setFormData({
               companyName: existingData.companyName as string || '',
+              companyWebsite: existingData.companyWebsite as string || '',
               incorporationCountry: existingData.incorporationCountry as string || '',
               operationalRegions: existingData.operationalRegions as string[] || [],
               stages: existingData.stages as string || '',
@@ -413,10 +434,35 @@ export default function OnboardingPage() {
     setNextStepLoading(true);
     
     try {
-      if (currentStep < 5) {
+      if (currentStep < 6) {
         // Save progress before moving to next step
         await saveProgress();
       }
+      
+      // If moving from step 2 (website), scrape logo
+      if (currentStep === 2 && formData.companyWebsite.trim()) {
+        try {
+          const response = await fetch(getApiUrl('/api/onboarding/company-website'), {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              userId: user?.id,
+              websiteUrl: formData.companyWebsite.trim()
+            }),
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            console.log('Logo scraping result:', data);
+          }
+        } catch (error) {
+          console.error('Error scraping logo:', error);
+          // Continue with onboarding even if logo scraping fails
+        }
+      }
+      
       setCurrentStep(currentStep + 1);
     } finally {
       setNextStepLoading(false);
@@ -550,6 +596,30 @@ export default function OnboardingPage() {
             
             <div className="flex flex-col">
               <h2 className="font-semibold text-base lg:text-lg leading-[22px] tracking-[-0.02em] text-white mb-4">
+                What is your company website?
+              </h2>
+              <p className="text-[#A5A6AC] font-normal text-sm lg:text-base leading-[22px] mb-4">
+                Help us get your company logo by providing your website URL. This step is optional.
+              </p>
+              <input
+                type="text"
+                name="companyWebsite"
+                value={formData.companyWebsite || ''}
+                onChange={handleInputChange}
+                placeholder="https://example.com or example.com"
+                className="w-full lg:w-[50%] bg-white/10 border border-white/10 rounded-[10px] h-[40px] font-normal text-sm leading-[22px] opacity-80 text-white px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+        );
+
+      case 3:
+        return (
+          <div className="">
+            {renderHeader()}
+            
+            <div className="flex flex-col">
+              <h2 className="font-semibold text-base lg:text-lg leading-[22px] tracking-[-0.02em] text-white mb-4">
                 Where is your business incorporated and where do you operate?
               </h2>
               <div className="space-y-4 flex gap-5">
@@ -587,7 +657,7 @@ export default function OnboardingPage() {
           </div>
         );
 
-      case 3:
+      case 4:
         return (
           <div className="">
             {renderHeader()}
@@ -624,7 +694,7 @@ export default function OnboardingPage() {
           </div>
         );
 
-      case 4:
+      case 5:
         return (
           <div className="">
             {renderHeader()}
@@ -661,7 +731,7 @@ export default function OnboardingPage() {
           </div>
         );
 
-      case 5:
+      case 6:
         return (
           <div className="">
             {renderHeader()}
@@ -769,7 +839,7 @@ export default function OnboardingPage() {
                     </span>
                   </button>
                 )}
-                {currentStep < 5 ? (
+                {currentStep < 6 ? (
                   <button
                     type="button"
                     onClick={() => nextStep()}

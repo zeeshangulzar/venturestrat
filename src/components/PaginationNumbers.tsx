@@ -58,6 +58,8 @@ const PaginationNumbers: React.FC<PaginationNumbersProps> = ({
   const goPrev = () => onPageChange(Math.max(1, currentPage - 1));
   const goNext = () => onPageChange(Math.min(totalPages, currentPage + 1));
 
+  const sidebarColor = '#0c2143';
+
   return (
     <div className="flex items-center justify-center gap-2 px-4 py-3">
       {/* Prev */}
@@ -66,7 +68,7 @@ const PaginationNumbers: React.FC<PaginationNumbersProps> = ({
         onClick={goPrev}
         disabled={currentPage <= 1}
         className={`rounded-md border px-3 py-1.5 text-sm transition-colors ${
-          currentPage <= 1 ? 'cursor-not-allowed opacity-40' : 'bg-white hover:bg-slate-50 cursor-pointer'
+          currentPage <= 1 ? 'cursor-not-allowed opacity-40 bg-white border-slate-200' : 'cursor-pointer border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
         }`}
         aria-label="Previous page"
       >
@@ -87,10 +89,18 @@ const PaginationNumbers: React.FC<PaginationNumbersProps> = ({
               onClick={() => onPageChange(p)}
               className={`min-w-[36px] rounded-md border px-3 py-1.5 text-sm transition-colors ${
                 p === currentPage
-                  ? 'bg-slate-900 text-white border-slate-900'
-                  : 'bg-white hover:bg-slate-50 cursor-pointer'
+                  ? 'text-white'
+                  : 'cursor-pointer border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
               }`}
               aria-current={p === currentPage ? 'page' : undefined}
+              style={
+                p === currentPage
+                  ? {
+                      backgroundColor: sidebarColor,
+                      borderColor: sidebarColor,
+                    }
+                  : undefined
+              }
             >
               {p}
             </button>
@@ -104,7 +114,7 @@ const PaginationNumbers: React.FC<PaginationNumbersProps> = ({
         onClick={goNext}
         disabled={currentPage >= totalPages}
         className={`rounded-md border px-3 py-1.5 text-sm transition-colors ${
-          currentPage >= totalPages ? 'cursor-not-allowed opacity-40' : 'bg-white hover:bg-slate-50 cursor-pointer'
+          currentPage >= totalPages ? 'cursor-not-allowed opacity-40 bg-white border-slate-200' : 'cursor-pointer border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
         }`}
         aria-label="Next page"
       >
