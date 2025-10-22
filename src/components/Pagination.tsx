@@ -67,6 +67,13 @@ const Pagination: React.FC<PaginationProps> = ({
     }
   }, [debouncedSearchQuery, onSearchChange, searchQuery]);
 
+  // Handle immediate search state when input is cleared
+  useEffect(() => {
+    if (localSearchQuery === '') {
+      setIsSearching(false);
+    }
+  }, [localSearchQuery]);
+
   // Update local state when searchQuery prop changes (e.g., from external filters)
   useEffect(() => {
     setLocalSearchQuery(searchQuery);
@@ -75,7 +82,12 @@ const Pagination: React.FC<PaginationProps> = ({
   // Handle search input change
   const handleSearchChange = useCallback((value: string) => {
     setLocalSearchQuery(value);
-    setIsSearching(true);
+    // If input is cleared immediately, stop searching
+    if (value === '') {
+      setIsSearching(false);
+    } else {
+      setIsSearching(true);
+    }
   }, []);
 
   // Options for the items per page dropdown
