@@ -7,6 +7,7 @@ import InvestorCard from '@components/InvestorCard';
 import Pagination from '@components/Pagination';
 import InvestorFilter from '@components/InvestorFilter';
 import PaginationNumbers from '@components/PaginationNumbers';
+import { useInvestorScope } from '@hooks/useInvestorScope';
 
 type Filters = {
   country: string;
@@ -48,6 +49,7 @@ type ApiResponse = {
 
 export default function FundraisingInvestorsPage() {
   const { user } = useUser();
+  const { scope: activeScope, isReady: isScopeReady } = useInvestorScope();
   const [investors, setInvestors] = useState<Investor[]>([]);
   const [shortlistedInvestorIds, setShortlistedInvestorIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
@@ -157,6 +159,8 @@ export default function FundraisingInvestorsPage() {
   };
 
   const fetchInvestors = async () => {
+    if (!isScopeReady || !activeScope) return;
+
     setLoading(true);
     setError(null);
 
@@ -166,7 +170,9 @@ export default function FundraisingInvestorsPage() {
         fetch(getApiUrl(
           `/api/investors?page=${currentPage}&itemsPerPage=${itemsPerPage}&search=${encodeURIComponent(
             searchQuery
-          )}&filters=${encodeURIComponent(JSON.stringify(filters))}`
+          )}&filters=${encodeURIComponent(JSON.stringify(filters))}&scope=${encodeURIComponent(
+            activeScope
+          )}`
         ), {
           method: 'GET',
           headers: { 'ngrok-skip-browser-warning': 'true' },
@@ -180,7 +186,10 @@ export default function FundraisingInvestorsPage() {
       if (!investorsRes.ok) throw new Error(`HTTP error! status: ${investorsRes.status}`);
 
       const investorsData: ApiResponse = await investorsRes.json();
-      setInvestors(investorsData.investors || []);
+      const uniqueInvestors = Array.from(
+        new Map((investorsData.investors || []).map((inv) => [inv.id, inv])).values()
+      );
+      setInvestors(uniqueInvestors);
       setPagination(investorsData.pagination);
 
       // Process shortlist data if user is logged in
@@ -202,8 +211,9 @@ export default function FundraisingInvestorsPage() {
   };
 
   useEffect(() => {
+    if (!isScopeReady || !activeScope) return;
     fetchInvestors();
-  }, [currentPage, filters, itemsPerPage, searchQuery]);
+  }, [activeScope, currentPage, filters, isScopeReady, itemsPerPage, searchQuery]);
 
   const hasActiveFilters = () =>
     filters.investmentStage.length > 0 ||
