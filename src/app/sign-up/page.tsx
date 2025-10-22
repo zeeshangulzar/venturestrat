@@ -31,6 +31,7 @@ export default function SignUpPage() {
   const [error, setError] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState(false);
   const [googleLoading, setGoogleLoading] = React.useState(false);
+  const [microsoftLoading, setMicrosoftLoading] = React.useState(false);
   const [fieldErrors, setFieldErrors] = React.useState<Record<string, string>>({});
 
   // Email-code verification step (only used if your Clerk instance requires it)
@@ -264,6 +265,30 @@ export default function SignUpPage() {
     } catch (err) {
       setError('Google sign-up failed. Please try again.');
       setGoogleLoading(false);
+    }
+  };
+
+  const onMicrosoft = async () => {
+    if (!isLoaded || !signUp) return;
+    setError(null);
+    setMicrosoftLoading(true);
+    
+    try {
+      console.log('Starting Microsoft OAuth flow...');
+      console.log('Clerk signUp object:', signUp);
+      console.log('Current URL:', window.location.href);
+      
+      // Note: Microsoft OAuth users will also get the default moderator role
+      // The role is set via the setDefaultRole server action when they complete the flow
+      await signUp.authenticateWithRedirect({
+        strategy: 'oauth_microsoft',
+        redirectUrl: '/sso-callback',
+        redirectUrlComplete: '/', // middleware handles onboarding redirect
+      });
+    } catch (err) {
+      console.error('Microsoft OAuth error:', err);
+      setError(`Microsoft sign-up failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      setMicrosoftLoading(false);
     }
   };
 
@@ -556,6 +581,29 @@ export default function SignUpPage() {
                 <path d="M19.325 8.23735H18.6V8.2H10.5V11.8H15.5864C15.2314 12.7974 14.5917 13.6691 13.7469 14.3071L13.7482 14.3067L16.5337 16.6638C16.3366 16.8429 19.5 14.5 19.5 10C19.5 9.39655 19.4379 8.8075 19.325 8.23735Z" fill="#1976D2"/>
               </svg>
               Continue with<span className='font-medium'>Google</span>
+            </span>
+          )}
+        </button>
+
+        <button
+          onClick={onMicrosoft}
+          disabled={microsoftLoading}
+          className="cursor-pointer h-[46px] w-full bg-[rgba(255, 255, 255, 0.1)] text-[#FFFFFF] border not-italic font-small text-sm leading-[19px] tracking-[-0.02em] rounded-[10px] px-4 py-2 hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {microsoftLoading ? (
+            <div className="flex items-center justify-center">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+              Signing up with Microsoft...
+            </div>
+          ) : (
+            <span className="inline-flex items-center gap-1">
+              <svg width="21" height="20" viewBox="0 0 21 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M10.5 1H1.5V9H10.5V1Z" fill="#F25022"/>
+                <path d="M19.5 1H10.5V9H19.5V1Z" fill="#7FBA00"/>
+                <path d="M10.5 10H1.5V18H10.5V10Z" fill="#00A4EF"/>
+                <path d="M19.5 10H10.5V18H19.5V10Z" fill="#FFB900"/>
+              </svg>
+              Continue with<span className='font-medium'>Microsoft</span>
             </span>
           )}
         </button>
