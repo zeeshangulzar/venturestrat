@@ -1,16 +1,20 @@
 import { NextResponse } from 'next/server';
-import { checkRole } from '@utils/roles';
 import { getApiUrl } from '@lib/api';
+import { verifyBasicAuth, createBasicAuthResponse } from '@utils/basicAuth';
 
 export async function GET(request: Request) {
   try {
-    const isAdmin = await checkRole('admin');
-    if (!isAdmin) {
-      return NextResponse.json(
-        { error: 'Unauthorized - Admin access required', success: false },
-        { status: 403 }
-      );
+    // Check Basic Authentication
+    if (!verifyBasicAuth(request as any)) {
+      return createBasicAuthResponse();
     }
+    // const isAdmin = await checkRole('admin');
+    // if (!isAdmin) {
+    //   return NextResponse.json(
+    //     { error: 'Unauthorized - Admin access required', success: false },
+    //     { status: 403 }
+    //   );
+    // }
 
     const { searchParams } = new URL(request.url);
     const search = searchParams.get('search') || '';

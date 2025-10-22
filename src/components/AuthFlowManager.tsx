@@ -87,9 +87,9 @@ const AuthFlowManager: React.FC<AuthFlowManagerProps> = ({ children }) => {
       
       if (!hasShownLoading) {
         showLoading('Checking authentication...');
-        setHasShownLoading(true);
+        setTimeout(() => setHasShownLoading(true), 0);
       }
-      setIsProcessingAuth(true);
+      setTimeout(() => setIsProcessingAuth(true), 0);
       return;
     }
 
@@ -102,9 +102,9 @@ const AuthFlowManager: React.FC<AuthFlowManagerProps> = ({ children }) => {
     if (user && onboardingStatus === null) {
       if (!hasShownLoading) {
         showLoading('Checking onboarding status...');
-        setHasShownLoading(true);
+        setTimeout(() => setHasShownLoading(true), 0);
       }
-      setIsProcessingAuth(true);
+      setTimeout(() => setIsProcessingAuth(true), 0);
       return;
     }
 
@@ -113,9 +113,9 @@ const AuthFlowManager: React.FC<AuthFlowManagerProps> = ({ children }) => {
         // User needs onboarding but not on onboarding page
         if (!hasShownLoading) {
           showLoading('Redirecting to onboarding...');
-          setHasShownLoading(true);
+          setTimeout(() => setHasShownLoading(true), 0);
         }
-        setIsProcessingAuth(true);
+        setTimeout(() => setIsProcessingAuth(true), 0);
         router.push('/onboarding');
       } else if (onboardingStatus && isOnboardingRoute) {
         // User completed onboarding but on onboarding page

@@ -1,20 +1,24 @@
 import { clerkClient } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
-import { checkRole } from '@utils/roles';
+import { verifyBasicAuth, createBasicAuthResponse } from '@utils/basicAuth';
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    // Check if user is admin
-    const isAdmin = await checkRole('admin');
-    if (!isAdmin) {
-      return NextResponse.json(
-        { 
-          error: 'Unauthorized - Admin access required',
-          success: false 
-        },
-        { status: 403 }
-      );
+    // Check Basic Authentication
+    if (!verifyBasicAuth(request as any)) {
+      return createBasicAuthResponse();
     }
+    // Check if user is admin
+    // const isAdmin = await checkRole('admin');
+    // if (!isAdmin) {
+    //   return NextResponse.json(
+    //     { 
+    //       error: 'Unauthorized - Admin access required',
+    //       success: false 
+    //     },
+    //     { status: 403 }
+    //   );
+    // }
 
     // Get the Clerk client
     const client = await clerkClient();

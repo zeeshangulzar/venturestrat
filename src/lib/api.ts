@@ -57,14 +57,16 @@ export const fetchUsersList = async (search?: string, page: number = 1, pageSize
 
 // Function to update user data on the backend
 export const updateUserData = async (userId: string, userData: Record<string, unknown>, isComplete: boolean = false): Promise<unknown> => {
-  // Extract profile fields and business data
-  const { firstName, lastName, ...businessData } = userData;
+  // Extract profile fields, website/logo fields, and business data
+  const { firstName, lastName, companyWebsite, companyLogo, ...businessData } = userData;
   
   // Prepare the request body matching backend expectations
   const requestBody = {
     firstname: firstName,  // Backend expects 'firstname' (lowercase)
     lastname: lastName,    // Backend expects 'lastname' (lowercase)
     onboardingComplete: isComplete,  // Separate top-level field
+    companyWebsite: companyWebsite,  // Direct field on User model
+    companyLogo: companyLogo,        // Direct field on User model
     publicMetaData: {
       ...businessData
       // onboardingComplete removed from publicMetaData

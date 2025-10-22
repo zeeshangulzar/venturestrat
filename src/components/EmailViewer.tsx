@@ -17,6 +17,13 @@ interface EmailDraft {
   investorId: string;
   investorName?: string;
   status?: string;
+  attachments?: Array<{
+    key: string;
+    filename: string;
+    type: string;
+    size: number;
+    url: string;
+  }>;
 }
 
 interface EmailViewerProps {
@@ -42,6 +49,7 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
   const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [sendStatus, setSendStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [sendMessage, setSendMessage] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   
   // Debounced auto-save functionality (same pattern as settings page)
   const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -59,6 +67,34 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
   
   // Ref to track if we're setting initial data (to prevent auto-save)
   const isSettingInitialDataRef = useRef(false);
+  
+  // Email validation function
+  const validateEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const validateCCEmails = (ccValue: string): string | null => {
+    if (!ccValue.trim()) return null; // CC is optional
+    
+    const emails = ccValue.split(',').map(email => email.trim()).filter(email => email);
+    
+    for (const email of emails) {
+      if (!validateEmail(email)) {
+        return `Invalid email format: ${email}`;
+      }
+    }
+    
+    return null;
+  };
+
+  const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
   
   // Note: QuillRef removed as we're using a wrapper component for React 19 compatibility
 
@@ -248,6 +284,14 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
       return;
     }
 
+    // Clear field error when user starts typing (same pattern as settings page)
+    if (fieldErrors[field]) {
+      setFieldErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
+    }
     
     switch (field) {
       case 'subject':
@@ -275,6 +319,15 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
       case 'cc':
         setEditedCc(value);
         currentValuesRef.current.editedCc = value;
+        
+        // Validate CC emails
+        const ccError = validateCCEmails(value);
+        if (ccError) {
+          setFieldErrors(prev => ({
+            ...prev,
+            cc: ccError
+          }));
+        }
         break;
     }
     // Use debounced auto-save (same pattern as settings page)
@@ -284,6 +337,18 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
   const handleSendEmail = async () => {
     if (!email?.id) return;
     const investorId = email.investorId;
+    
+    // Validate CC emails before sending
+    const ccError = validateCCEmails(editedCc);
+    if (ccError) {
+      setFieldErrors(prev => ({
+        ...prev,
+        cc: ccError
+      }));
+      setSendStatus('error');
+      setSendMessage('Please fix CC email validation errors before sending');
+      return;
+    }
     
     setIsSending(true);
     setSendStatus('idle');
@@ -462,15 +527,23 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
                   type="text"
                   value={editedCc}
                   onChange={(e) => handleFieldChange('cc', e.target.value)}
-                  className="ml-2 border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full max-w-md min-w-0"
+                  className={`ml-2 h-[46px] w-full max-w-md min-w-0 px-3 py-2 bg-[#F6F6F7] border rounded-[10px] focus:ring-2 focus:ring-blue-500 focus:border-blue-500 not-italic font-medium text-sm leading-6 text-[#0C2143] ${
+                    fieldErrors.cc 
+                      ? 'border-red-500 focus:border-red-500 focus:ring-red-500' 
+                      : 'border-[#EDEEEF]'
+                  }`}
                   placeholder="cc1@example.com, cc2@example.com"
                   style={{ minWidth: '200px' }}
                   title="Separate multiple emails with commas"
                 />
               </div>
-              <div className="text-xs text-gray-500 mt-1 ml-0">
-                Separate multiple emails with commas
-              </div>
+              {fieldErrors.cc ? (
+                <p className="text-red-500 text-xs mt-1 ml-2">{fieldErrors.cc}</p>
+              ) : (
+                <div className="text-xs text-gray-500 mt-1 ml-2">
+                  Separate multiple emails with commas
+                </div>
+              )}
             </div>
           )}
           
@@ -495,6 +568,36 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
                   __html: email.body.includes('<') ? email.body : email.body.replace(/\n/g, '<br>') 
                 }}
               />
+              
+              {/* Display Attachments for Sent Emails */}
+              {email.attachments && email.attachments.length > 0 && (
+                <div className="mt-4 pt-4 border-t border-gray-200">
+                  <h4 className="font-medium text-gray-700 mb-3">Attachments ({email.attachments.length})</h4>
+                  <div className="space-y-2">
+                    {email.attachments.map((attachment, index) => (
+                      <div key={index} className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-md hover:bg-gray-50">
+                        <div className="flex items-center">
+                          <svg className="w-5 h-5 mr-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                          </svg>
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">{attachment.filename}</p>
+                            <p className="text-xs text-gray-500">{formatFileSize(attachment.size)} • {attachment.type}</p>
+                          </div>
+                        </div>
+                        <a
+                          href={attachment.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                        >
+                          Download
+                        </a>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <div className="w-full flex-1 min-h-0 flex flex-col">

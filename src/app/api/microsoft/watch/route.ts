@@ -41,6 +41,8 @@ export async function POST(req: Request) {
     console.log('Microsoft Graph watch request received', {
       userId: user.id,
       notificationUrl,
+      clientId: clientId ? 'configured' : 'missing',
+      clientSecret: clientSecret ? 'configured' : 'missing',
     })
 
     let tokensResponse
@@ -49,20 +51,38 @@ export async function POST(req: Request) {
         user.id,
         'microsoft',
       )
+      console.log('Primary Microsoft OAuth token lookup successful')
     } catch (primaryError) {
       console.warn(
         'Primary Microsoft OAuth token lookup failed; retrying with oauth_ prefix',
         primaryError,
       )
-      tokensResponse = await client.users.getUserOauthAccessToken(
-        user.id,
-        'oauth_microsoft',
-      )
+      try {
+        tokensResponse = await client.users.getUserOauthAccessToken(
+          user.id,
+          'oauth_microsoft',
+        )
+        console.log('Fallback Microsoft OAuth token lookup successful')
+      } catch (fallbackError) {
+        console.error('Both Microsoft OAuth token lookups failed:', fallbackError)
+        return NextResponse.json(
+          {
+            error: 'missing_access_token',
+            message: 'No Microsoft OAuth access token found for the current user. Ensure Microsoft OAuth is enabled in Clerk.',
+            details: {
+              primaryError: primaryError instanceof Error ? primaryError.message : String(primaryError),
+              fallbackError: fallbackError instanceof Error ? fallbackError.message : String(fallbackError),
+            },
+          },
+          { status: 400 },
+        )
+      }
     }
 
     const oauthAccessToken = tokensResponse?.data?.[0]
 
     if (!oauthAccessToken?.token) {
+      console.error('No Microsoft OAuth access token found in response:', tokensResponse)
       return NextResponse.json(
         {
           error: 'missing_access_token',
@@ -73,7 +93,9 @@ export async function POST(req: Request) {
       )
     }
 
-    // Create Microsoft Graph subscription
+    console.log('Microsoft OAuth access token found, creating subscription...')
+
+    // Create Microsoft Graph subscription for incoming messages only
     const subscriptionData = {
       changeType: 'created',
       notificationUrl: notificationUrl,
@@ -82,6 +104,8 @@ export async function POST(req: Request) {
       clientState: `secret-${user.id}`,
     }
 
+    console.log('Creating Microsoft Graph subscription with data:', subscriptionData)
+
     const graphResponse = await fetch(
       'https://graph.microsoft.com/v1.0/subscriptions',
       {
@@ -89,6 +113,7 @@ export async function POST(req: Request) {
         headers: {
           ...JSON_HEADERS,
           Authorization: `Bearer ${oauthAccessToken.token}`,
+          'ngrok-skip-browser-warning': 'true',
         },
         body: JSON.stringify(subscriptionData),
       },
@@ -98,13 +123,28 @@ export async function POST(req: Request) {
       .json()
       .catch(() => ({ error: 'invalid_json_response' }))
 
+    console.log('Microsoft Graph subscription response:', {
+      status: graphResponse.status,
+      ok: graphResponse.ok,
+      data: graphData,
+    })
+
     if (!graphResponse.ok) {
-      console.error('Failed to start Microsoft Graph subscription', graphData)
+      console.error('Failed to start Microsoft Graph subscription', {
+        status: graphResponse.status,
+        statusText: graphResponse.statusText,
+        data: graphData,
+        subscriptionData,
+        notificationUrl,
+      })
       return NextResponse.json(
         {
           error: 'microsoft_subscription_failed',
           status: graphResponse.status,
+          statusText: graphResponse.statusText,
           details: graphData,
+          subscriptionData,
+          notificationUrl,
         },
         { status: graphResponse.status },
       )
