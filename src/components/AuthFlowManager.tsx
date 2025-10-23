@@ -5,6 +5,7 @@ import { useUser } from '@clerk/nextjs';
 import { useRouter, usePathname } from 'next/navigation';
 import { useGlobalLoading } from './GlobalLoadingProvider';
 import { fetchUserData } from '@lib/api';
+import { hasVerifiedExternalAccount } from '../utils/externalAccounts';
 
 interface AuthFlowManagerProps {
   children: React.ReactNode;
@@ -163,19 +164,12 @@ const AuthFlowManager: React.FC<AuthFlowManagerProps> = ({ children }) => {
       return;
     }
 
-    const hasGoogleAccount =
-      user.externalAccounts?.some(
-        account =>
-          account.provider === 'google' ||
-          (typeof account.provider === 'string' && account.provider.includes('google')),
-      ) ?? false;
+    const hasGoogleAccount = hasVerifiedExternalAccount(user.externalAccounts, 'google');
 
-    const hasMicrosoftAccount =
-      user.externalAccounts?.some(
-        account =>
-          account.provider === 'microsoft' ||
-          (typeof account.provider === 'string' && account.provider.includes('microsoft')),
-      ) ?? false;
+    const hasMicrosoftAccount = hasVerifiedExternalAccount(
+      user.externalAccounts,
+      'microsoft',
+    );
 
     if (!hasGoogleAccount && !hasMicrosoftAccount) {
       gmailWatchAttemptRef.current = user.id;
