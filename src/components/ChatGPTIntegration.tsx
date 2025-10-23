@@ -119,7 +119,7 @@ export default function ChatGPTIntegration({
         onEmailCreated(emailId, true); // true indicates this is an AI-generated email
       }
       setHasDraft(true);
-      onEmailGenerated(emailContent);
+      onEmailGenerated('Email draft created successfully!');
     } catch (error) {
       console.error('Error generating email:', error);
       onError(error instanceof Error ? error.message : 'Failed to generate email');
