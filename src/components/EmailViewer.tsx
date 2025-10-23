@@ -5,6 +5,8 @@ import { getApiUrl } from '@lib/api';
 import '@lib/react-polyfill'; // Import React 19 polyfill for React Quill compatibility
 import QuillEditor from './QuillEditor';
 import Loader from './Loader';
+import { useAuthAccount } from '../contexts/AuthAccountContext';
+import AuthModal from './AuthModal';
 
 interface EmailDraft {
   id: string;
@@ -48,8 +50,97 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
   const [isSending, setIsSending] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [sendStatus, setSendStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  
+  // Authentication context
+  const { hasAccount, checkAuthStatus } = useAuthAccount();
   const [sendMessage, setSendMessage] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+  // Modal handlers
+  const handleAuthSuccess = () => {
+    setShowAuthModal(false);
+    checkAuthStatus();
+  };
+
+  const handleCloseModal = () => {
+    setShowAuthModal(false);
+  };
+
+  const handleSkipAuth = () => {
+    setShowAuthModal(false);
+    // Proceed with sending email without authentication
+    proceedWithEmailSending();
+  };
+
+  const proceedWithEmailSending = async () => {
+    if (!email?.id) return;
+    const investorId = email.investorId;
+    
+    // Validate CC emails before sending
+    const ccError = validateCCEmails(editedCc);
+    if (ccError) {
+      setFieldErrors(prev => ({
+        ...prev,
+        cc: ccError
+      }));
+      setSendStatus('error');
+      setSendMessage('Please fix CC email validation errors before sending');
+      return;
+    }
+    
+    setIsSending(true);
+    setSendStatus('idle');
+    setSendMessage('');
+    
+    try {
+      // Create FormData to handle attachments
+      const formData = new FormData();
+      
+      // Add attachments to FormData
+      attachments.forEach((file, index) => {
+        formData.append(`attachment_${index}`, file);
+      });
+      
+      // Add other email data
+      formData.append('messageId', email.id);
+      formData.append('attachments', JSON.stringify(attachments.map(f => ({ name: f.name, size: f.size, type: f.type }))));
+      
+      console.log('=== FRONTEND DEBUGGING ===');
+      console.log('Attachments being sent:', attachments);
+      console.log('FormData entries:', Array.from(formData.entries()));
+      
+      const response = await fetch(`/api/message/${email.id}/send`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        // Extract error message from response
+        const errorMessage = result.message || result.error || `Failed to send email: ${response.statusText}`;
+        setSendStatus('error');
+        setSendMessage(errorMessage);
+        console.error('Error sending email:', errorMessage);
+      } else {
+        setSendStatus('success');
+        setSendMessage('Email sent successfully!');
+        console.log('Email sent successfully:', result);
+        
+        // Call the onEmailSent callback if provided
+        if (onEmailSent) {
+          onEmailSent(investorId);
+        }
+      }
+    } catch (error) {
+      console.error('Error sending email:', error);
+      setSendStatus('error');
+      setSendMessage('Failed to send email. Please try again.');
+    } finally {
+      setIsSending(false);
+    }
+  };
   
   // Debounced auto-save functionality (same pattern as settings page)
   const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -336,79 +427,15 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
 
   const handleSendEmail = async () => {
     if (!email?.id) return;
-    const investorId = email.investorId;
     
-    // Validate CC emails before sending
-    const ccError = validateCCEmails(editedCc);
-    if (ccError) {
-      setFieldErrors(prev => ({
-        ...prev,
-        cc: ccError
-      }));
-      setSendStatus('error');
-      setSendMessage('Please fix CC email validation errors before sending');
+    // Check if user has authenticated with Google or Microsoft
+    if (!hasAccount) {
+      setShowAuthModal(true);
       return;
     }
     
-    setIsSending(true);
-    setSendStatus('idle');
-    setSendMessage('');
-    
-    try {
-      // Create FormData to handle attachments
-      const formData = new FormData();
-      
-      // Add attachments to FormData
-      attachments.forEach((file, index) => {
-        formData.append(`attachment_${index}`, file);
-      });
-      
-      // Add other email data
-      formData.append('messageId', email.id);
-      formData.append('attachments', JSON.stringify(attachments.map(f => ({ name: f.name, size: f.size, type: f.type }))));
-      
-      console.log('=== FRONTEND DEBUGGING ===');
-      console.log('Attachments being sent:', attachments);
-      console.log('FormData entries:', Array.from(formData.entries()));
-      
-      const response = await fetch(`/api/message/${email.id}/send`, {
-        method: 'POST',
-        body: formData,
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        // Extract error message from response
-        const errorMessage = result.message || result.error || `Failed to send email: ${response.statusText}`;
-        setSendStatus('error');
-        setSendMessage(errorMessage);
-        console.error('Error sending email:', errorMessage);
-        return;
-      }
-
-      console.log('Email sent successfully:', result);
-      setSendStatus('success');
-      setSendMessage(result.message || 'Email sent successfully!');
-      
-      // Notify parent component that email was sent (to refresh draft list)
-      if (onEmailSent) {
-        onEmailSent(investorId);
-      }
-      
-      // Clear success message after 3 seconds
-      setTimeout(() => {
-        setSendStatus('idle');
-        setSendMessage('');
-      }, 3000);
-      
-    } catch (error) {
-      console.error('Error sending email:', error);
-      setSendStatus('error');
-      setSendMessage(error instanceof Error ? error.message : 'Failed to send email. Please try again.');
-    } finally {
-      setIsSending(false);
-    }
+    // If user has account, proceed with sending
+    await proceedWithEmailSending();
   };
 
 
@@ -690,6 +717,14 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
           </div>
         </div>
       </div>
+      
+      {/* Authentication Modal */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={handleCloseModal}
+        onAuthSuccess={handleAuthSuccess}
+        onSkipAuth={handleSkipAuth}
+      />
     </div>
   );
 }
