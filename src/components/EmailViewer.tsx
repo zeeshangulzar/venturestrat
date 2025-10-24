@@ -186,6 +186,48 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
+
+  // Handle attachment changes with file size validation
+  const handleAttachmentsChange = (newAttachments: File[]) => {
+    const maxFileSize = 25 * 1024 * 1024; // 25MB in bytes
+    const validFiles = [];
+    const removedFiles = [];
+    
+    // Filter out files that are too large
+    for (const file of newAttachments) {
+      if (file.size > maxFileSize) {
+        removedFiles.push({
+          name: file.name,
+          size: file.size,
+          sizeInMB: (file.size / (1024 * 1024)).toFixed(1)
+        });
+      } else {
+        validFiles.push(file);
+      }
+    }
+    
+    // Show error message if files were removed
+    if (removedFiles.length > 0) {
+      const fileNames = removedFiles.map(f => `${f.name} (${f.sizeInMB}MB)`).join(', ');
+      setSendStatus('error');
+      setSendMessage(`Files too large and removed: ${fileNames}. Maximum file size is 25MB.`);
+      
+      // Clear error after 5 seconds
+      setTimeout(() => {
+        setSendStatus('idle');
+        setSendMessage('');
+      }, 5000);
+    } else {
+      // Clear any previous file size errors
+      if (sendStatus === 'error' && sendMessage.includes('Files too large')) {
+        setSendStatus('idle');
+        setSendMessage('');
+      }
+    }
+    
+    // Set only valid files
+    setAttachments(validFiles);
+  };
   
   // Note: QuillRef removed as we're using a wrapper component for React 19 compatibility
 
@@ -637,7 +679,7 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
                 style={{ minHeight: '400px' }}
                 className="flex-1"
                 enableAIEditing={true}
-                onAttachmentsChange={setAttachments}
+                onAttachmentsChange={handleAttachmentsChange}
                 attachments={attachments}
               />
             </div>
