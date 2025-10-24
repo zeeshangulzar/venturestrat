@@ -160,7 +160,7 @@ export default function KanbanBoard({
                 draggable
                 onDragStart={(e) => handleDragStart(e, investor)}
                 onDragEnd={handleDragEnd}
-                className={`bg-white rounded-lg border border-gray-200 p-4 cursor-move hover:shadow-md transition-all ${
+                className={`bg-white rounded-lg border border-gray-200 p-4 cursor-grab active:cursor-grabbing hover:shadow-md transition-all ${
                   isUpdating === investor.shortlistId ? 'opacity-50' : ''
                 } ${
                   draggedItem?.id === investor.id ? 'opacity-50' : ''
