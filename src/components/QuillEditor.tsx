@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import 'react-quill/dist/quill.snow.css';
 import '../styles/quill-fonts.css';
+import { AttachmentItem, AttachmentStatus } from '../types/attachments';
 /**
  * Comprehensive font list for Quill Editor with email client compatibility
  * 
@@ -125,6 +126,21 @@ import AIEditModal from './AIEditModal';
 import QuillAISelectionHandler from './QuillAISelectionHandler';
 import { useModal } from '../contexts/ModalContext';
 
+const renderAttachmentStatus = (status: AttachmentStatus, error?: string) => {
+  switch (status) {
+    case 'pending':
+      return 'Queued for upload...';
+    case 'uploading':
+      return 'Uploading...';
+    case 'uploaded':
+      return 'Uploaded';
+    case 'error':
+      return error ? `Upload failed: ${error}` : 'Upload failed';
+    default:
+      return '';
+  }
+};
+
 interface QuillEditorProps {
   value: string;
   onChange: (content: string) => void;
@@ -136,8 +152,8 @@ interface QuillEditorProps {
   className?: string;
   style?: React.CSSProperties;
   enableAIEditing?: boolean;
-  onAttachmentsChange?: (files: File[]) => void;
-  attachments?: File[];
+  onAttachmentsChange?: (files: AttachmentItem[]) => void;
+  attachments?: AttachmentItem[];
 }
 
 const QuillEditor: React.FC<QuillEditorProps> = ({
@@ -160,7 +176,7 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
   const [selectedRange, setSelectedRange] = useState<any>(null);
   const [showFloatingButton, setShowFloatingButton] = useState(false);
   const [buttonPosition, setButtonPosition] = useState({ top: 0, left: 0 });
-  const [attachments, setAttachments] = useState<File[]>([]);
+  const [attachments, setAttachments] = useState<AttachmentItem[]>([]);
   const [highlightedText, setHighlightedText] = useState('');
   const [highlightRange, setHighlightRange] = useState<any>(null);
   const editorRef = useRef<HTMLDivElement>(null);
@@ -346,9 +362,27 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
   }, [showFloatingButton, selectedRange]);
 
   // Handle file attachments
+  const generateAttachmentId = () => {
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+      return crypto.randomUUID();
+    }
+    return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  };
+
+  const createAttachmentItem = (file: File): AttachmentItem => ({
+    id: generateAttachmentId(),
+    name: file.name,
+    size: file.size,
+    type: file.type || 'application/octet-stream',
+    status: 'pending',
+    file,
+    temporary: true,
+  });
+
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    const newAttachments = [...attachments, ...files];
+    const newItems = files.map(createAttachmentItem);
+    const newAttachments = [...attachments, ...newItems];
     setAttachments(newAttachments);
     if (onAttachmentsChange) {
       onAttachmentsChange(newAttachments);
@@ -662,7 +696,7 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
             <div className="mt-3 space-y-2 relative z-20">
               {attachments.map((file, index) => (
                 <div
-                  key={index}
+                  key={file.id ?? index}
                   className="flex items-center justify-between p-2 bg-gray-50 border border-gray-200 rounded-lg group hover:bg-gray-100 transition-colors"
                 >
                   <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -671,6 +705,17 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
                     </svg>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-gray-900 truncate">{file.name}</p>
+                      {file.status !== 'uploaded' && (
+                        <p
+                          className={`text-xs mt-1 ${
+                            file.status === 'error'
+                              ? 'text-red-600'
+                              : 'text-gray-500'
+                          }`}
+                        >
+                          {renderAttachmentStatus(file.status, file.error)}
+                        </p>
+                      )}
                     </div>
                     <p className="text-xs text-gray-500 flex-shrink-0">{formatFileSize(file.size)}</p>
                   </div>

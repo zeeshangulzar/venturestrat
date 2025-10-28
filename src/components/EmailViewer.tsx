@@ -7,6 +7,7 @@ import QuillEditor from './QuillEditor';
 import Loader from './Loader';
 import { useAuthAccount } from '../contexts/AuthAccountContext';
 import AuthModal from './AuthModal';
+import { AttachmentItem } from '../types/attachments';
 
 interface EmailDraft {
   id: string;
@@ -40,12 +41,14 @@ interface EmailViewerProps {
   saveRef?: React.MutableRefObject<(() => Promise<void>) | null>;
 }
 
+const MAX_ATTACHMENT_SIZE = 75 * 1024 * 1024; // 75MB
+
 export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmailSaveStart, onEmailSaveEnd, onEmailRefresh, readOnly = false, loading = false, saveRef }: EmailViewerProps) {
   const [editedSubject, setEditedSubject] = useState('');
   const [editedBody, setEditedBody] = useState('');
   const [editedFrom, setEditedFrom] = useState('');
   const [editedCc, setEditedCc] = useState('');
-  const [attachments, setAttachments] = useState<File[]>([]);
+  const [attachments, setAttachments] = useState<AttachmentItem[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
@@ -56,6 +59,89 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
   const { hasAccount, checkAuthStatus } = useAuthAccount();
   const [sendMessage, setSendMessage] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+  const updateAttachment = useCallback((id: string, updates: Partial<AttachmentItem>) => {
+    setAttachments(prev =>
+      prev.map(attachment => (attachment.id === id ? { ...attachment, ...updates } : attachment))
+    );
+  }, []);
+
+  const uploadAttachment = useCallback(async (attachment: AttachmentItem) => {
+    if (!attachment.file) {
+      return;
+    }
+
+    updateAttachment(attachment.id, { status: 'uploading', error: undefined });
+
+    try {
+      const response = await fetch(getApiUrl(`/api/message/attachments/upload-url`), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          filename: attachment.name,
+          contentType: attachment.type || 'application/octet-stream',
+          size: attachment.size,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Failed to create upload URL (${response.status})`);
+      }
+
+      const { uploadUrl, key, downloadUrl } = await response.json();
+
+      const uploadResponse = await fetch(uploadUrl, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': attachment.type || 'application/octet-stream',
+        },
+        body: attachment.file,
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error(`Upload failed with status ${uploadResponse.status}`);
+      }
+
+      updateAttachment(attachment.id, {
+        status: 'uploaded',
+        key,
+        url: downloadUrl,
+        file: undefined,
+        error: undefined,
+      });
+    } catch (error: any) {
+      console.error('Attachment upload failed:', error);
+      const errorMessage = error?.message ?? 'Failed to upload attachment. Please try again.';
+      updateAttachment(attachment.id, {
+        status: 'error',
+        error: errorMessage,
+      });
+      setSendStatus('error');
+      setSendMessage(errorMessage);
+
+      // Remove failed attachment from composer/Quill to prevent stale items
+      setAttachments(prev => prev.filter(item => item.id !== attachment.id));
+
+      setTimeout(() => {
+        setSendStatus(prev => (prev === 'error' ? 'idle' : prev));
+        setSendMessage(prev => (prev === errorMessage ? '' : prev));
+      }, 5000);
+    }
+  }, [updateAttachment]);
+
+  const hasPendingUploads = attachments.some(
+    attachment => attachment.status === 'pending' || attachment.status === 'uploading'
+  );
+  const hasUploadErrors = attachments.some(attachment => attachment.status === 'error');
+  const isSendDisabled = isSending || hasPendingUploads || hasUploadErrors;
+  const sendButtonLabel = isSending
+    ? 'Sending...'
+    : hasPendingUploads
+      ? 'Uploading attachments...'
+      : 'Send';
 
   // Modal handlers
   const handleAuthSuccess = () => {
@@ -77,6 +163,22 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
     if (!email?.id) return;
     const investorId = email.investorId;
     
+    const hasPendingUploads = attachments.some(
+      attachment => attachment.status === 'pending' || attachment.status === 'uploading'
+    );
+    if (hasPendingUploads) {
+      setSendStatus('error');
+      setSendMessage('Attachments are still uploading. Please wait until uploads finish.');
+      return;
+    }
+
+    const hasUploadErrors = attachments.some(attachment => attachment.status === 'error');
+    if (hasUploadErrors) {
+      setSendStatus('error');
+      setSendMessage('One or more attachments failed to upload. Please remove or retry them before sending.');
+      return;
+    }
+
     // Validate CC emails before sending
     const ccError = validateCCEmails(editedCc);
     if (ccError) {
@@ -94,32 +196,39 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
     setSendMessage('');
     
     try {
-      // Create FormData to handle attachments
-      const formData = new FormData();
-      
-      // Add attachments to FormData
-      attachments.forEach((file, index) => {
-        formData.append(`attachment_${index}`, file);
-      });
-      
-      // Add other email data
-      formData.append('messageId', email.id);
-      formData.append('attachments', JSON.stringify(attachments.map(f => ({ name: f.name, size: f.size, type: f.type }))));
-      
-      console.log('=== FRONTEND DEBUGGING ===');
-      console.log('Attachments being sent:', attachments);
-      console.log('FormData entries:', Array.from(formData.entries()));
-      
-      const response = await fetch(`/api/message/${email.id}/send`, {
-        method: 'POST',
-        body: formData,
-      });
+      const attachmentPayload = attachments
+        .filter(attachment => attachment.status === 'uploaded')
+        .map(attachment => ({
+          key: attachment.key,
+          filename: attachment.name,
+          type: attachment.type,
+          size: attachment.size,
+          url: attachment.url,
+        }));
 
-      const result = await response.json();
+      console.log('=== FRONTEND DEBUGGING ===');
+      console.log('Attachments metadata being sent:', attachmentPayload);
+
+      const response = await fetch(
+        getApiUrl(`/api/message/${email.id}/send`),
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ attachments: attachmentPayload }),
+        }
+      );
+
+      let result: any = {};
+      try {
+        result = await response.json();
+      } catch (parseError) {
+        console.warn('Failed to parse send response JSON:', parseError);
+      }
 
       if (!response.ok) {
-        // Extract error message from response
-        const errorMessage = result.message || result.error || `Failed to send email: ${response.statusText}`;
+        const errorMessage = result?.message || result?.error || `Failed to send email: ${response.statusText}`;
         setSendStatus('error');
         setSendMessage(errorMessage);
         console.error('Error sending email:', errorMessage);
@@ -187,46 +296,63 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  // Handle attachment changes with file size validation
-  const handleAttachmentsChange = (newAttachments: File[]) => {
-    const maxFileSize = 75 * 1024 * 1024; // 10MB in bytes
-    const validFiles = [];
-    const removedFiles = [];
-    
-    // Filter out files that are too large
-    for (const file of newAttachments) {
-      if (file.size > maxFileSize) {
-        removedFiles.push({
-          name: file.name,
-          size: file.size,
-          sizeInMB: (file.size / (1024 * 1024)).toFixed(1)
-        });
-      } else {
-        validFiles.push(file);
-      }
-    }
-    
-    // Show error message if files were removed
-    if (removedFiles.length > 0) {
-      const fileNames = removedFiles.map(f => `${f.name} (${f.sizeInMB}MB)`).join(', ');
+  // Handle attachment changes with file size validation and direct upload
+  const handleAttachmentsChange = (updatedAttachments: AttachmentItem[]) => {
+    const existingIds = new Set(attachments.map(attachment => attachment.id));
+    const newItems = updatedAttachments.filter(attachment => !existingIds.has(attachment.id));
+
+    const oversizedItems = newItems.filter(attachment => attachment.size > MAX_ATTACHMENT_SIZE);
+    const oversizedIds = new Set(oversizedItems.map(attachment => attachment.id));
+
+    if (oversizedItems.length > 0) {
+      const fileNames = oversizedItems
+        .map(attachment => `${attachment.name} (${(attachment.size / (1024 * 1024)).toFixed(1)}MB)`)
+        .join(', ');
       setSendStatus('error');
       setSendMessage(`Files too large and removed: ${fileNames}. Maximum file size is 75MB.`);
       
-      // Clear error after 5 seconds
       setTimeout(() => {
-        setSendStatus('idle');
-        setSendMessage('');
+        setSendStatus(prev => (prev === 'error' ? 'idle' : prev));
+        setSendMessage(prev => (prev.includes('Files too large') ? '' : prev));
       }, 5000);
-    } else {
-      // Clear any previous file size errors
-      if (sendStatus === 'error' && sendMessage.includes('Files too large')) {
-        setSendStatus('idle');
-        setSendMessage('');
-      }
+    } else if (sendStatus === 'error' && sendMessage.includes('Files too large')) {
+      setSendStatus('idle');
+      setSendMessage('');
     }
-    
-    // Set only valid files
-    setAttachments(validFiles);
+
+    const sanitizedAttachments = updatedAttachments.filter(
+      attachment => !oversizedIds.has(attachment.id)
+    );
+
+    const removedAttachments = attachments.filter(
+      attachment => !sanitizedAttachments.some(item => item.id === attachment.id)
+    );
+
+    removedAttachments.forEach(async (attachment) => {
+      if (attachment.key && attachment.temporary) {
+        try {
+          await fetch(getApiUrl('/api/message/attachments/delete'), {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ key: attachment.key }),
+          });
+        } catch (error) {
+          console.error('Failed to delete attachment from storage:', error);
+        }
+      }
+    });
+
+    setAttachments(sanitizedAttachments);
+
+    sanitizedAttachments
+      .filter(attachment => newItems.some(item => item.id === attachment.id))
+      .forEach(attachment => {
+        if (attachment.status === 'pending' && attachment.file) {
+          uploadAttachment(attachment);
+        }
+      });
   };
   
   // Note: QuillRef removed as we're using a wrapper component for React 19 compatibility
@@ -244,6 +370,17 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
       setEditedFrom(from);
       setEditedCc(cc);
       setSaveStatus('idle');
+      const hydratedAttachments: AttachmentItem[] = (email.attachments || []).map((attachment, index) => ({
+        id: attachment.key || `${email.id}-existing-${index}`,
+        name: attachment.filename,
+        size: attachment.size,
+        type: attachment.type,
+        key: attachment.key,
+        url: attachment.url,
+        status: 'uploaded',
+        temporary: false,
+      }));
+      setAttachments(hydratedAttachments);
       
       // Clear any pending auto-save timeout when switching emails
       if (autoSaveTimeoutRef.current) {
@@ -269,6 +406,8 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
       setTimeout(() => {
         isSettingInitialDataRef.current = false;
       }, 200);
+    } else {
+      setAttachments([]);
     }
   }, [email]);
 
@@ -716,37 +855,36 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
             {!readOnly ? (
             <div
               className={`flex items-center gap-2 px-6 py-2 rounded-md font-medium transition-colors ${
-                isSending
-                  ? 'bg-gray-400 text-gray-700 cursor-not-allowed'
+                isSendDisabled
+                  ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
                   : 'bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
               }`}
             >
               <button
+                type="button"
                 onClick={handleSendEmail}
-                disabled={isSending}
+                disabled={isSendDisabled}
+                aria-disabled={isSendDisabled}
+                className="flex items-center gap-2"
               >
-                {isSending ? (
-                  <div className="flex items-center">
-                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-gray-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Sending...
-                  </div>
-                ) : (
-                  'Send'
+                {isSending && (
+                  <svg className="animate-spin -ml-1 h-4 w-4 text-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
                 )}
+                <span>{sendButtonLabel}</span>
               </button>
-              <svg width="21" height="20" viewBox="0 0 21 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <svg width="21" height="20" viewBox="0 0 21 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                 <g clipPath="url(#clip0_1403_3442)">
-                <path d="M16.333 10H4.66634" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M16.333 10L12.9997 13.3333" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M16.333 10.0001L12.9997 6.66675" stroke="white" strokeWidth="1.5" stroke-winecap="round" strokeLinejoin="round"/>
+                  <path d="M16.333 10H4.66634" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M16.333 10L12.9997 13.3333" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M16.333 10.0001L12.9997 6.66675" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                 </g>
                 <defs>
-                <clipPath id="clip0_1403_3442">
-                <rect width="20" height="20" fill="white" transform="matrix(-1 0 0 1 20.5 0)"/>
-                </clipPath>
+                  <clipPath id="clip0_1403_3442">
+                    <rect width="20" height="20" fill="white" transform="matrix(-1 0 0 1 20.5 0)"/>
+                  </clipPath>
                 </defs>
               </svg>
             </div>
