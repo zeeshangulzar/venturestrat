@@ -13,6 +13,7 @@ interface EmailTabsManagerProps {
   onTabSwitch?: (tab: MailSectionType) => void; // Add callback for tab switching
   onEmailProcessed?: () => void; // Add callback for when email is processed
   onEmailSent?: (investorId?: string) => void; // Add callback when an email is sent
+  onAttachmentUploadStatusChange?: (isUploading: boolean) => void; // Notify parent when attachments upload
 }
 
 interface EmailCounts {
@@ -22,7 +23,7 @@ interface EmailCounts {
   answered: number;
 }
 
-export default function EmailTabsManager({ userId, refreshTrigger, selectEmailId, isAIEmail, onTabSwitch, onEmailProcessed, onEmailSent }: EmailTabsManagerProps) {
+export default function EmailTabsManager({ userId, refreshTrigger, selectEmailId, isAIEmail, onTabSwitch, onEmailProcessed, onEmailSent, onAttachmentUploadStatusChange }: EmailTabsManagerProps) {
   const [activeSection, setActiveSection] = useState<MailSectionType>('all');
   const [counts, setCounts] = useState<EmailCounts>({
     all: 0,
@@ -204,6 +205,7 @@ export default function EmailTabsManager({ userId, refreshTrigger, selectEmailId
             isAIEmail={isAIEmail}
             onSelectEmailProcessed={handleSelectEmailProcessed}
             onSaveRefReady={handleSaveRefReady}
+            onAttachmentUploadStatusChange={onAttachmentUploadStatusChange}
           />
         )}
         
@@ -218,6 +220,7 @@ export default function EmailTabsManager({ userId, refreshTrigger, selectEmailId
             selectEmailId={undefined}
             onSelectEmailProcessed={handleSelectEmailProcessed}
             onSaveRefReady={handleSaveRefReady}
+            onAttachmentUploadStatusChange={onAttachmentUploadStatusChange}
           />
         )}
         
@@ -247,6 +250,7 @@ export default function EmailTabsManager({ userId, refreshTrigger, selectEmailId
             selectEmailId={undefined}
             onSelectEmailProcessed={handleSelectEmailProcessed}
             onSaveRefReady={handleSaveRefReady}
+            onAttachmentUploadStatusChange={onAttachmentUploadStatusChange}
           />
         )}
       </div>
