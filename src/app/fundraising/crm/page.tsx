@@ -50,6 +50,7 @@ export default function FundraisingPage() {
 
   // State for full-page loader
   const [showFullPageLoader, setShowFullPageLoader] = useState(true);
+  const [isAttachmentUploading, setIsAttachmentUploading] = useState(false);
 
 
   // Update shortlist state when data changes
@@ -321,7 +322,18 @@ export default function FundraisingPage() {
           
           {/* Mails section */}
           <div className='bg-[#F4F6FB] px-4 h-[800px]'>
-            <div className="bg-[#FFFFFF] border border-[#EDEEEF] rounded-[14px] h-full flex flex-col">
+            <div className="bg-[#FFFFFF] border border-[#EDEEEF] rounded-[14px] h-full flex flex-col relative overflow-hidden">
+              {isAttachmentUploading && (
+                <div className="absolute inset-0 bg-white/80 z-30 flex flex-col items-center justify-center">
+                  <Loader
+                    size="lg"
+                    text="Uploading attachments..."
+                    textColor="text-[#0C2143]"
+                    spinnerColor="border-[#2563EB]"
+                    className="py-4"
+                  />
+                </div>
+              )}
               <div className="p-5 flex-shrink-0">
                 <h2 className="not-italic font-bold text-[18px] leading-[24px] tracking-[-0.02em] text-[#0C2143]">Mails</h2>
               </div>
@@ -353,6 +365,7 @@ export default function FundraisingPage() {
                       // Update the shortlist status to CONTACTED when email is sent successfully
                       updateInvestorStatusByInvestorId(investorId, 'CONTACTED');
                     }}
+                    onAttachmentUploadStatusChange={(status) => setIsAttachmentUploading(status)}
                   />
                 ) : (
                   <div className="flex items-center justify-center h-full">

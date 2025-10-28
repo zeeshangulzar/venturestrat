@@ -39,11 +39,48 @@ interface EmailViewerProps {
   readOnly?: boolean;
   loading?: boolean;
   saveRef?: React.MutableRefObject<(() => Promise<void>) | null>;
+  onAttachmentUploadStatusChange?: (isUploading: boolean) => void;
 }
 
 const MAX_ATTACHMENT_SIZE = 75 * 1024 * 1024; // 75MB
 
-export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmailSaveStart, onEmailSaveEnd, onEmailRefresh, readOnly = false, loading = false, saveRef }: EmailViewerProps) {
+const toAttachmentMetadataPayload = (attachment: AttachmentItem) => ({
+  key: attachment.key ?? null,
+  filename: attachment.name,
+  type: attachment.type,
+  size: attachment.size,
+  url: attachment.url ?? null,
+});
+
+const persistAttachmentMetadata = async (messageId: string, attachment: AttachmentItem) => {
+  try {
+    await fetch(getApiUrl(`/api/message/${messageId}/attachments/add`), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ attachments: [toAttachmentMetadataPayload(attachment)] }),
+    });
+  } catch (error) {
+    console.error('Failed to persist attachment metadata:', error);
+  }
+};
+
+const deleteAttachmentMetadata = async (messageId: string, key: string) => {
+  try {
+    await fetch(getApiUrl('/api/message/attachments/delete'), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ messageId, key }),
+    });
+  } catch (error) {
+    console.error('Failed to delete attachment metadata:', error);
+  }
+};
+
+export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmailSaveStart, onEmailSaveEnd, onEmailRefresh, readOnly = false, loading = false, saveRef, onAttachmentUploadStatusChange }: EmailViewerProps) {
   const [editedSubject, setEditedSubject] = useState('');
   const [editedBody, setEditedBody] = useState('');
   const [editedFrom, setEditedFrom] = useState('');
@@ -54,6 +91,15 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
   const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [sendStatus, setSendStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const isAttachmentUploading = attachments.some(
+    attachment => attachment.status === 'pending' || attachment.status === 'uploading'
+  );
+
+  useEffect(() => {
+    if (onAttachmentUploadStatusChange) {
+      onAttachmentUploadStatusChange(isAttachmentUploading);
+    }
+  }, [isAttachmentUploading, onAttachmentUploadStatusChange]);
   
   // Authentication context
   const { hasAccount, checkAuthStatus } = useAuthAccount();
@@ -83,6 +129,7 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
           filename: attachment.name,
           contentType: attachment.type || 'application/octet-stream',
           size: attachment.size,
+          messageId: email?.id,
         }),
       });
 
@@ -105,13 +152,21 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
         throw new Error(`Upload failed with status ${uploadResponse.status}`);
       }
 
-      updateAttachment(attachment.id, {
+      const uploadedAttachment: AttachmentItem = {
+        ...attachment,
         status: 'uploaded',
         key,
         url: downloadUrl,
         file: undefined,
         error: undefined,
-      });
+        temporary: false,
+      };
+
+      updateAttachment(attachment.id, uploadedAttachment);
+
+      if (email?.id) {
+        await persistAttachmentMetadata(email.id, uploadedAttachment);
+      }
     } catch (error: any) {
       console.error('Attachment upload failed:', error);
       const errorMessage = error?.message ?? 'Failed to upload attachment. Please try again.';
@@ -130,7 +185,7 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
         setSendMessage(prev => (prev === errorMessage ? '' : prev));
       }, 5000);
     }
-  }, [updateAttachment]);
+  }, [updateAttachment, email?.id]);
 
   const hasPendingUploads = attachments.some(
     attachment => attachment.status === 'pending' || attachment.status === 'uploading'
@@ -329,17 +384,21 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
     );
 
     removedAttachments.forEach(async (attachment) => {
-      if (attachment.key && attachment.temporary) {
-        try {
-          await fetch(getApiUrl('/api/message/attachments/delete'), {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ key: attachment.key }),
-          });
-        } catch (error) {
-          console.error('Failed to delete attachment from storage:', error);
+      if (attachment.key) {
+        if (email?.id) {
+          await deleteAttachmentMetadata(email.id, attachment.key);
+        } else {
+          try {
+            await fetch(getApiUrl('/api/message/attachments/delete'), {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ key: attachment.key }),
+            });
+          } catch (error) {
+            console.error('Failed to delete attachment from storage:', error);
+          }
         }
       }
     });
