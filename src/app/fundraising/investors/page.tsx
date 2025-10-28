@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { getApiUrl } from '@lib/api';
 import InvestorCard from '@components/InvestorCard';
@@ -54,7 +54,7 @@ export default function FundraisingInvestorsPage() {
   const [shortlistedInvestorIds, setShortlistedInvestorIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPageState] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(20);
   const [pagination, setPagination] = useState({
     currentPage: 1,
@@ -105,9 +105,6 @@ export default function FundraisingInvestorsPage() {
               const page = parseInt(urlPage);
               if (!isNaN(page) && page > 0) setCurrentPage(page);
             }
-
-            const newUrl = window.location.pathname;
-            window.history.replaceState({}, '', newUrl);
           } catch (e) {
             console.warn('Failed to parse URL filters:', e);
           }
@@ -119,28 +116,58 @@ export default function FundraisingInvestorsPage() {
     return () => clearTimeout(timer);
   }, []);
 
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const urlParams = new URLSearchParams(window.location.search);
-      const urlPage = urlParams.get('page');
-      if (urlPage) {
-        const page = parseInt(urlPage);
-        if (!isNaN(page) && page > 0 && page !== currentPage) {
-          setCurrentPage(page);
-        }
-      }
+  const syncPageParam = useCallback((page: number, options?: { replace?: boolean }) => {
+    if (typeof window === 'undefined') return;
+    const url = new URL(window.location.href);
+    url.searchParams.set('page', String(page));
+    const next = `${url.pathname}?${url.searchParams.toString()}`;
+    if (options?.replace) {
+      window.history.replaceState({}, '', next);
+    } else {
+      // Avoid pushing history during render by deferring to the next tick
+      setTimeout(() => {
+        window.history.pushState({}, '', next);
+      }, 0);
     }
-  }, [currentPage]);
+  }, []);
+
+  const setCurrentPage = useCallback((value: React.SetStateAction<number>, options?: { replace?: boolean }) => {
+    setCurrentPageState(prev => {
+      const nextPage = typeof value === 'function' ? (value as (prev: number) => number)(prev) : value;
+      const safePage = nextPage > 0 ? nextPage : 1;
+      if (safePage !== prev) {
+        syncPageParam(safePage, options);
+      }
+      return safePage;
+    });
+  }, [syncPageParam]);
 
   const updateFilters = (newFilters: Partial<Filters>) => {
     const updatedFilters = { ...filters, ...newFilters };
     if (JSON.stringify(updatedFilters) !== JSON.stringify(filters)) {
       setFilters(updatedFilters);
-      setCurrentPage(1);
+      setCurrentPage(1, { replace: true });
     }
   };
 
-  const updatePage = (page: number) => setCurrentPage(page);
+  const updatePage = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlPage = urlParams.get('page');
+    if (urlPage) {
+      const page = parseInt(urlPage);
+      if (!isNaN(page) && page > 0) {
+        setCurrentPageState(page);
+        return;
+      }
+    }
+    syncPageParam(currentPage, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const setCurrentPageWrapper = (value: React.SetStateAction<number>) => {
     if (typeof value === 'function') {
@@ -186,11 +213,19 @@ export default function FundraisingInvestorsPage() {
       if (!investorsRes.ok) throw new Error(`HTTP error! status: ${investorsRes.status}`);
 
       const investorsData: ApiResponse = await investorsRes.json();
+      const serverPagination = investorsData.pagination;
+      const totalPages = Math.max(1, serverPagination.totalPages || 1);
+
+      if (serverPagination.totalItems > 0 && currentPage > totalPages) {
+        setCurrentPage(totalPages, { replace: true });
+        return;
+      }
+
       const uniqueInvestors = Array.from(
         new Map((investorsData.investors || []).map((inv) => [inv.id, inv])).values()
       );
       setInvestors(uniqueInvestors);
-      setPagination(investorsData.pagination);
+      setPagination(serverPagination);
 
       // Process shortlist data if user is logged in
       if (shortlistRes && shortlistRes.ok) {
