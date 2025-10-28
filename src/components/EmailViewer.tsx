@@ -189,7 +189,7 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
 
   // Handle attachment changes with file size validation
   const handleAttachmentsChange = (newAttachments: File[]) => {
-    const maxFileSize = 10 * 1024 * 1024; // 10MB in bytes
+    const maxFileSize = 75 * 1024 * 1024; // 10MB in bytes
     const validFiles = [];
     const removedFiles = [];
     
@@ -210,7 +210,7 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
     if (removedFiles.length > 0) {
       const fileNames = removedFiles.map(f => `${f.name} (${f.sizeInMB}MB)`).join(', ');
       setSendStatus('error');
-      setSendMessage(`Files too large and removed: ${fileNames}. Maximum file size is 10MB.`);
+      setSendMessage(`Files too large and removed: ${fileNames}. Maximum file size is 75MB.`);
       
       // Clear error after 5 seconds
       setTimeout(() => {
