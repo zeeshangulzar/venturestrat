@@ -15,11 +15,15 @@ interface EmailDraft {
   investorId: string;
   investorName?: string;
   status?: string;
+  scheduledFor?: string;
+  threadId?: string;
+  gmailMessageId?: string;
+  gmailReferences?: string;
 }
 
 interface EmailManagementInterfaceProps {
   userId: string;
-  mode?: 'draft' | 'sent' | 'answered';
+  mode?: 'draft' | 'sent' | 'answered' | 'scheduled';
   refreshTrigger?: number; // Add refresh trigger prop
   onEmailSent?: (investorId?: string) => void; // Add callback for when email is sent
   onSaveStart?: () => void; // Add callback for when save starts
@@ -127,6 +131,10 @@ export default function EmailManagementInterface({ userId, mode = 'draft', refre
 
         case 'answered':
           endpoint = `/api/messages/answered/${userId}`;
+          break;
+
+        case 'scheduled':
+          endpoint = `/api/messages/scheduled/${userId}`;
           break;
 
         default:
@@ -310,7 +318,7 @@ export default function EmailManagementInterface({ userId, mode = 'draft', refre
         }
 
         // For sent emails, just show cached data immediately
-        if (mode === 'sent' || mode === 'answered') {
+        if (mode === 'sent' || mode === 'answered' || mode === 'scheduled') {
           const emailFromList = drafts.find(draft => draft.id === selectedEmailId);
           if (emailFromList) {
             setSelectedEmail(emailFromList);

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useUser } from '@clerk/nextjs';
 import { getApiUrl } from '@lib/api';
 import '@lib/react-polyfill'; // Import React 19 polyfill for React Quill compatibility
 import QuillEditor from './QuillEditor';
@@ -8,9 +9,11 @@ import Loader from './Loader';
 import { useAuthAccount } from '../contexts/AuthAccountContext';
 import AuthModal from './AuthModal';
 import { AttachmentItem } from '../types/attachments';
+import ScheduleFollowUpModal from './ScheduleFollowUpModal';
 
 interface EmailDraft {
   id: string;
+  userId?: string;
   to: string | string[];
   cc?: string | string[];
   from: string;
@@ -27,10 +30,16 @@ interface EmailDraft {
     size: number;
     url: string;
   }>;
+  threadId?: string;
+  scheduledFor?: string;
+  gmailMessageId?: string;
+  gmailReferences?: string;
 }
 
 interface EmailViewerProps {
   email: EmailDraft | null;
+  userId?: string;
+  mode?: 'draft' | 'sent' | 'answered' | 'scheduled';
   onEmailUpdate: (updatedEmail: EmailDraft) => void;
   onEmailSent?: (investorId?: string) => void;
   onEmailSaveStart?: () => void;
@@ -80,7 +89,7 @@ const deleteAttachmentMetadata = async (messageId: string, key: string) => {
   }
 };
 
-export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmailSaveStart, onEmailSaveEnd, onEmailRefresh, readOnly = false, loading = false, saveRef, onAttachmentUploadStatusChange }: EmailViewerProps) {
+export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUpdate, onEmailSent, onEmailSaveStart, onEmailSaveEnd, onEmailRefresh, readOnly = false, loading = false, saveRef, onAttachmentUploadStatusChange }: EmailViewerProps) {
   const [editedSubject, setEditedSubject] = useState('');
   const [editedBody, setEditedBody] = useState('');
   const [editedFrom, setEditedFrom] = useState('');
@@ -88,6 +97,7 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
   const [attachments, setAttachments] = useState<AttachmentItem[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [sendStatus, setSendStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -100,9 +110,20 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
       onAttachmentUploadStatusChange(isAttachmentUploading);
     }
   }, [isAttachmentUploading, onAttachmentUploadStatusChange]);
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [lastSentEmail, setLastSentEmail] = useState<EmailDraft | null>(null);
+  const [pendingSentInvestorId, setPendingSentInvestorId] = useState<string | null>(null);
+  
+  // Debug effect to track showScheduleModal changes
+  useEffect(() => {
+    console.log('🔍 showScheduleModal changed:', showScheduleModal);
+    console.log('🔍 lastSentEmail:', lastSentEmail);
+  }, [showScheduleModal, lastSentEmail]);
   
   // Authentication context
   const { hasAccount, checkAuthStatus } = useAuthAccount();
+  const { user } = useUser();
+  const currentUserId = userIdProp || user?.id || '';
   const [sendMessage, setSendMessage] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
@@ -214,6 +235,36 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
     proceedWithEmailSending();
   };
 
+  const handleCancelScheduledEmail = async () => {
+    if (!email?.id) return;
+    
+    setIsCancelling(true);
+    
+    try {
+      const response = await fetch(getApiUrl(`/api/message/${email.id}/cancel`), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to cancel scheduled email');
+      }
+
+      // Refresh the email list
+      if (onEmailRefresh) {
+        onEmailRefresh();
+      }
+    } catch (error) {
+      console.error('Error cancelling scheduled email:', error);
+      setSendStatus('error');
+      setSendMessage('Failed to cancel scheduled email');
+    } finally {
+      setIsCancelling(false);
+    }
+  };
+
   const proceedWithEmailSending = async () => {
     if (!email?.id) return;
     const investorId = email.investorId;
@@ -289,12 +340,47 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
         console.error('Error sending email:', errorMessage);
       } else {
         setSendStatus('success');
-        setSendMessage('Email sent successfully!');
+        const successMessage = mode === 'scheduled' 
+          ? 'Scheduled email sent as reply successfully!'
+          : 'Email sent successfully!';
+        setSendMessage(successMessage);
         console.log('Email sent successfully:', result);
+
+        const latestPayload =
+          result && typeof result === 'object' && 'data' in result && result.data
+            ? (result.data as EmailDraft)
+            : null;
+
+        const latestMessage: EmailDraft = latestPayload
+          ? {
+              ...latestPayload,
+              userId: currentUserId,
+            }
+          : {
+              ...email,
+              userId: currentUserId,
+            };
+
+        // Save for potential follow-up scheduling (prefer updated server response for thread IDs)
+        setLastSentEmail(latestMessage);
+        console.log('Saved last sent email:', latestMessage);
+        console.log('Current user ID:', currentUserId);
+        console.log('Mode:', mode);
         
-        // Call the onEmailSent callback if provided
-        if (onEmailSent) {
-          onEmailSent(investorId);
+        if (mode === 'scheduled') {
+          // For scheduled emails sent as replies, don't show schedule modal
+          // Call the onEmailSent callback to refresh the list
+          if (onEmailSent) {
+            onEmailSent(investorId);
+          }
+        } else {
+          // Show the schedule modal automatically after successful send
+          setPendingSentInvestorId(investorId || null);
+          setTimeout(() => {
+            console.log('Opening schedule modal...');
+            console.log('showScheduleModal will be set to true');
+            setShowScheduleModal(true);
+          }, 100);
         }
       }
     } catch (error) {
@@ -794,19 +880,20 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
                   type="text"
                   value={editedCc}
                   onChange={(e) => handleFieldChange('cc', e.target.value)}
+                  disabled={mode === 'scheduled'}
                   className={`ml-2 h-[46px] w-full max-w-md min-w-0 px-3 py-2 bg-[#F6F6F7] border rounded-[10px] focus:ring-2 focus:ring-blue-500 focus:border-blue-500 not-italic font-medium text-sm leading-6 text-[#0C2143] ${
                     fieldErrors.cc 
                       ? 'border-red-500 focus:border-red-500 focus:ring-red-500' 
-                      : 'border-[#EDEEEF]'
+                      : mode === 'scheduled' 
+                        ? 'border-[#EDEEEF] opacity-60 cursor-not-allowed bg-gray-100' 
+                        : 'border-[#EDEEEF]'
                   }`}
                   placeholder="cc1@example.com, cc2@example.com"
                   style={{ minWidth: '200px' }}
-                  title="Separate multiple emails with commas"
+                  title={mode === 'scheduled' ? 'CC is fixed for scheduled replies' : 'Separate multiple emails with commas'}
                 />
               </div>
-              {fieldErrors.cc ? (
-                <p className="text-red-500 text-xs mt-1 ml-2">{fieldErrors.cc}</p>
-              ) : (
+              {!fieldErrors.cc && mode !== 'scheduled' && (
                 <div className="text-xs text-gray-500 mt-1 ml-2">
                   Separate multiple emails with commas
                 </div>
@@ -819,6 +906,23 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
             <div>
               <span className="font-medium text-gray-700">CC:</span>
               <span className="ml-2 text-gray-900">{getRecipients(email.cc)}</span>
+            </div>
+          )}
+          
+          {/* Scheduled Time Display */}
+          {mode === 'scheduled' && email.scheduledFor && (
+            <div className="flex items-center">
+              <span className="font-medium text-gray-700">Scheduled for:</span>
+              <span className="ml-2 text-gray-900">
+                {new Date(email.scheduledFor).toLocaleString('en-US', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  hour12: true
+                })}
+              </span>
             </div>
           )}
         </div>
@@ -919,6 +1023,16 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
                   : 'bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
               }`}
             >
+              {mode === 'scheduled' && (
+                <button
+                  type="button"
+                  onClick={handleCancelScheduledEmail}
+                  disabled={isCancelling}
+                  className="px-3 py-2 rounded-md text-red-600 bg-red-50 hover:bg-red-100 disabled:opacity-50"
+                >
+                  {isCancelling ? 'Cancelling…' : 'Cancel Scheduled'}
+                </button>
+              )}
               <button
                 type="button"
                 onClick={handleSendEmail}
@@ -963,6 +1077,34 @@ export default function EmailViewer({ email, onEmailUpdate, onEmailSent, onEmail
         onClose={handleCloseModal}
         onAuthSuccess={handleAuthSuccess}
         onSkipAuth={handleSkipAuth}
+      />
+
+      {/* Schedule Follow-Up Modal */}
+      <ScheduleFollowUpModal
+        isOpen={showScheduleModal}
+        onClose={() => {
+          console.log('Closing schedule modal');
+          setShowScheduleModal(false);
+          if (onEmailSent && pendingSentInvestorId) {
+            onEmailSent(pendingSentInvestorId);
+          }
+          setPendingSentInvestorId(null);
+        }}
+        onSchedule={() => {
+          console.log('Schedule confirmed');
+          setShowScheduleModal(false);
+          if (onEmailRefresh) {
+            onEmailRefresh();
+          }
+          if (onEmailSent && pendingSentInvestorId) {
+            onEmailSent(pendingSentInvestorId);
+          }
+          setPendingSentInvestorId(null);
+        }}
+        email={lastSentEmail ? {
+          ...lastSentEmail,
+          userId: currentUserId
+        } : null}
       />
     </div>
   );
