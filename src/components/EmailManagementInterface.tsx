@@ -28,9 +28,10 @@ interface EmailManagementInterfaceProps {
   isAIEmail?: boolean; // Add flag to indicate if this is an AI email
   onSelectEmailProcessed?: () => void; // Add callback for when selectEmailId is processed
   onSaveRefReady?: (saveRef: React.MutableRefObject<(() => Promise<void>) | null>) => void; // Add callback for save ref
+  onAttachmentUploadStatusChange?: (isUploading: boolean) => void;
 }
 
-export default function EmailManagementInterface({ userId, mode = 'draft', refreshTrigger, onEmailSent, onSaveStart, onSaveEnd, selectEmailId, isAIEmail, onSelectEmailProcessed, onSaveRefReady }: EmailManagementInterfaceProps) {
+export default function EmailManagementInterface({ userId, mode = 'draft', refreshTrigger, onEmailSent, onSaveStart, onSaveEnd, selectEmailId, isAIEmail, onSelectEmailProcessed, onSaveRefReady, onAttachmentUploadStatusChange }: EmailManagementInterfaceProps) {
   const [drafts, setDrafts] = useState<EmailDraft[]>([]);
   const [selectedEmailId, setSelectedEmailId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -539,17 +540,20 @@ export default function EmailManagementInterface({ userId, mode = 'draft', refre
         selectedEmailId={selectedEmailId ? selectedEmailId.split('_')[0] : selectedEmailId}
         onEmailSelect={handleEmailSelect}
       />
-      <EmailViewer
-        email={selectedEmail}
-        onEmailUpdate={handleEmailUpdate}
-        onEmailSent={handleEmailSent}
-        onEmailSaveStart={mode === 'draft' ? handleEmailSaveStart : undefined}
-        onEmailSaveEnd={mode === 'draft' ? handleEmailSaveEnd : undefined}
-        onEmailRefresh={mode === 'draft' ? refreshEmailFromBackend : undefined}
-        readOnly={mode === 'sent' || mode === 'answered'}
-        loading={isFetchingIndividualEmail || isTransitioning}
-        saveRef={saveRef}
-      />
+      <div className="flex-1">
+        <EmailViewer
+          email={selectedEmail}
+          onEmailUpdate={handleEmailUpdate}
+          onEmailSent={handleEmailSent}
+          onEmailSaveStart={mode === 'draft' ? handleEmailSaveStart : undefined}
+          onEmailSaveEnd={mode === 'draft' ? handleEmailSaveEnd : undefined}
+          onEmailRefresh={mode === 'draft' ? refreshEmailFromBackend : undefined}
+          readOnly={mode === 'sent' || mode === 'answered'}
+          loading={isFetchingIndividualEmail || isTransitioning}
+          saveRef={saveRef}
+          onAttachmentUploadStatusChange={onAttachmentUploadStatusChange}
+        />
+      </div>
     </div>
   );
 }
