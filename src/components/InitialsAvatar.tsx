@@ -17,13 +17,15 @@ export default function InitialsAvatar({
   backgroundColor,
   textColor = '#ffffff'
 }: InitialsAvatarProps) {
-  // Extract initials from the name
-  const getInitials = (name: string): string => {
-    if (!name || name.trim() === '') return '?';
-    
-    // Always take only the first letter of the first word
-    const firstWord = name.trim().split(/\s+/)[0];
-    return firstWord.charAt(0).toUpperCase();
+  // Extract initials from the name (match InvestorCard logic)
+  const getInitials = (value: string): string => {
+    if (!value || value.trim() === '') return '?';
+
+    const parts = value.trim().split(/\s+/);
+    const first = parts[0]?.[0]?.toUpperCase() || '';
+    const second = parts[1]?.[0]?.toUpperCase() || '';
+
+    return (first + second) || '?';
   };
 
   // Generate background color based on name if not provided
