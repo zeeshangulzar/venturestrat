@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation';
 import { getApiUrl } from '@lib/api';
 import InvestorHeader from '@components/InvestorCardHeader';
 import MapPinIcon from './icons/mapPinIcon';
+import Image from "next/image";
+import InitialsAvatar from '@components/InitialsAvatar';
 
 import {
   PhoneIcon,
@@ -213,30 +215,48 @@ const InvestorCard: React.FC<{
         {/* Column 1: Identity */}
         <div className="flex min-w-0 items-start gap-4 pt-4 pb-2 xl:pb-6 px-4
 +                 xl:flex-[0_0_370px] xl:max-w-none">
-          <div className="min-w-0 flex-1">
-            <div className="flex items-start gap-2 mb-2">
-              <InvestorHeader
-                name={investor.name}
-                verified={verified}
-                social_links={investor.social_links}
+          <div className="flex items-start gap-3">
+            {investor.avatar ? (
+              <Image
+                src={investor.avatar}
+                alt={investor.name || "Investor avatar"}
+                width={60}
+                height={60}
+                className="rounded-full object-cover"
               />
-            </div>
-
-            {investor.title && (
-              <p className="text-[var(--Dark-D200,#787F89)] leading-[22px] sm:leading-[24px] font-manrope text-[13px] sm:text-[14px] font-normal tracking-[-0.26px] sm:tracking-[-0.28px] mb-2 sm:mb-[10px] break-words">
-                {investor.title}
-              </p>
+            ) : (
+              <InitialsAvatar
+                name={investor.name || 'Investor'}
+                size="lg"
+                className="h-[60px] w-[60px] text-xl"
+              />
             )}
 
-            <div className="flex flex-wrap gap-2">
-              {investorTypeChips.map((type) => (
-                <span
-                  key={type}
-                  className="inline-flex items-center justify-center px-[10px] py-[5.5px] gap-[10px] rounded-[40px] text-[var(--Dark-D500,#525A68)] font-manrope text-[11px] sm:text-[12px] font-medium leading-normal tracking-[-0.22px] sm:tracking-[-0.24px] bg-[var(--Primary-P20,#F6F9FE)] whitespace-nowrap"
-                >
-                  {type}
-                </span>
-              ))}
+            <div className="min-w-0 flex-1">
+              <div className="flex items-start gap-2 mb-2">
+                <InvestorHeader
+                  name={investor.name}
+                  verified={verified}
+                  social_links={investor.social_links}
+                />
+              </div>
+
+              {investor.title && (
+                <p className="text-[var(--Dark-D200,#787F89)] leading-[22px] sm:leading-[24px] font-manrope text-[13px] sm:text-[14px] font-normal tracking-[-0.26px] sm:tracking-[-0.28px] mb-2 sm:mb-[10px] break-words">
+                  {investor.title}
+                </p>
+              )}
+
+              <div className="flex flex-wrap gap-2">
+                {investorTypeChips.map((type) => (
+                  <span
+                    key={type}
+                    className="inline-flex items-center justify-center px-[10px] py-[5.5px] gap-[10px] rounded-[40px] text-[var(--Dark-D500,#525A68)] font-manrope text-[11px] sm:text-[12px] font-medium leading-normal tracking-[-0.22px] sm:tracking-[-0.24px] bg-[var(--Primary-P20,#F6F9FE)] whitespace-nowrap"
+                  >
+                    {type}
+                  </span>
+                ))}
+              </div>
             </div>
           </div>
         </div>
