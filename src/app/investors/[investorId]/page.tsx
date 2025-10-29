@@ -5,6 +5,8 @@ import { useParams } from 'next/navigation';
 import InvestorHeader from '@components/InvestorCardHeader';
 import { getApiUrl } from '@lib/api';
 import Link from 'next/link';
+import Image from 'next/image';
+import InitialsAvatar from '@components/InitialsAvatar';
 
 type SocialLinks = { [key: string]: string };
 
@@ -119,26 +121,46 @@ export default function InvestorShowPage() {
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         {/* Header */}
         <div className="border-b border-slate-200 p-6">
-          <InvestorHeader
-            name={investor.name}
-            verified={verified}
-            social_links={investor.social_links}
-          />
-          {investor.title && (
-            <p className="mt-1 text-sm font-medium text-slate-700">{investor.title}</p>
-          )}
-          {investorTypes.length > 0 && (
-            <div className="mt-3 flex flex-wrap gap-2">
-              {investorTypes.map((type) => (
-                <span
-                  key={type}
-                  className="rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-700"
-                >
-                  {type}
-                </span>
-              ))}
+          <div className="flex items-start gap-4">
+            {investor.avatar ? (
+              <Image
+                src={investor.avatar}
+                alt={investor.name || 'Investor avatar'}
+                width={64}
+                height={64}
+                className="h-16 w-16 rounded-full object-cover"
+              />
+            ) : (
+              <InitialsAvatar
+                name={investor.name || 'Investor'}
+                size="lg"
+                className="h-16 w-16 text-xl"
+              />
+            )}
+
+            <div className="min-w-0 flex-1">
+              <InvestorHeader
+                name={investor.name}
+                verified={verified}
+                social_links={investor.social_links}
+              />
+              {investor.title && (
+                <p className="mt-1 text-sm font-medium text-slate-700">{investor.title}</p>
+              )}
+              {investorTypes.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {investorTypes.map((type) => (
+                    <span
+                      key={type}
+                      className="rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-700"
+                    >
+                      {type}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
 
         {/* Body */}
