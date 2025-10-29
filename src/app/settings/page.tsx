@@ -1,7 +1,7 @@
 'use client';
 
-import { useUser } from '@clerk/nextjs';
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useUser, useClerk } from '@clerk/nextjs';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUserDataRefresh } from '../../contexts/UserDataContext';
 import { Country } from 'country-state-city';
@@ -17,6 +17,7 @@ import FinancialsIcon from '@components/icons/FinancialsIcon';
 import PresentationsIcon from '@components/icons/PresentationsIcon';
 import BusinessPlanningIcon from '@components/icons/BusinessPlanningIcon';
 import MarketingIcon from '@components/icons/MarketingIcon';
+import { hasVerifiedExternalAccount } from '@utils/externalAccounts';
 
 type FilterOption = { label: string; value: string; disabled?: boolean };
 
@@ -48,6 +49,7 @@ type OnboardingData = {
 
 export default function SettingsPage() {
   const { user, isLoaded } = useUser();
+  const { openSignIn } = useClerk();
   const router = useRouter();
   const { triggerRefresh } = useUserDataRefresh();
   const [currentCategory, setCurrentCategory] = useState('financials');
@@ -74,6 +76,276 @@ export default function SettingsPage() {
     fundingCurrency: '',
     currency: ''
   });
+
+  // Email integration state
+  const [isConnecting, setIsConnecting] = useState<null | 'google' | 'microsoft'>(null);
+  const [isDisconnecting, setIsDisconnecting] = useState(false);
+
+  const hasGoogleAccount = useMemo(
+    () => hasVerifiedExternalAccount(user?.externalAccounts, 'google'),
+    [user?.externalAccounts],
+  );
+  const hasMicrosoftAccount = useMemo(
+    () => hasVerifiedExternalAccount(user?.externalAccounts, 'microsoft'),
+    [user?.externalAccounts],
+  );
+
+  const googleAccount = useMemo(() => {
+    const accounts = user?.externalAccounts || [];
+    return accounts.find((a: any) => {
+      const providerId = a.provider;
+      return providerId === 'google' || providerId === 'oauth_google' || providerId?.includes('google');
+    });
+  }, [user?.externalAccounts]);
+
+  const microsoftAccount = useMemo(() => {
+    const accounts = user?.externalAccounts || [];
+    return accounts.find((a: any) => {
+      const providerId = a.provider;
+      return providerId === 'microsoft' || providerId === 'oauth_microsoft' || providerId?.includes('microsoft');
+    });
+  }, [user?.externalAccounts]);
+
+  const googleApprovedScopes = (googleAccount?.approvedScopes ?? '').toString();
+  const msApprovedScopes = (microsoftAccount?.approvedScopes ?? '').toString();
+
+  const hasGoogleRequiredScopes = useMemo(() => {
+    if (!googleApprovedScopes) return false;
+    const s = googleApprovedScopes;
+    return (
+      (s.includes('https://www.googleapis.com/auth/gmail.send') || s.includes('gmail.send')) &&
+      (s.includes('https://www.googleapis.com/auth/gmail.readonly') || s.includes('gmail.readonly'))
+    );
+  }, [googleApprovedScopes]);
+
+  const hasMicrosoftRequiredScopes = useMemo(() => {
+    if (!msApprovedScopes) return false;
+    const s = msApprovedScopes;
+    return (
+      (s.includes('https://graph.microsoft.com/Mail.Send') || s.includes('Mail.Send')) &&
+      (s.includes('https://graph.microsoft.com/Mail.Read') || s.includes('Mail.Read'))
+    );
+  }, [msApprovedScopes]);
+
+  const needsGoogleReconnect = hasGoogleAccount && !hasGoogleRequiredScopes;
+  const needsMicrosoftReconnect = hasMicrosoftAccount && !hasMicrosoftRequiredScopes;
+
+  const openPopupAndWait = (url: string) => {
+    return new Promise<void>((resolve) => {
+      const popup = window.open(
+        url,
+        'oauth-connect',
+        'width=500,height=600,scrollbars=yes,resizable=yes,location=yes,toolbar=no'
+      );
+      if (!popup) {
+        resolve();
+        return;
+      }
+      const timer = setInterval(() => {
+        if (popup.closed) {
+          clearInterval(timer);
+          resolve();
+        } else {
+          try {
+            const href = popup.location?.href ?? '';
+            if (href.includes(window.location.origin)) {
+              popup.close();
+              clearInterval(timer);
+              resolve();
+            }
+          } catch (_) {
+            // ignore cross-origin errors while still on provider domain
+          }
+        }
+      }, 1000);
+      // safety auto-close after 2 minutes
+      setTimeout(() => {
+        try { popup.close(); } catch {}
+        clearInterval(timer);
+        resolve();
+      }, 120000);
+    });
+  };
+
+  const handleConnect = async (provider: 'google' | 'microsoft') => {
+    if (!user) return;
+    if (provider === 'google' && hasMicrosoftAccount) {
+      alert('Microsoft is already connected. Disconnect it before connecting Google.');
+      return;
+    }
+    if (provider === 'microsoft' && hasGoogleAccount) {
+      alert('Google is already connected. Disconnect it before connecting Microsoft.');
+      return;
+    }
+
+    setIsConnecting(provider);
+    try {
+      const externalAccount = await user.createExternalAccount({
+        strategy: provider === 'google' ? 'oauth_google' : 'oauth_microsoft',
+        additionalScopes:
+          provider === 'google'
+            ? [
+                'https://www.googleapis.com/auth/gmail.send',
+                'https://www.googleapis.com/auth/gmail.readonly',
+                'openid',
+                'email',
+                'profile',
+              ]
+            : [
+                'https://graph.microsoft.com/Mail.Send',
+                'https://graph.microsoft.com/Mail.Read',
+                'offline_access',
+              ],
+        redirectUrl: window.location.origin,
+      });
+
+      const verificationUrl = externalAccount?.verification?.externalVerificationRedirectURL?.toString();
+      if (verificationUrl) {
+        await openPopupAndWait(verificationUrl);
+      }
+      await user.reload();
+    } catch (e: any) {
+      const message = (e && (e.message || e.errors?.[0]?.message)) || '';
+      const alreadyConnected = typeof message === 'string' && message.toLowerCase().includes('already connected');
+      if (alreadyConnected) {
+        // If account exists, try reauthorization (incremental consent) instead
+        await handleReconnect(provider);
+      } else {
+        console.error('Connect failed', e);
+        alert('Unable to connect account. Please try again.');
+      }
+    } finally {
+      setIsConnecting(null);
+    }
+  };
+
+  const handleDisconnect = async () => {
+    if (!user) return;
+    const account: any = googleAccount || microsoftAccount;
+    if (!account) return;
+    if (!confirm('Disconnect your email account? Emails cannot be sent until reconnected.')) return;
+    setIsDisconnecting(true);
+    try {
+      if (typeof account.destroy === 'function') {
+        await account.destroy();
+      } else {
+        // Fallback: attempt through user resource if available
+        // @ts-ignore
+        if (typeof user.unlinkExternalAccount === 'function') {
+          // @ts-ignore
+          await user.unlinkExternalAccount(account.id);
+        }
+      }
+      await user.reload();
+    } catch (e: any) {
+      const message = (e && (e.message || e.errors?.[0]?.message)) || '';
+      const needsReauth = typeof message === 'string' && message.toLowerCase().includes('additional verification');
+      if (needsReauth) {
+        try {
+          alert('This action needs a quick re-verification. A sign-in dialog will open. After verifying, we will retry disconnect automatically.');
+          await openSignIn({ afterSignInUrl: typeof window !== 'undefined' ? window.location.href : undefined });
+
+          const originalAccountId = account.id;
+          const providerId = account.provider;
+          let attempts = 0;
+          const retry = async (): Promise<void> => {
+            attempts += 1;
+            try {
+              await user.reload?.();
+              const freshAccounts = user?.externalAccounts || [];
+              const freshAccount: any =
+                freshAccounts.find((a: any) => a.id === originalAccountId) ||
+                freshAccounts.find((a: any) => a.provider === providerId);
+              if (!freshAccount) {
+                return; // already disconnected
+              }
+              if (typeof freshAccount.destroy === 'function') {
+                await freshAccount.destroy();
+              } else if (typeof (user as any).unlinkExternalAccount === 'function') {
+                await (user as any).unlinkExternalAccount(freshAccount.id);
+              }
+              await user.reload?.();
+            } catch (err: any) {
+              const msg = (err && (err.message || err.errors?.[0]?.message)) || '';
+              const stillNeeds = typeof msg === 'string' && msg.toLowerCase().includes('additional verification');
+              if (stillNeeds && attempts < 10) {
+                setTimeout(retry, 2000);
+              } else if (!stillNeeds) {
+                console.error('Disconnect retry failed:', err);
+                alert('Failed to disconnect. Please try again.');
+              }
+            }
+          };
+          setTimeout(retry, 1500);
+        } catch (openErr) {
+          console.error('Reverification prompt failed:', openErr);
+          alert('Please sign out and sign back in, then try disconnecting again.');
+        }
+      } else {
+        console.error('Disconnect failed', e);
+        alert('Failed to disconnect. Please try again.');
+      }
+    } finally {
+      setIsDisconnecting(false);
+    }
+  };
+
+  const handleReconnect = async (provider: 'google' | 'microsoft') => {
+    if (!user) return;
+    setIsConnecting(provider);
+    try {
+      const account: any = provider === 'google' ? googleAccount : microsoftAccount;
+      const scopes = provider === 'google'
+        ? [
+            'https://www.googleapis.com/auth/gmail.send',
+            'https://www.googleapis.com/auth/gmail.readonly',
+            'openid',
+            'email',
+            'profile',
+          ]
+        : [
+            'https://graph.microsoft.com/Mail.Send',
+            'https://graph.microsoft.com/Mail.Read',
+            'offline_access',
+          ];
+
+      if (account && typeof account.reauthorize === 'function') {
+        // Preferred: reauthorize existing connection with incremental scopes
+        const result = await account.reauthorize({
+          additionalScopes: scopes,
+          redirectUrl: window.location.origin,
+        });
+        const verificationUrl = result?.verification?.externalVerificationRedirectURL?.toString();
+        if (verificationUrl) {
+          await openPopupAndWait(verificationUrl);
+        }
+        await user.reload();
+        return;
+      }
+
+      // Fallback: destroy then connect again with required scopes
+      if (account && typeof account.destroy === 'function') {
+        await account.destroy();
+        await user.reload();
+      }
+
+      const newAccount = await user.createExternalAccount({
+        strategy: provider === 'google' ? 'oauth_google' : 'oauth_microsoft',
+        additionalScopes: scopes,
+        redirectUrl: window.location.origin,
+      });
+      const verificationUrl = newAccount?.verification?.externalVerificationRedirectURL?.toString();
+      if (verificationUrl) {
+        await openPopupAndWait(verificationUrl);
+      }
+      await user.reload();
+    } catch (e) {
+      console.error('Reconnect failed', e);
+      alert('Unable to reconnect. Please try again.');
+    } finally {
+      setIsConnecting(null);
+    }
+  };
 
   // API data state for stages and business sectors
   const [originalStages, setOriginalStages] = useState<FilterOption[]>([]);
@@ -872,7 +1144,115 @@ export default function SettingsPage() {
           </div>
         </div>
 
+        {/* Email Integration */}
+        <div className="bg-[#FFFFFF] rounded-xl p-6 mb-8 border border-[#EDEEEF]">
+          <h2 className="text-[20px] font-semibold text-[#0C2143]">Integration Settings</h2>
+          <p className="text-sm text-[#525A68] mt-1">
+            Configure Google or Microsoft connections for email delivery and webhook support.
+          </p>
 
+          {hasGoogleAccount || hasMicrosoftAccount ? (
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  {hasGoogleAccount ? (
+                    <svg className="w-5 h-5" viewBox="0 0 24 24">
+                      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                    </svg>
+                  ) : (
+                    <svg className="w-5 h-5" viewBox="0 0 24 24">
+                      <path fill="#F25022" d="M1 1h10v10H1z"/>
+                      <path fill="#7FBA00" d="M13 1h10v10H13z"/>
+                      <path fill="#00A4EF" d="M1 13h10v10H1z"/>
+                      <path fill="#FFB900" d="M13 13h10v10H13z"/>
+                    </svg>
+                  )}
+                  <div>
+                    <div className="text-[#0C2143] text-sm font-medium">
+                      {hasGoogleAccount ? 'Google connected' : 'Microsoft connected'}
+                    </div>
+                    {(needsGoogleReconnect || needsMicrosoftReconnect) && (
+                      <div className="text-xs text-amber-600">Missing permissions. Please reconnect to grant email send and read access.</div>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  {(needsGoogleReconnect || needsMicrosoftReconnect) && (
+                    <button
+                      onClick={() => handleReconnect(hasGoogleAccount ? 'google' : 'microsoft')}
+                      disabled={isConnecting !== null}
+                      className="px-3 py-2 text-sm border border-amber-300 text-amber-700 rounded-lg hover:bg-amber-50"
+                    >
+                      {isConnecting ? 'Reconnecting...' : 'Reconnect'}
+                    </button>
+                  )}
+                  <button
+                    onClick={handleDisconnect}
+                    disabled={isDisconnecting}
+                    className="px-3 py-2 text-sm border border-red-300 text-red-700 rounded-lg hover:bg-red-50"
+                  >
+                    {isDisconnecting ? 'Disconnecting...' : 'Disconnect'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <button
+                onClick={() => handleConnect('google')}
+                disabled={isConnecting !== null}
+                className={`w-full flex items-center justify-center px-4 py-3 border rounded-lg transition-colors ${
+                  isConnecting === 'google' ? 'opacity-50 cursor-not-allowed' : 'border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                {isConnecting === 'google' ? (
+                  <div className="flex items-center">
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600 mr-3"></div>
+                    Connecting...
+                  </div>
+                ) : (
+                  <div className="flex items-center">
+                    <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24">
+                      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                    </svg>
+                    Connect with Google
+                  </div>
+                )}
+              </button>
+
+              <button
+                onClick={() => handleConnect('microsoft')}
+                disabled={isConnecting !== null}
+                className={`w-full flex items-center justify-center px-4 py-3 border rounded-lg transition-colors ${
+                  isConnecting === 'microsoft' ? 'opacity-50 cursor-not-allowed' : 'border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                {isConnecting === 'microsoft' ? (
+                  <div className="flex items-center">
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600 mr-3"></div>
+                    Connecting...
+                  </div>
+                ) : (
+                  <div className="flex items-center">
+                    <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24">
+                      <path fill="#F25022" d="M1 1h10v10H1z"/>
+                      <path fill="#7FBA00" d="M13 1h10v10H13z"/>
+                      <path fill="#00A4EF" d="M1 13h10v10H1z"/>
+                      <path fill="#FFB900" d="M13 13h10v10H13z"/>
+                    </svg>
+                    Connect with Microsoft
+                  </div>
+                )}
+              </button>
+            </div>
+          )}
+        </div>
 
         {/* Categories and Content Section */}
         <div className='bg-[#FFFFFF] border border-[#EDEEEF] rounded-[14px]'>
