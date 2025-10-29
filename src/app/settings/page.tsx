@@ -230,9 +230,9 @@ export default function SettingsPage() {
         await account.destroy();
       } else {
         // Fallback: attempt through user resource if available
-        // @ts-ignore
+        // @ts-expect-error - unlinkExternalAccount is not typed on the User resource in Clerk SDK
         if (typeof user.unlinkExternalAccount === 'function') {
-          // @ts-ignore
+          // @ts-expect-error - unlinkExternalAccount is not typed on the User resource in Clerk SDK
           await user.unlinkExternalAccount(account.id);
         }
       }
