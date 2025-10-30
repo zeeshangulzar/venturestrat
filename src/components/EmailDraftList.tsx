@@ -12,6 +12,9 @@ interface EmailDraft {
   createdAt: string;
   investorId: string;
   investorName?: string;
+  threadId?: string;
+  gmailMessageId?: string;
+  gmailReferences?: string;
 }
 
 interface EmailDraftListProps {

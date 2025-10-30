@@ -21,6 +21,7 @@ interface EmailCounts {
   sent: number;
   opened: number;
   answered: number;
+  scheduled: number;
 }
 
 export default function EmailTabsManager({ userId, refreshTrigger, selectEmailId, isAIEmail, onTabSwitch, onEmailProcessed, onEmailSent, onAttachmentUploadStatusChange }: EmailTabsManagerProps) {
@@ -30,6 +31,7 @@ export default function EmailTabsManager({ userId, refreshTrigger, selectEmailId
     sent: 0,
     opened: 0,
     answered: 0,
+    scheduled: 0,
   });
   const [loading, setLoading] = useState(true);
   const [pendingSave, setPendingSave] = useState(false);
@@ -61,9 +63,15 @@ export default function EmailTabsManager({ userId, refreshTrigger, selectEmailId
         headers: { 'Content-Type': 'application/json' },
       });
 
+      const scheduledResponse = await fetch(getApiUrl(`/api/messages/scheduled/${userId}`), {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
       let draftCount = 0;
       let sentCount = 0;
       let answeredCount = 0;
+      let scheduledCount = 0;
 
       if (draftResponse.ok) {
         const draftData = await draftResponse.json();
@@ -78,12 +86,17 @@ export default function EmailTabsManager({ userId, refreshTrigger, selectEmailId
         const answeredData = await answeredResponse.json();
         answeredCount = answeredData.data?.length || answeredData.count || 0;
       }
+      if (scheduledResponse.ok) {
+        const scheduledData = await scheduledResponse.json();
+        scheduledCount = scheduledData.data?.length || scheduledData.count || 0;
+      }
 
       setCounts({
         all: draftCount,
         sent: sentCount,
         opened: 0, // Placeholder for future implementation
-        answered: answeredCount, // Placeholder for future implementation
+        answered: answeredCount,
+        scheduled: scheduledCount,
       });
     } catch (error) {
       console.error('Error fetching email counts:', error);
@@ -251,6 +264,20 @@ export default function EmailTabsManager({ userId, refreshTrigger, selectEmailId
             onSelectEmailProcessed={handleSelectEmailProcessed}
             onSaveRefReady={handleSaveRefReady}
             onAttachmentUploadStatusChange={onAttachmentUploadStatusChange}
+          />
+        )}
+        
+        {activeSection === 'scheduled' && (
+          <EmailManagementInterface 
+            userId={userId} 
+            mode="scheduled" 
+            refreshTrigger={refreshTrigger} 
+            onEmailSent={handleEmailSent}
+            onSaveStart={handleSaveStart}
+            onSaveEnd={handleSaveEnd}
+            selectEmailId={undefined}
+            onSelectEmailProcessed={handleSelectEmailProcessed}
+            onSaveRefReady={handleSaveRefReady}
           />
         )}
       </div>
