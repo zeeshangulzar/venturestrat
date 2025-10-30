@@ -185,7 +185,21 @@ export default function FundraisingInvestorsPage() {
     } else {
       updatePage(value);
     }
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'auto' });
+    }
   };
+
+  // Ensure viewport resets to top when new data has finished loading
+  useEffect(() => {
+    if (!loading) {
+      if (typeof window !== 'undefined') {
+        requestAnimationFrame(() => {
+          window.scrollTo({ top: 0, behavior: 'auto' });
+        });
+      }
+    }
+  }, [loading, currentPage]);
 
   const handleSearchChange = (query: string) => {
     setSearchQuery(query);
