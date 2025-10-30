@@ -485,6 +485,15 @@ export default function EmailManagementInterface({ userId, mode = 'draft', refre
     }
   };
 
+  // Refresh handler for scheduled tab (used by child on cancel)
+  const handleScheduledRefresh = () => {
+    if (mode === 'scheduled') {
+      // Clear selection so UI doesn't hold a now-removed scheduled item
+      setSelectedEmailId(null);
+      fetchDrafts();
+    }
+  };
+
   // Only show full-page loader on initial load when we have no data at all
   if (loading && !hasInitialData && drafts.length === 0) {
     return (
@@ -551,11 +560,12 @@ export default function EmailManagementInterface({ userId, mode = 'draft', refre
       <div className="flex-1">
         <EmailViewer
           email={selectedEmail}
+          mode={mode}
           onEmailUpdate={handleEmailUpdate}
           onEmailSent={handleEmailSent}
           onEmailSaveStart={mode === 'draft' ? handleEmailSaveStart : undefined}
           onEmailSaveEnd={mode === 'draft' ? handleEmailSaveEnd : undefined}
-          onEmailRefresh={mode === 'draft' ? refreshEmailFromBackend : undefined}
+          onEmailRefresh={mode === 'draft' ? refreshEmailFromBackend : (mode === 'scheduled' ? handleScheduledRefresh : undefined)}
           readOnly={mode === 'sent' || mode === 'answered'}
           loading={isFetchingIndividualEmail || isTransitioning}
           saveRef={saveRef}

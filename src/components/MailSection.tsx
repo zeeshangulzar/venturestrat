@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 
-type MailSectionType = 'all' | 'sent' | 'opened' | 'answered';
+type MailSectionType = 'all' | 'sent' | 'opened' | 'answered' | 'scheduled';
 
 interface MailSectionProps {
   section: MailSectionType;
@@ -18,6 +18,8 @@ export default function MailSection({ section, children }: MailSectionProps) {
         return 'Opened Mails';
       case 'answered':
         return 'Answered Mails';
+      case 'scheduled':
+        return 'Scheduled Mails';
       default:
         return 'Mails';
     }
