@@ -315,8 +315,11 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
       console.log('=== FRONTEND DEBUGGING ===');
       console.log('Attachments metadata being sent:', attachmentPayload);
 
+      const endpoint = mode === 'scheduled'
+        ? getApiUrl(`/api/message/${email.id}/send-reply`)
+        : getApiUrl(`/api/message/${email.id}/send`);
       const response = await fetch(
-        getApiUrl(`/api/message/${email.id}/send`),
+        endpoint,
         {
           method: 'POST',
           headers: {
@@ -619,9 +622,9 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
 
       const updatedEmail = await response.json();
       
-      // Update sidebar only - don't update the current email state to prevent input focus loss
-      // This will refresh the drafts array (sidebar) without affecting the selectedEmail (input field)
-      if (onEmailRefresh) {
+      // Update sidebar only for drafts. For scheduled mode, avoid refreshing to prevent loader flicker
+      // and allow smooth typing/attachments handling.
+      if (mode === 'draft' && onEmailRefresh) {
         onEmailRefresh();
       }
     } catch (error) {
@@ -1015,20 +1018,13 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
           </div>
           
           <div className="flex justify-end">
-            {!readOnly ? (
-            <div
-              className={`flex items-center gap-2 px-6 py-2 rounded-md font-medium transition-colors ${
-                isSendDisabled
-                  ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
-                  : 'bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
-              }`}
-            >
+            <div className="flex items-center gap-2">
               {mode === 'scheduled' && (
                 <button
                   type="button"
                   onClick={handleCancelScheduledEmail}
                   disabled={isCancelling}
-                  className="px-3 py-2 rounded-md text-red-600 bg-red-50 hover:bg-red-100 disabled:opacity-50"
+                  className="px-3 py-2 rounded-md border border-red-300 text-red-600 bg-white hover:bg-red-50 disabled:opacity-50"
                 >
                   {isCancelling ? 'Cancelling…' : 'Cancel Scheduled'}
                 </button>
@@ -1038,7 +1034,7 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
                 onClick={handleSendEmail}
                 disabled={isSendDisabled}
                 aria-disabled={isSendDisabled}
-                className="flex items-center gap-2"
+                className={`${isSendDisabled ? 'bg-gray-300 text-gray-600 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700'} flex items-center gap-2 px-6 py-2 rounded-md font-medium transition-colors`}
               >
                 {isSending && (
                   <svg className="animate-spin -ml-1 h-4 w-4 text-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -1047,26 +1043,20 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
                   </svg>
                 )}
                 <span>{sendButtonLabel}</span>
+                <svg width="21" height="20" viewBox="0 0 21 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                  <g clipPath="url(#clip0_1403_3442)">
+                    <path d="M16.333 10H4.66634" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M16.333 10L12.9997 13.3333" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M16.333 10.0001L12.9997 6.66675" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </g>
+                  <defs>
+                    <clipPath id="clip0_1403_3442">
+                      <rect width="20" height="20" fill="white" transform="matrix(-1 0 0 1 20.5 0)"/>
+                    </clipPath>
+                  </defs>
+                </svg>
               </button>
-              <svg width="21" height="20" viewBox="0 0 21 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                <g clipPath="url(#clip0_1403_3442)">
-                  <path d="M16.333 10H4.66634" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M16.333 10L12.9997 13.3333" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M16.333 10.0001L12.9997 6.66675" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </g>
-                <defs>
-                  <clipPath id="clip0_1403_3442">
-                    <rect width="20" height="20" fill="white" transform="matrix(-1 0 0 1 20.5 0)"/>
-                  </clipPath>
-                </defs>
-              </svg>
             </div>
-            ) : (
-              /* Placeholder content for read-only mode to maintain consistent height */
-              <div className="px-6 py-2 text-sm text-gray-500">
-              
-              </div>
-            )}
           </div>
         </div>
       </div>
