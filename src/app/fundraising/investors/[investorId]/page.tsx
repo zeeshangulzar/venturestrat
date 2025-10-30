@@ -38,7 +38,7 @@ export default function InvestorShowPage() {
 
   const [investor, setInvestor] = useState<Investor | null>(null);
   const [loading, setLoading] = useState(true);
-  const [backUrl, setBackUrl] = useState('/');
+  const [backUrl, setBackUrl] = useState('/fundraising/investors');
 
   useEffect(() => {
     // Get filters and page from URL parameters for back navigation
@@ -48,8 +48,8 @@ export default function InvestorShowPage() {
       const urlPage = urlParams.get('page');
       
       if (urlFilters || urlPage) {
-        // Create back URL with filters and page
-        let url = '/';
+        // Create back URL with filters and page to fundraising investors list
+        let url = '/fundraising/investors';
         const params = new URLSearchParams();
         
         if (urlFilters) {
