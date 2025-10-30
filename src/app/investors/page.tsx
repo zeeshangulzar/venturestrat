@@ -89,31 +89,27 @@ export default function FundraisingInvestorsPage() {
 
   // restore filters/page from URL (when coming back from show page)
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (typeof window !== 'undefined' && !filtersRestoredRef.current) {
-        const urlParams = new URLSearchParams(window.location.search);
-        const urlFilters = urlParams.get('filters');
-        const urlPage = urlParams.get('page');
+    if (typeof window === 'undefined' || filtersRestoredRef.current) return;
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlFilters = urlParams.get('filters');
+    const urlPage = urlParams.get('page');
 
-        if (urlFilters) {
-          try {
-            const restoredFilters = JSON.parse(decodeURIComponent(urlFilters));
-            setFilters(restoredFilters);
-            filtersRestoredRef.current = true;
-
-            if (urlPage) {
-              const page = parseInt(urlPage);
-              if (!isNaN(page) && page > 0) setCurrentPage(page);
-            }
-          } catch (e) {
-            console.warn('Failed to parse URL filters:', e);
-          }
-        } else {
-          filtersRestoredRef.current = true;
+    if (urlFilters) {
+      try {
+        const restoredFilters = JSON.parse(decodeURIComponent(urlFilters));
+        setFilters(restoredFilters);
+        filtersRestoredRef.current = true;
+        if (urlPage) {
+          const page = parseInt(urlPage);
+          if (!isNaN(page) && page > 0) setCurrentPage(page);
         }
+      } catch (e) {
+        console.warn('Failed to parse URL filters:', e);
+        filtersRestoredRef.current = true;
       }
-    }, 100);
-    return () => clearTimeout(timer);
+    } else {
+      filtersRestoredRef.current = true;
+    }
   }, []);
 
   const syncPageParam = useCallback((page: number, options?: { replace?: boolean }) => {
@@ -142,10 +138,23 @@ export default function FundraisingInvestorsPage() {
     });
   }, [syncPageParam]);
 
+  const syncFiltersParam = useCallback((nextFilters: Filters, options?: { replace?: boolean }) => {
+    if (typeof window === 'undefined') return;
+    const url = new URL(window.location.href);
+    url.searchParams.set('filters', encodeURIComponent(JSON.stringify(nextFilters)));
+    const next = `${url.pathname}?${url.searchParams.toString()}`;
+    if (options?.replace) {
+      window.history.replaceState({}, '', next);
+    } else {
+      setTimeout(() => window.history.pushState({}, '', next), 0);
+    }
+  }, []);
+
   const updateFilters = (newFilters: Partial<Filters>) => {
     const updatedFilters = { ...filters, ...newFilters };
     if (JSON.stringify(updatedFilters) !== JSON.stringify(filters)) {
       setFilters(updatedFilters);
+      syncFiltersParam(updatedFilters, { replace: true });
       setCurrentPage(1, { replace: true });
     }
   };
@@ -246,7 +255,7 @@ export default function FundraisingInvestorsPage() {
   };
 
   useEffect(() => {
-    if (!isScopeReady || !activeScope) return;
+    if (!isScopeReady || !activeScope || !filtersRestoredRef.current) return;
     fetchInvestors();
   }, [activeScope, currentPage, filters, isScopeReady, itemsPerPage, searchQuery]);
 
