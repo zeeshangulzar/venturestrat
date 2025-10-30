@@ -1147,7 +1147,7 @@ export default function SettingsPage() {
         {/* Email Integration */}
         <div className="bg-[#FFFFFF] rounded-xl p-6 mb-8 border border-[#EDEEEF]">
           <h2 className="text-[20px] font-semibold text-[#0C2143]">Integration Settings</h2>
-          <p className="text-sm text-[#525A68] mt-1">
+          <p className="text-sm text-[#525A68] mt-1 mb-2">
             Configure Google or Microsoft connections for email delivery and webhook support.
           </p>
 
