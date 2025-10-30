@@ -2,7 +2,7 @@ import { ReactNode } from 'react';
 import MailTabButton from './MailTabButton';
 import MailSection from './MailSection';
 
-export type MailSectionType = 'all' | 'sent' | 'opened' | 'answered';
+export type MailSectionType = 'all' | 'sent' | 'opened' | 'answered' | 'scheduled';
 
 interface MailTabsProps {
   activeSection: MailSectionType;
@@ -13,6 +13,7 @@ interface MailTabsProps {
     sent?: number;
     opened?: number;
     answered?: number;
+    scheduled?: number;
   };
   disabled?: boolean;
 }
@@ -30,6 +31,7 @@ export default function MailTabs({ activeSection, onSectionChange, children, cou
     { type: 'sent', label: 'Sent', count: counts.sent || 0, isClickable: true },
     // { type: 'opened', label: 'Opened', count: counts.opened || 0, isClickable: false }, Hide for now
     { type: 'answered', label: 'Answered', count: counts.answered || 0, isClickable: true },
+    { type: 'scheduled', label: 'Scheduled', count: counts.scheduled || 0, isClickable: true },
   ];
   return (
     <div className='p-[15px] h-full flex flex-col pt-0'>

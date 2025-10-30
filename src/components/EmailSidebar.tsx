@@ -19,6 +19,9 @@ interface EmailDraft {
     size: number;
     url: string;
   }>;
+  threadId?: string;
+  gmailMessageId?: string;
+  gmailReferences?: string;
 }
 
 interface EmailSidebarProps {
