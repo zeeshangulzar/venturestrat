@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useUser } from '@clerk/nextjs';
+import { useRouter } from 'next/navigation';
 import { getApiUrl } from '@lib/api';
 import '@lib/react-polyfill'; // Import React 19 polyfill for React Quill compatibility
 import QuillEditor from './QuillEditor';
@@ -90,6 +91,7 @@ const deleteAttachmentMetadata = async (messageId: string, key: string) => {
 };
 
 export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUpdate, onEmailSent, onEmailSaveStart, onEmailSaveEnd, onEmailRefresh, readOnly = false, loading = false, saveRef, onAttachmentUploadStatusChange }: EmailViewerProps) {
+  const router = useRouter();
   const [editedSubject, setEditedSubject] = useState('');
   const [editedBody, setEditedBody] = useState('');
   const [editedFrom, setEditedFrom] = useState('');
@@ -338,6 +340,13 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
 
       if (!response.ok) {
         const errorMessage = result?.message || result?.error || `Failed to send email: ${response.statusText}`;
+        
+        // Check if it's an authentication error and redirect to settings
+        if (errorMessage.includes('Authentication failed') || errorMessage.includes('reconnect your account')) {
+          router.push('/settings?error=auth_failed');
+          return;
+        }
+        
         setSendStatus('error');
         setSendMessage(errorMessage);
         console.error('Error sending email:', errorMessage);
