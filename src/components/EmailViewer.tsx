@@ -11,6 +11,7 @@ import { useAuthAccount } from '../contexts/AuthAccountContext';
 import AuthModal from './AuthModal';
 import { AttachmentItem } from '../types/attachments';
 import ScheduleFollowUpModal from './ScheduleFollowUpModal';
+import type { MailSectionType } from './MailTabs';
 
 interface EmailDraft {
   id: string;
@@ -42,14 +43,16 @@ interface EmailViewerProps {
   userId?: string;
   mode?: 'draft' | 'sent' | 'answered' | 'scheduled';
   onEmailUpdate: (updatedEmail: EmailDraft) => void;
-  onEmailSent?: (investorId?: string) => void;
+  onEmailSent?: (investorId?: string) => Promise<void> | void;
+  onScheduledEmailCancel?: (messageId: string) => Promise<void> | void;
   onEmailSaveStart?: () => void;
   onEmailSaveEnd?: () => void;
-  onEmailRefresh?: () => void;
+  onEmailRefresh?: () => Promise<void> | void;
   readOnly?: boolean;
   loading?: boolean;
   saveRef?: React.MutableRefObject<(() => Promise<void>) | null>;
   onAttachmentUploadStatusChange?: (isUploading: boolean) => void;
+  onRequestTabChange?: (section: MailSectionType) => void;
 }
 
 const MAX_ATTACHMENT_SIZE = 75 * 1024 * 1024; // 75MB
@@ -90,7 +93,7 @@ const deleteAttachmentMetadata = async (messageId: string, key: string) => {
   }
 };
 
-export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUpdate, onEmailSent, onEmailSaveStart, onEmailSaveEnd, onEmailRefresh, readOnly = false, loading = false, saveRef, onAttachmentUploadStatusChange }: EmailViewerProps) {
+export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUpdate, onEmailSent, onScheduledEmailCancel, onEmailSaveStart, onEmailSaveEnd, onEmailRefresh, readOnly = false, loading = false, saveRef, onAttachmentUploadStatusChange, onRequestTabChange }: EmailViewerProps) {
   const router = useRouter();
   const [editedSubject, setEditedSubject] = useState('');
   const [editedBody, setEditedBody] = useState('');
@@ -114,13 +117,21 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
   }, [isAttachmentUploading, onAttachmentUploadStatusChange]);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [lastSentEmail, setLastSentEmail] = useState<EmailDraft | null>(null);
-  const [pendingSentInvestorId, setPendingSentInvestorId] = useState<string | null>(null);
+  const [pendingScheduleModal, setPendingScheduleModal] = useState(false);
   
   // Debug effect to track showScheduleModal changes
   useEffect(() => {
     console.log('🔍 showScheduleModal changed:', showScheduleModal);
     console.log('🔍 lastSentEmail:', lastSentEmail);
   }, [showScheduleModal, lastSentEmail]);
+
+  useEffect(() => {
+    if (pendingScheduleModal && !loading) {
+      console.log('Opening schedule modal after refresh settled');
+      setShowScheduleModal(true);
+      setPendingScheduleModal(false);
+    }
+  }, [pendingScheduleModal, loading]);
   
   // Authentication context
   const { hasAccount, checkAuthStatus } = useAuthAccount();
@@ -255,8 +266,16 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
       }
 
       // Refresh the email list
+      if (onScheduledEmailCancel) {
+        await onScheduledEmailCancel(email.id);
+      }
+
+      if (onRequestTabChange) {
+        onRequestTabChange('scheduled');
+      }
+
       if (onEmailRefresh) {
-        onEmailRefresh();
+        await onEmailRefresh();
       }
     } catch (error) {
       console.error('Error cancelling scheduled email:', error);
@@ -379,21 +398,18 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
         console.log('Current user ID:', currentUserId);
         console.log('Mode:', mode);
         
+        if (onEmailSent) {
+          await onEmailSent(investorId);
+        }
+
         if (mode === 'scheduled') {
           // For scheduled emails sent as replies, don't show schedule modal
-          // Call the onEmailSent callback to refresh the list
-          if (onEmailSent) {
-            onEmailSent(investorId);
-          }
-        } else {
-          // Show the schedule modal automatically after successful send
-          setPendingSentInvestorId(investorId || null);
-          setTimeout(() => {
-            console.log('Opening schedule modal...');
-            console.log('showScheduleModal will be set to true');
-            setShowScheduleModal(true);
-          }, 100);
+          return;
         }
+
+        // Show the schedule modal after the UI refresh completes
+        console.log('Queueing schedule modal after refresh...');
+        setPendingScheduleModal(true);
       }
     } catch (error) {
       console.error('Error sending email:', error);
@@ -785,33 +801,74 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
     return to;
   };
 
+  const modalComponents = (
+    <React.Fragment>
+      {/* Authentication Modal */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={handleCloseModal}
+        onAuthSuccess={handleAuthSuccess}
+        onSkipAuth={handleSkipAuth}
+      />
+
+      {/* Schedule Follow-Up Modal */}
+      <ScheduleFollowUpModal
+        isOpen={showScheduleModal}
+        onClose={async () => {
+          console.log('Closing schedule modal');
+          setShowScheduleModal(false);
+          if (onEmailRefresh) {
+            await onEmailRefresh();
+          }
+        }}
+        onSchedule={async () => {
+          console.log('Schedule confirmed');
+          setShowScheduleModal(false);
+          if (onEmailRefresh) {
+            await onEmailRefresh();
+          }
+          if (onRequestTabChange) {
+            onRequestTabChange('scheduled');
+          }
+        }}
+        email={lastSentEmail ? {
+          ...lastSentEmail,
+          userId: currentUserId
+        } : null}
+      />
+    </React.Fragment>
+  );
 
   if (!email) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-gray-50">
-        {loading ? (
-          <Loader 
-            size="lg" 
-            text="Loading email content..." 
-            className="h-64"
-          />
-        ) : (
-          <div className="text-center">
-            <div className="text-gray-400 mb-4">
-              <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-              </svg>
+      <React.Fragment>
+        <div className="flex-1 flex items-center justify-center bg-gray-50">
+          {loading ? (
+            <Loader 
+              size="lg" 
+              text="Loading email content..." 
+              className="h-64"
+            />
+          ) : (
+            <div className="text-center">
+              <div className="text-gray-400 mb-4">
+                <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Select an email</h3>
+              <p className="text-gray-500">Choose an email from the sidebar to view and edit its content.</p>
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Select an email</h3>
-            <p className="text-gray-500">Choose an email from the sidebar to view and edit its content.</p>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+        {modalComponents}
+      </React.Fragment>
     );
   }
 
   return (
-    <div className="flex-1 flex flex-col bg-white h-full relative">
+    <React.Fragment>
+      <div className="flex-1 flex flex-col bg-white h-full relative">
       {/* Loading overlay */}
       {loading && (
         <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-10">
@@ -1071,42 +1128,8 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
           </div>
         )}
       </div>
-      
-      {/* Authentication Modal */}
-      <AuthModal
-        isOpen={showAuthModal}
-        onClose={handleCloseModal}
-        onAuthSuccess={handleAuthSuccess}
-        onSkipAuth={handleSkipAuth}
-      />
-
-      {/* Schedule Follow-Up Modal */}
-      <ScheduleFollowUpModal
-        isOpen={showScheduleModal}
-        onClose={() => {
-          console.log('Closing schedule modal');
-          setShowScheduleModal(false);
-          if (onEmailSent && pendingSentInvestorId) {
-            onEmailSent(pendingSentInvestorId);
-          }
-          setPendingSentInvestorId(null);
-        }}
-        onSchedule={() => {
-          console.log('Schedule confirmed');
-          setShowScheduleModal(false);
-          if (onEmailRefresh) {
-            onEmailRefresh();
-          }
-          if (onEmailSent && pendingSentInvestorId) {
-            onEmailSent(pendingSentInvestorId);
-          }
-          setPendingSentInvestorId(null);
-        }}
-        email={lastSentEmail ? {
-          ...lastSentEmail,
-          userId: currentUserId
-        } : null}
-      />
     </div>
+    {modalComponents}
+  </React.Fragment>
   );
 }
