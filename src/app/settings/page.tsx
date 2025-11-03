@@ -1315,7 +1315,7 @@ export default function SettingsPage() {
                           : 'border border-red-200 text-red-700 hover:bg-red-50'
                       }`}
                       aria-disabled={isDisconnecting || !passwordEnabled}
-                      title={!passwordEnabled ? 'Kindly contact support because your password hasn’t been set yet.' : undefined}
+                      title={!passwordEnabled ? 'Account disconnection is not supported for this sign-in method.' : undefined}
                     >
                       {isDisconnecting ? 'Disconnecting...' : 'Disconnect'}
                     </button>
