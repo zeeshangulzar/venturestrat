@@ -12,7 +12,7 @@ interface EmailTabsManagerProps {
   isAIEmail?: boolean; // Add flag to indicate if this is an AI email
   onTabSwitch?: (tab: MailSectionType) => void; // Add callback for tab switching
   onEmailProcessed?: () => void; // Add callback for when email is processed
-  onEmailSent?: (investorId?: string) => void; // Add callback when an email is sent
+  onEmailSent?: (investorId?: string) => Promise<void> | void; // Add callback when an email is sent
   onAttachmentUploadStatusChange?: (isUploading: boolean) => void; // Notify parent when attachments upload
 }
 
@@ -162,12 +162,12 @@ export default function EmailTabsManager({ userId, refreshTrigger, selectEmailId
     }, 50);
   };
 
-  const handleEmailSent = (investorId?: string) => {
+  const handleEmailSent = async (investorId?: string) => {
     // Refresh counts when an email is sent
-    fetchCounts();
+    await fetchCounts();
     
     if (onEmailSent) {
-      onEmailSent(investorId);
+      await onEmailSent(investorId);
     }
   };
 
@@ -219,6 +219,7 @@ export default function EmailTabsManager({ userId, refreshTrigger, selectEmailId
             onSelectEmailProcessed={handleSelectEmailProcessed}
             onSaveRefReady={handleSaveRefReady}
             onAttachmentUploadStatusChange={onAttachmentUploadStatusChange}
+            onRequestTabChange={(section) => { handleSectionChange(section); }}
           />
         )}
         
@@ -234,6 +235,7 @@ export default function EmailTabsManager({ userId, refreshTrigger, selectEmailId
             onSelectEmailProcessed={handleSelectEmailProcessed}
             onSaveRefReady={handleSaveRefReady}
             onAttachmentUploadStatusChange={onAttachmentUploadStatusChange}
+            onRequestTabChange={(section) => { handleSectionChange(section); }}
           />
         )}
         
@@ -264,6 +266,7 @@ export default function EmailTabsManager({ userId, refreshTrigger, selectEmailId
             onSelectEmailProcessed={handleSelectEmailProcessed}
             onSaveRefReady={handleSaveRefReady}
             onAttachmentUploadStatusChange={onAttachmentUploadStatusChange}
+            onRequestTabChange={(section) => { handleSectionChange(section); }}
           />
         )}
         
@@ -278,6 +281,7 @@ export default function EmailTabsManager({ userId, refreshTrigger, selectEmailId
             selectEmailId={undefined}
             onSelectEmailProcessed={handleSelectEmailProcessed}
             onSaveRefReady={handleSaveRefReady}
+            onRequestTabChange={(section) => { handleSectionChange(section); }}
           />
         )}
       </div>
