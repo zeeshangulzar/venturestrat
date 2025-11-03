@@ -1001,73 +1001,75 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
         </div>
         
         {/* Send Email Button Section - Always render to maintain consistent height */}
-        <div className="border-t border-gray-200 p-4 flex-shrink-0 bg-white">
-          {/* Status Message - Always reserve space to prevent height changes */}
-          <div className={`mb-3 p-3 rounded-md text-sm transition-all duration-200 ${
-            sendMessage 
-              ? (sendStatus === 'success' 
-                  ? 'bg-green-50 text-green-700 border border-green-200' 
-                  : 'bg-red-50 text-red-700 border border-red-200')
-              : 'h-0 p-0 mb-0 opacity-0 overflow-hidden'
-          }`}>
-            {sendMessage && (
-              <div className="flex items-center">
-                {sendStatus === 'success' ? (
-                  <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                  </svg>
-                ) : (
-                  <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                  </svg>
+        {mode !== 'sent' && (
+          <div className="border-t border-gray-200 p-4 flex-shrink-0 bg-white">
+            {/* Status Message - Always reserve space to prevent height changes */}
+            <div className={`mb-3 p-3 rounded-md text-sm transition-all duration-200 ${
+              sendMessage 
+                ? (sendStatus === 'success' 
+                    ? 'bg-green-50 text-green-700 border border-green-200' 
+                    : 'bg-red-50 text-red-700 border border-red-200')
+                : 'h-0 p-0 mb-0 opacity-0 overflow-hidden'
+            }`}>
+              {sendMessage && (
+                <div className="flex items-center">
+                  {sendStatus === 'success' ? (
+                    <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                  ) : (
+                    <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                    </svg>
+                  )}
+                  {sendMessage}
+                </div>
+              )}
+            </div>
+            
+            <div className="flex justify-end">
+              <div className="flex items-center gap-2">
+                {mode === 'scheduled' && (
+                  <button
+                    type="button"
+                    onClick={handleCancelScheduledEmail}
+                    disabled={isCancelling}
+                    className="px-3 py-2 rounded-md border border-red-300 text-red-600 bg-white hover:bg-red-50 disabled:opacity-50"
+                  >
+                    {isCancelling ? 'Cancelling…' : 'Cancel Scheduled'}
+                  </button>
                 )}
-                {sendMessage}
-              </div>
-            )}
-          </div>
-          
-          <div className="flex justify-end">
-            <div className="flex items-center gap-2">
-              {mode === 'scheduled' && (
                 <button
                   type="button"
-                  onClick={handleCancelScheduledEmail}
-                  disabled={isCancelling}
-                  className="px-3 py-2 rounded-md border border-red-300 text-red-600 bg-white hover:bg-red-50 disabled:opacity-50"
+                  onClick={handleSendEmail}
+                  disabled={isSendDisabled}
+                  aria-disabled={isSendDisabled}
+                  className={`${isSendDisabled ? 'bg-gray-300 text-gray-600 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700'} flex items-center gap-2 px-6 py-2 rounded-md font-medium transition-colors`}
                 >
-                  {isCancelling ? 'Cancelling…' : 'Cancel Scheduled'}
-                </button>
-              )}
-              <button
-                type="button"
-                onClick={handleSendEmail}
-                disabled={isSendDisabled}
-                aria-disabled={isSendDisabled}
-                className={`${isSendDisabled ? 'bg-gray-300 text-gray-600 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700'} flex items-center gap-2 px-6 py-2 rounded-md font-medium transition-colors`}
-              >
-                {isSending && (
-                  <svg className="animate-spin -ml-1 h-4 w-4 text-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  {isSending && (
+                    <svg className="animate-spin -ml-1 h-4 w-4 text-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  )}
+                  <span>{sendButtonLabel}</span>
+                  <svg width="21" height="20" viewBox="0 0 21 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <g clipPath="url(#clip0_1403_3442)">
+                      <path d="M16.333 10H4.66634" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M16.333 10L12.9997 13.3333" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M16.333 10.0001L12.9997 6.66675" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </g>
+                    <defs>
+                      <clipPath id="clip0_1403_3442">
+                        <rect width="20" height="20" fill="white" transform="matrix(-1 0 0 1 20.5 0)"/>
+                      </clipPath>
+                    </defs>
                   </svg>
-                )}
-                <span>{sendButtonLabel}</span>
-                <svg width="21" height="20" viewBox="0 0 21 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                  <g clipPath="url(#clip0_1403_3442)">
-                    <path d="M16.333 10H4.66634" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M16.333 10L12.9997 13.3333" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M16.333 10.0001L12.9997 6.66675" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  </g>
-                  <defs>
-                    <clipPath id="clip0_1403_3442">
-                      <rect width="20" height="20" fill="white" transform="matrix(-1 0 0 1 20.5 0)"/>
-                    </clipPath>
-                  </defs>
-                </svg>
-              </button>
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
       
       {/* Authentication Modal */}

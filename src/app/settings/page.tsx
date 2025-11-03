@@ -1,6 +1,7 @@
 'use client';
 
-import { useUser, useClerk } from '@clerk/nextjs';
+import { useUser, useReverification } from '@clerk/nextjs';
+import { isReverificationCancelledError } from '@clerk/nextjs/errors';
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUserDataRefresh } from '../../contexts/UserDataContext';
@@ -18,6 +19,7 @@ import PresentationsIcon from '@components/icons/PresentationsIcon';
 import BusinessPlanningIcon from '@components/icons/BusinessPlanningIcon';
 import MarketingIcon from '@components/icons/MarketingIcon';
 import { hasVerifiedExternalAccount } from '@utils/externalAccounts';
+import { ensureRecentVerification } from './actions';
 
 type FilterOption = { label: string; value: string; disabled?: boolean };
 
@@ -49,9 +51,9 @@ type OnboardingData = {
 
 export default function SettingsPage() {
   const { user, isLoaded } = useUser();
-  const { openSignIn } = useClerk();
   const router = useRouter();
   const { triggerRefresh } = useUserDataRefresh();
+  const ensureReverified = useReverification(ensureRecentVerification);
   const [currentCategory, setCurrentCategory] = useState('financials');
   const [isUserDataLoaded, setIsUserDataLoaded] = useState(false);
 
@@ -168,6 +170,71 @@ export default function SettingsPage() {
     });
   };
 
+  const extractClerkErrorMessage = (error: any): string => {
+    if (!error) return '';
+    if (typeof error === 'string') return error;
+    if (error?.errors?.[0]?.message) return error.errors[0].message;
+    if (error?.message) return error.message;
+    return '';
+  };
+
+  const clerkErrorCode = (error: any): string => {
+    if (!error) return '';
+    if (error?.errors?.[0]?.code) return error.errors[0].code;
+    if (typeof error?.code === 'string') return error.code;
+    return '';
+  };
+
+  const needsAdditionalVerification = (error: any): boolean => {
+    const message = extractClerkErrorMessage(error).toLowerCase();
+    const code = clerkErrorCode(error)?.toLowerCase();
+    return (
+      (typeof message === 'string' &&
+        (message.includes('additional verification') ||
+          message.includes('reverification required') ||
+          message.includes('reverify') ||
+          message.includes('requires reverification')))
+      || code === 'reverification_required'
+      || code === 'require_additional_verification'
+    );
+  };
+
+  const runWithReverification = async (operation: () => Promise<void>) => {
+    try {
+      await operation();
+      return 'success' as const;
+    } catch (error: any) {
+      if (!needsAdditionalVerification(error)) {
+        throw error;
+      }
+
+      try {
+        await ensureReverified();
+      } catch (verificationError: any) {
+        if (isReverificationCancelledError(verificationError)) {
+          return 'cancelled' as const;
+        }
+        throw verificationError;
+      }
+
+      try {
+        await user?.reload?.();
+      } catch (reloadErr) {
+        console.warn('Reload after reverification failed:', reloadErr);
+      }
+
+      try {
+        await operation();
+        return 'success' as const;
+      } catch (secondError: any) {
+        if (needsAdditionalVerification(secondError)) {
+          throw new Error('REVERIFY_FAILED_AFTER_PROMPT');
+        }
+        throw secondError;
+      }
+    }
+  };
+
   const handleConnect = async (provider: 'google' | 'microsoft') => {
     if (!user) return;
     if (provider === 'google' && hasMicrosoftAccount) {
@@ -181,39 +248,51 @@ export default function SettingsPage() {
 
     setIsConnecting(provider);
     try {
-      const externalAccount = await user.createExternalAccount({
-        strategy: provider === 'google' ? 'oauth_google' : 'oauth_microsoft',
-        additionalScopes:
-          provider === 'google'
-            ? [
-                'https://www.googleapis.com/auth/gmail.send',
-                'https://www.googleapis.com/auth/gmail.readonly',
-                'openid',
-                'email',
-                'profile',
-              ]
-            : [
-                'https://graph.microsoft.com/Mail.Send',
-                'https://graph.microsoft.com/Mail.Read',
-                'offline_access',
-              ],
-        redirectUrl: window.location.origin,
-      });
+      const runConnect = async () => {
+        const externalAccount = await user.createExternalAccount({
+          strategy: provider === 'google' ? 'oauth_google' : 'oauth_microsoft',
+          additionalScopes:
+            provider === 'google'
+              ? [
+                  'https://www.googleapis.com/auth/gmail.send',
+                  'https://www.googleapis.com/auth/gmail.readonly',
+                  'openid',
+                  'email',
+                  'profile',
+                ]
+              : [
+                  'https://graph.microsoft.com/Mail.Send',
+                  'https://graph.microsoft.com/Mail.Read',
+                  'offline_access',
+                ],
+          redirectUrl: window.location.origin + '/settings',
+        });
 
-      const verificationUrl = externalAccount?.verification?.externalVerificationRedirectURL?.toString();
-      if (verificationUrl) {
-        await openPopupAndWait(verificationUrl);
+        const verificationUrl = externalAccount?.verification?.externalVerificationRedirectURL?.toString();
+        if (verificationUrl) {
+          await openPopupAndWait(verificationUrl);
+        }
+        await user.reload();
+      };
+
+      const outcome = await runWithReverification(runConnect);
+      if (outcome === 'cancelled') {
+        return;
       }
-      await user.reload();
     } catch (e: any) {
-      const message = (e && (e.message || e.errors?.[0]?.message)) || '';
+      const message = extractClerkErrorMessage(e);
       const alreadyConnected = typeof message === 'string' && message.toLowerCase().includes('already connected');
+      const needsReauth = typeof message === 'string' && message.toLowerCase().includes('additional verification');
+      
       if (alreadyConnected) {
         // If account exists, try reauthorization (incremental consent) instead
         await handleReconnect(provider);
+      } else if (needsReauth || e?.message === 'REVERIFY_FAILED_AFTER_PROMPT') {
+        console.error('Connect still requires reverification after prompt:', e);
+        alert('We could not verify your identity. Please sign out and sign back in, then try connecting again.');
       } else {
         console.error('Connect failed', e);
-        alert('Unable to connect account. Please try again.');
+        alert(message || 'Unable to connect account. Please try again.');
       }
     } finally {
       setIsConnecting(null);
@@ -227,64 +306,47 @@ export default function SettingsPage() {
     if (!confirm('Disconnect your email account? Emails cannot be sent until reconnected.')) return;
     setIsDisconnecting(true);
     try {
-      if (typeof account.destroy === 'function') {
-        await account.destroy();
-      } else {
-        // Fallback: attempt through user resource if available
-        // @ts-expect-error - unlinkExternalAccount is not typed on the User resource in Clerk SDK
-        if (typeof user.unlinkExternalAccount === 'function') {
-          // @ts-expect-error - unlinkExternalAccount is not typed on the User resource in Clerk SDK
-          await user.unlinkExternalAccount(account.id);
-        }
-      }
-      await user.reload();
-    } catch (e: any) {
-      const message = (e && (e.message || e.errors?.[0]?.message)) || '';
-      const needsReauth = typeof message === 'string' && message.toLowerCase().includes('additional verification');
-      if (needsReauth) {
-        try {
-          alert('This action needs a quick re-verification. A sign-in dialog will open. After verifying, we will retry disconnect automatically.');
-          await openSignIn({ afterSignInUrl: typeof window !== 'undefined' ? window.location.href : undefined });
+      const runDisconnect = async () => {
+        const accounts = user?.externalAccounts || [];
+        const freshAccount: any =
+          accounts.find((a: any) => {
+            const providerId = a.provider;
+            return providerId === 'google' || providerId === 'oauth_google' || providerId?.includes('google');
+          }) ||
+          accounts.find((a: any) => {
+            const providerId = a.provider;
+            return providerId === 'microsoft' || providerId === 'oauth_microsoft' || providerId?.includes('microsoft');
+          });
 
-          const originalAccountId = account.id;
-          const providerId = account.provider;
-          let attempts = 0;
-          const retry = async (): Promise<void> => {
-            attempts += 1;
-            try {
-              await user.reload?.();
-              const freshAccounts = user?.externalAccounts || [];
-              const freshAccount: any =
-                freshAccounts.find((a: any) => a.id === originalAccountId) ||
-                freshAccounts.find((a: any) => a.provider === providerId);
-              if (!freshAccount) {
-                return; // already disconnected
-              }
-              if (typeof freshAccount.destroy === 'function') {
-                await freshAccount.destroy();
-              } else if (typeof (user as any).unlinkExternalAccount === 'function') {
-                await (user as any).unlinkExternalAccount(freshAccount.id);
-              }
-              await user.reload?.();
-            } catch (err: any) {
-              const msg = (err && (err.message || err.errors?.[0]?.message)) || '';
-              const stillNeeds = typeof msg === 'string' && msg.toLowerCase().includes('additional verification');
-              if (stillNeeds && attempts < 10) {
-                setTimeout(retry, 2000);
-              } else if (!stillNeeds) {
-                console.error('Disconnect retry failed:', err);
-                alert('Failed to disconnect. Please try again.');
-              }
-            }
-          };
-          setTimeout(retry, 1500);
-        } catch (openErr) {
-          console.error('Reverification prompt failed:', openErr);
-          alert('Please sign out and sign back in, then try disconnecting again.');
+        if (!freshAccount) {
+          throw new Error('No connected account found.');
         }
+
+        if (typeof freshAccount.destroy === 'function') {
+          await freshAccount.destroy();
+        } else if (typeof (user as any)?.unlinkExternalAccount === 'function') {
+          await (user as any).unlinkExternalAccount(freshAccount.id);
+        } else {
+          throw new Error('Unable to disconnect account.');
+        }
+
+        await user.reload();
+      };
+
+      const outcome = await runWithReverification(runDisconnect);
+      if (outcome === 'cancelled') {
+        return;
+      }
+    } catch (e: any) {
+      const message = extractClerkErrorMessage(e);
+      const needsReauth = typeof message === 'string' && message.toLowerCase().includes('additional verification');
+
+      if (needsReauth || e?.message === 'REVERIFY_FAILED_AFTER_PROMPT') {
+        console.error('Disconnect still requires reverification after prompt:', e);
+        alert('We could not verify your identity. Please sign out and sign back in, then try disconnecting again.');
       } else {
-        console.error('Disconnect failed', e);
-        alert('Failed to disconnect. Please try again.');
+        console.error('Disconnect failed:', e);
+        alert(message || 'Failed to disconnect. Please try again.');
       }
     } finally {
       setIsDisconnecting(false);
