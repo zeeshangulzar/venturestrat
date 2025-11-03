@@ -5,8 +5,8 @@ import { getApiUrl } from '@lib/api';
 
 interface ScheduleFollowUpModalProps {
   isOpen: boolean;
-  onClose: () => void;
-  onSchedule: () => void;
+  onClose: () => Promise<void> | void;
+  onSchedule: () => Promise<void> | void;
   email: {
     id: string;
     userId: string;
@@ -102,8 +102,8 @@ Generate a follow-up that:
         throw new Error(errorData.message || 'Failed to schedule email');
       }
 
-      onSchedule();
-      onClose();
+      await onSchedule();
+
     } catch (error) {
       console.error('Error scheduling follow-up:', error);
       setError(error instanceof Error ? error.message : 'Failed to schedule email');
