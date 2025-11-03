@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { getApiUrl } from '@lib/api';
 import EmailSidebar from './EmailSidebar';
 import EmailViewer from './EmailViewer';
+import type { MailSectionType } from './MailTabs';
 
 interface EmailDraft {
   id: string;
@@ -25,7 +26,7 @@ interface EmailManagementInterfaceProps {
   userId: string;
   mode?: 'draft' | 'sent' | 'answered' | 'scheduled';
   refreshTrigger?: number; // Add refresh trigger prop
-  onEmailSent?: (investorId?: string) => void; // Add callback for when email is sent
+  onEmailSent?: (investorId?: string) => Promise<void> | void; // Add callback for when email is sent
   onSaveStart?: () => void; // Add callback for when save starts
   onSaveEnd?: () => void; // Add callback for when save ends
   selectEmailId?: string; // Add prop to select a specific email ID
@@ -33,9 +34,10 @@ interface EmailManagementInterfaceProps {
   onSelectEmailProcessed?: () => void; // Add callback for when selectEmailId is processed
   onSaveRefReady?: (saveRef: React.MutableRefObject<(() => Promise<void>) | null>) => void; // Add callback for save ref
   onAttachmentUploadStatusChange?: (isUploading: boolean) => void;
+  onRequestTabChange?: (section: MailSectionType) => void;
 }
 
-export default function EmailManagementInterface({ userId, mode = 'draft', refreshTrigger, onEmailSent, onSaveStart, onSaveEnd, selectEmailId, isAIEmail, onSelectEmailProcessed, onSaveRefReady, onAttachmentUploadStatusChange }: EmailManagementInterfaceProps) {
+export default function EmailManagementInterface({ userId, mode = 'draft', refreshTrigger, onEmailSent, onSaveStart, onSaveEnd, selectEmailId, isAIEmail, onSelectEmailProcessed, onSaveRefReady, onAttachmentUploadStatusChange, onRequestTabChange }: EmailManagementInterfaceProps) {
   const [drafts, setDrafts] = useState<EmailDraft[]>([]);
   const [selectedEmailId, setSelectedEmailId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -472,25 +474,35 @@ export default function EmailManagementInterface({ userId, mode = 'draft', refre
     }
   };
 
-  const handleEmailSent = (investorId?: string) => {
+  const handleEmailSent = async (investorId?: string) => {
     // Refresh the draft list to remove the sent email
-    fetchDrafts();
-    
-    // Clear selected email since it's no longer a draft
     setSelectedEmailId(null);
+    await fetchDrafts();
     
     // Notify parent component if callback provided
     if (onEmailSent) {
-      onEmailSent(investorId);
+      await onEmailSent(investorId);
     }
   };
 
   // Refresh handler for scheduled tab (used by child on cancel)
-  const handleScheduledRefresh = () => {
+  const handleScheduledRefresh = async () => {
     if (mode === 'scheduled') {
       // Clear selection so UI doesn't hold a now-removed scheduled item
       setSelectedEmailId(null);
-      fetchDrafts();
+      lastFetchRef.current = null;
+      await fetchDrafts();
+    }
+  };
+
+  const handleScheduledImmediateRemoval = async (messageId: string) => {
+    if (mode !== 'scheduled') return;
+
+    setDrafts(prevDrafts => prevDrafts.filter(draft => draft.id !== messageId));
+
+    if (selectedEmailId === messageId) {
+      setSelectedEmailId(null);
+      setSelectedEmail(null);
     }
   };
 
@@ -563,6 +575,7 @@ export default function EmailManagementInterface({ userId, mode = 'draft', refre
           mode={mode}
           onEmailUpdate={handleEmailUpdate}
           onEmailSent={handleEmailSent}
+          onScheduledEmailCancel={mode === 'scheduled' ? handleScheduledImmediateRemoval : undefined}
           onEmailSaveStart={mode === 'draft' ? handleEmailSaveStart : undefined}
           onEmailSaveEnd={mode === 'draft' ? handleEmailSaveEnd : undefined}
           onEmailRefresh={mode === 'draft' ? refreshEmailFromBackend : (mode === 'scheduled' ? handleScheduledRefresh : undefined)}
@@ -570,6 +583,7 @@ export default function EmailManagementInterface({ userId, mode = 'draft', refre
           loading={isFetchingIndividualEmail || isTransitioning}
           saveRef={saveRef}
           onAttachmentUploadStatusChange={onAttachmentUploadStatusChange}
+          onRequestTabChange={onRequestTabChange}
         />
       </div>
     </div>
