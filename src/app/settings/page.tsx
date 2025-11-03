@@ -111,6 +111,7 @@ export default function SettingsPage() {
 
   const googleApprovedScopes = (googleAccount?.approvedScopes ?? '').toString();
   const msApprovedScopes = (microsoftAccount?.approvedScopes ?? '').toString();
+  const passwordEnabled = user?.passwordEnabled ?? false;
 
   const hasGoogleRequiredScopes = useMemo(() => {
     if (!googleApprovedScopes) return false;
@@ -1307,8 +1308,14 @@ export default function SettingsPage() {
                     )}
                     <button
                       onClick={handleDisconnect}
-                      disabled={isDisconnecting}
-                      className="px-3 py-2 text-sm rounded-lg border border-red-200 text-red-700 hover:bg-red-50"
+                      disabled={isDisconnecting || !passwordEnabled}
+                      className={`px-3 py-2 text-sm rounded-lg transition-colors ${
+                        isDisconnecting || !passwordEnabled
+                          ? 'border border-gray-200 text-gray-500 bg-gray-100 cursor-not-allowed'
+                          : 'border border-red-200 text-red-700 hover:bg-red-50'
+                      }`}
+                      aria-disabled={isDisconnecting || !passwordEnabled}
+                      title={!passwordEnabled ? 'Kindly contact support because your password hasn’t been set yet.' : undefined}
                     >
                       {isDisconnecting ? 'Disconnecting...' : 'Disconnect'}
                     </button>
@@ -1372,8 +1379,14 @@ export default function SettingsPage() {
                     )}
                     <button
                       onClick={handleDisconnect}
-                      disabled={isDisconnecting}
-                      className="px-3 py-2 text-sm rounded-lg border border-red-200 text-red-700 hover:bg-red-50"
+                      disabled={isDisconnecting || !passwordEnabled}
+                      className={`px-3 py-2 text-sm rounded-lg transition-colors ${
+                        isDisconnecting || !passwordEnabled
+                          ? 'border border-gray-200 text-gray-500 bg-gray-100 cursor-not-allowed'
+                          : 'border border-red-200 text-red-700 hover:bg-red-50'
+                      }`}
+                      aria-disabled={isDisconnecting || !passwordEnabled}
+                      title={!passwordEnabled ? 'Set a password in your account before disconnecting.' : undefined}
                     >
                       {isDisconnecting ? 'Disconnecting...' : 'Disconnect'}
                     </button>
