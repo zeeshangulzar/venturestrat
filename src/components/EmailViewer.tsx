@@ -117,7 +117,6 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
   }, [isAttachmentUploading, onAttachmentUploadStatusChange]);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [lastSentEmail, setLastSentEmail] = useState<EmailDraft | null>(null);
-  const [pendingScheduleModal, setPendingScheduleModal] = useState(false);
   
   // Debug effect to track showScheduleModal changes
   useEffect(() => {
@@ -125,13 +124,6 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
     console.log('🔍 lastSentEmail:', lastSentEmail);
   }, [showScheduleModal, lastSentEmail]);
 
-  useEffect(() => {
-    if (pendingScheduleModal && !loading) {
-      console.log('Opening schedule modal after refresh settled');
-      setShowScheduleModal(true);
-      setPendingScheduleModal(false);
-    }
-  }, [pendingScheduleModal, loading]);
   
   // Authentication context
   const { hasAccount, checkAuthStatus } = useAuthAccount();
@@ -404,11 +396,11 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
         console.log('Current user ID:', currentUserId);
         console.log('Mode:', mode);
         
-        if (onEmailSent) {
-          await onEmailSent(investorId);
-        }
-
+        console.log("here is the current mode", mode);
         if (mode === 'scheduled') {
+          if (onEmailSent) {
+            await onEmailSent(investorId);
+          }
           if (onEmailRefresh) {
             await onEmailRefresh();
           }
@@ -416,8 +408,14 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
             onRequestTabChange('scheduled');
           }
         } else {
-          console.log('Queueing schedule modal after refresh...');
-          setPendingScheduleModal(true);
+          console.log('Opening schedule modal immediately');
+          setShowScheduleModal(true);
+          if (onEmailSent) {
+            void onEmailSent(investorId);
+          }
+          if (onEmailRefresh) {
+            void onEmailRefresh();
+          }
         }
       }
     } catch (error) {
@@ -877,7 +875,15 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
 
   return (
     <React.Fragment>
-      <div className="flex-1 flex flex-col bg-white h-full relative">
+      <div className="relative flex-1 flex flex-col h-full">
+        {showScheduleModal && (
+          <div className="absolute inset-0 bg-[#0c2143]/15 z-30 transition-opacity pointer-events-none" />
+        )}
+        <div
+          className={`flex-1 flex flex-col bg-white h-full relative z-20 transition duration-200 ${
+            showScheduleModal ? 'blur-sm scale-[0.99] pointer-events-none select-none' : ''
+          }`}
+        >
       {/* Loading overlay */}
       {loading && (
         <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-10">
@@ -1144,6 +1150,7 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
             </div>
           </div>
         )}
+        </div>
       </div>
     </div>
     {modalComponents}
