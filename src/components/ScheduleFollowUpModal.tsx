@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { getApiUrl } from '@lib/api';
 
 interface ScheduleFollowUpModalProps {
@@ -36,7 +36,7 @@ export default function ScheduleFollowUpModal({ isOpen, onClose, onSchedule, ema
     console.log('🎭 ScheduleFollowUpModal mounted with props:', { isOpen, hasEmail: !!email });
   }, [isOpen, email]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (isOpen && email) {
       setCurrentStep('confirm');
       setScheduledDate('');
@@ -59,7 +59,7 @@ export default function ScheduleFollowUpModal({ isOpen, onClose, onSchedule, ema
     await onClose();
   };
 
-  if (currentStep === 'confirm') {
+  if (currentStep === 'confirm' && isOpen) {
     return (
       <div className="fixed inset-0 bg-transparent flex items-center justify-center z-50">
         <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6 border border-gray-200">
