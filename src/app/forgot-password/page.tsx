@@ -78,8 +78,7 @@ export default function ForgotPasswordPage() {
       });
 
       if (verification.status !== 'needs_new_password') {
-        const clerkError = verification?.errors?.[0]?.message;
-        throw new Error(clerkError || 'Invalid or expired code. Please request a new one.');
+        throw new Error('Invalid or expired code. Please request a new one.');
       }
 
       const resetResult = await signIn.resetPassword({
@@ -106,7 +105,8 @@ export default function ForgotPasswordPage() {
     }
   };
 
-  const hasPasswordMismatch = step === 'reset' && password && confirmPassword && password !== confirmPassword;
+  const hasPasswordMismatch =
+    step === 'reset' && Boolean(password) && Boolean(confirmPassword) && password !== confirmPassword;
   const disableReset = loading || hasPasswordMismatch;
 
   return (
