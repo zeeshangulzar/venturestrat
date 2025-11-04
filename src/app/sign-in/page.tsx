@@ -201,6 +201,15 @@ export default function SignInPage() {
             </button>
           </div>
 
+          <div className="text-right">
+            <Link
+              href="/forgot-password"
+              className="text-xs font-medium text-blue-400 hover:text-blue-300"
+            >
+              Forgot password?
+            </Link>
+          </div>
+
           {/* Clerk CAPTCHA Widget */}
           <div id="clerk-captcha" className="flex justify-center"></div>
 
