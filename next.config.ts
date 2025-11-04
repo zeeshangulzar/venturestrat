@@ -19,6 +19,7 @@ const presetHosts = [
   "res-3.cloudinary.com",
   "res-4.cloudinary.com",
   "res-5.cloudinary.com",
+  "venturestrat-staging.s3.us-east-1.amazonaws.com",
 ];
 
 const imageHosts = Array.from(new Set([...presetHosts, ...extraHosts]));
