@@ -226,11 +226,17 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
   );
   const hasUploadErrors = attachments.some(attachment => attachment.status === 'error');
   const isSendDisabled = isSending || hasPendingUploads || hasUploadErrors;
-  const sendButtonLabel = isSending
-    ? 'Sending...'
-    : hasPendingUploads
-      ? 'Uploading attachments...'
-      : 'Send';
+  const sendButtonLabel = (() => {
+    if (mode === 'scheduled') return 'Send Now';
+    if (isSending) return 'Sending...';
+    if (hasPendingUploads) return 'Uploading attachments...';
+    return 'Send';
+  })();
+
+  const isSendButtonDisabled = (() => {
+    if (mode === 'answered') return true;
+    return isSendDisabled;
+  })();
 
   // Modal handlers
   const handleAuthSuccess = () => {
@@ -403,13 +409,16 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
         }
 
         if (mode === 'scheduled') {
-          // For scheduled emails sent as replies, don't show schedule modal
-          return;
+          if (onEmailRefresh) {
+            await onEmailRefresh();
+          }
+          if (onRequestTabChange) {
+            onRequestTabChange('scheduled');
+          }
+        } else {
+          console.log('Queueing schedule modal after refresh...');
+          setPendingScheduleModal(true);
         }
-
-        // Show the schedule modal after the UI refresh completes
-        console.log('Queueing schedule modal after refresh...');
-        setPendingScheduleModal(true);
       }
     } catch (error) {
       console.error('Error sending email:', error);
@@ -1058,7 +1067,7 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
         </div>
         
         {/* Send Email Button Section - Always render to maintain consistent height */}
-        {mode !== 'sent' && (
+        {mode !== 'sent' && mode !== 'answered' && (
           <div className="border-t border-gray-200 p-4 flex-shrink-0 bg-white">
             {/* Status Message - Always reserve space to prevent height changes */}
             <div className={`mb-3 p-3 rounded-md text-sm transition-all duration-200 ${
@@ -1098,10 +1107,18 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
                 )}
                 <button
                   type="button"
-                  onClick={handleSendEmail}
-                  disabled={isSendDisabled}
-                  aria-disabled={isSendDisabled}
-                  className={`${isSendDisabled ? 'bg-gray-300 text-gray-600 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700'} flex items-center gap-2 px-6 py-2 rounded-md font-medium transition-colors`}
+                  onClick={async () => {
+                    if (mode === 'scheduled') {
+                      const confirmed = window.confirm('Send this scheduled email right now?');
+                      if (!confirmed) {
+                        return;
+                      }
+                    }
+                    await handleSendEmail();
+                  }}
+                  disabled={isSendButtonDisabled}
+                  aria-disabled={isSendButtonDisabled}
+                  className={`${isSendButtonDisabled ? 'bg-gray-300 text-gray-600 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700'} flex items-center gap-2 px-6 py-2 rounded-md font-medium transition-colors`}
                 >
                   {isSending && (
                     <svg className="animate-spin -ml-1 h-4 w-4 text-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
