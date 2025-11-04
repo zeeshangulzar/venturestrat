@@ -28,6 +28,7 @@ export default function ScheduleFollowUpModal({ isOpen, onClose, onSchedule, ema
   const [isScheduling, setIsScheduling] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [currentStep, setCurrentStep] = useState<'confirm' | 'form'>('confirm');
 
   console.log('🎭 ScheduleFollowUpModal render:', { isOpen, email: email ? 'exists' : 'null' });
 
@@ -35,9 +36,54 @@ export default function ScheduleFollowUpModal({ isOpen, onClose, onSchedule, ema
     console.log('🎭 ScheduleFollowUpModal mounted with props:', { isOpen, hasEmail: !!email });
   }, [isOpen, email]);
 
+  useEffect(() => {
+    if (isOpen && email) {
+      setCurrentStep('confirm');
+      setScheduledDate('');
+      setScheduledTime('');
+      setError(null);
+      setIsScheduling(false);
+      setIsGenerating(false);
+    }
+  }, [isOpen, email?.id]);
+
   if (!isOpen || !email) {
     console.log('🎭 Modal returning null:', { isOpen, hasEmail: !!email });
     return null;
+  }
+
+  const handleCancel = async () => {
+    setCurrentStep('confirm');
+    setScheduledDate('');
+    setScheduledTime('');
+    await onClose();
+  };
+
+  if (currentStep === 'confirm') {
+    return (
+      <div className="fixed inset-0 bg-transparent flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6 border border-gray-200">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Schedule Follow-Up Email</h2>
+          <p className="text-sm text-gray-600 mb-6">
+            Do you want to schedule an automated follow-up email for this investor?
+          </p>
+          <div className="flex justify-end gap-3">
+            <button
+              onClick={handleCancel}
+              className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-400"
+            >
+              Not now
+            </button>
+            <button
+              onClick={() => setCurrentStep('form')}
+              className="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              Yes, schedule
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   const handleSchedule = async () => {
@@ -103,6 +149,9 @@ Generate a follow-up that:
       }
 
       await onSchedule();
+      setCurrentStep('confirm');
+      setScheduledDate('');
+      setScheduledTime('');
 
     } catch (error) {
       console.error('Error scheduling follow-up:', error);
@@ -185,7 +234,7 @@ Generate a follow-up that:
 
         <div className="flex justify-end space-x-3 mt-6">
           <button
-            onClick={onClose}
+            onClick={handleCancel}
             disabled={isScheduling}
             className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 disabled:opacity-50"
           >
