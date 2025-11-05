@@ -81,11 +81,25 @@ export default function ForgotPasswordPage() {
     }
   };
 
+  const validatePassword = (value: string): string | null => {
+    if (!value || value.trim().length < 8) {
+      return 'Password must be at least 8 characters long.';
+    }
+    return null;
+  };
+
   const handleReset = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!isLoaded || !signIn) return;
 
     setError(null);
+
+    const passwordValidationError = validatePassword(password);
+    if (passwordValidationError) {
+      setError(passwordValidationError);
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -115,8 +129,36 @@ export default function ForgotPasswordPage() {
 
       setError('Additional verification required.');
     } catch (err: any) {
-      const clerkError = err?.errors?.[0]?.message;
-      setError(err?.message || clerkError || 'Unable to reset password. Please check the code and try again.');
+      const clerkError = err?.errors?.[0]?.message as string | undefined;
+      const normalizedMessage = clerkError?.toLowerCase() ?? '';
+
+      if (normalizedMessage.includes('send a verification code before')) {
+        setError('Your reset code expired. Please request a new code and try again.');
+      } else if (err?.message?.toLowerCase().includes('send a verification code before')) {
+        setError('Your reset code expired. Please request a new code and try again.');
+      } else {
+        setError(err?.message || clerkError || 'Unable to reset password. Please check the code and try again.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resendCode = async () => {
+    if (!isLoaded || !signIn) return;
+
+    setError(null);
+    setLoading(true);
+
+    try {
+      await signIn.create({
+        strategy: 'reset_password_email_code',
+        identifier: email,
+      });
+      setError('A new code has been sent to your email.');
+    } catch (err: any) {
+      const clerkError = err?.errors?.[0]?.message as string | undefined;
+      setError(clerkError || 'Unable to resend the code. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -212,7 +254,7 @@ export default function ForgotPasswordPage() {
                     onChange={(event) => setPassword(event.target.value)}
                     required
                     autoComplete="new-password"
-                    placeholder="New password"
+                  placeholder="New password (min 8 characters)"
                   />
                   <button
                     type="button"
@@ -231,7 +273,7 @@ export default function ForgotPasswordPage() {
                     onChange={(event) => setConfirmPassword(event.target.value)}
                     required
                     autoComplete="new-password"
-                    placeholder="Confirm new password"
+                  placeholder="Confirm new password"
                   />
                   <button
                     type="button"
@@ -256,6 +298,17 @@ export default function ForgotPasswordPage() {
                   {loading ? 'Resetting password...' : 'Reset password'}
                 </button>
               </div>
+              <p className="text-sm text-[#a5a6ac] text-center">
+                Didn&apos;t receive a code?{' '}
+                <button
+                  type="button"
+                  onClick={resendCode}
+                  disabled={loading}
+                  className="text-blue-400 hover:text-blue-300 underline disabled:opacity-50"
+                >
+                  Send code again
+                </button>
+              </p>
             </form>
           )}
 
