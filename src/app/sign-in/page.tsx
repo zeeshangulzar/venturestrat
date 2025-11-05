@@ -178,7 +178,7 @@ export default function SignInPage() {
             />
           </div>
 
-          <div className="relative">
+          <div className="relative mb-0">
             <input
               type={showPassword ? "text" : "password"}
               className="h-[42] w-full font-normal text-sm leading-5 bg-[#0C111D] text-[#FFFFFF] border border-[#ffffff1a] rounded-[10px] px-3 py-2 pr-10 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
@@ -201,7 +201,7 @@ export default function SignInPage() {
             </button>
           </div>
 
-          <div className="text-right">
+          <div className="text-right mb-0 mt-1">
             <Link
               href="/forgot-password"
               className="text-xs font-medium text-blue-400 hover:text-blue-300"
