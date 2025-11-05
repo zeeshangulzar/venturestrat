@@ -82,9 +82,16 @@ export default function ForgotPasswordPage() {
   };
 
   const validatePassword = (value: string): string | null => {
-    if (!value || value.trim().length < 8) {
+    if (!value || value.length < 8) {
       return 'Password must be at least 8 characters long.';
     }
+    const hasLetter = /[a-zA-Z]/.test(value);
+    const hasDigit = /\d/.test(value);
+
+    if (!hasLetter || !hasDigit) {
+      return 'Password must include both letters and numbers.';
+    }
+
     return null;
   };
 
@@ -166,7 +173,13 @@ export default function ForgotPasswordPage() {
 
   const hasPasswordMismatch =
     step === 'reset' && Boolean(password) && Boolean(confirmPassword) && password !== confirmPassword;
-  const disableReset = loading || hasPasswordMismatch;
+  const passwordRequirementError =
+    step === 'reset' && password ? validatePassword(password) : null;
+  const disableReset =
+    loading ||
+    hasPasswordMismatch ||
+    Boolean(passwordRequirementError) ||
+    (step === 'reset' && code.trim().length < 6);
 
   return (
     <main className="min-h-screen bg-[#0c2143] relative w-full">
@@ -246,7 +259,9 @@ export default function ForgotPasswordPage() {
               </div>
 
               <div className="space-y-4">
-                <div className="relative">
+                <label className="flex flex-col gap-2 text-xs font-medium text-[#a5a6ac]">
+                  <span>Password must contain at least 8 characters and include both letters and numbers.</span>
+                  <div className="relative">
                   <input
                     type={showPassword ? 'text' : 'password'}
                     className="h-[42] w-full font-normal text-sm leading-5 bg-[#0C111D] text-[#FFFFFF] border border-[#ffffff1a] rounded-[10px] px-3 py-2 pr-10 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
@@ -254,7 +269,7 @@ export default function ForgotPasswordPage() {
                     onChange={(event) => setPassword(event.target.value)}
                     required
                     autoComplete="new-password"
-                  placeholder="New password (min 8 characters)"
+                    placeholder="New password"
                   />
                   <button
                     type="button"
@@ -264,7 +279,8 @@ export default function ForgotPasswordPage() {
                   >
                     {showPassword ? <EyeSlashIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
                   </button>
-                </div>
+                  </div>
+                </label>
                 <div className="relative">
                   <input
                     type={showConfirmPassword ? 'text' : 'password'}
@@ -286,6 +302,9 @@ export default function ForgotPasswordPage() {
                 </div>
                 {hasPasswordMismatch && (
                   <p className="text-xs text-red-400">Passwords do not match.</p>
+                )}
+                {passwordRequirementError && (
+                  <p className="text-xs text-red-400">{passwordRequirementError}</p>
                 )}
               </div>
 
