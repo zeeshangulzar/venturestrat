@@ -598,9 +598,6 @@ export default function OnboardingPage() {
               <h2 className="font-semibold text-base lg:text-lg leading-[22px] tracking-[-0.02em] text-white mb-4">
                 What is your company website?
               </h2>
-              <p className="text-[#A5A6AC] font-normal text-sm lg:text-base leading-[22px] mb-4">
-                Help us get your company logo by providing your website URL. This step is optional.
-              </p>
               <input
                 type="text"
                 name="companyWebsite"
