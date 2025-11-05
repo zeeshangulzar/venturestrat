@@ -9,6 +9,34 @@ import LogoIcon from '@components/icons/LogoWithText';
 import Logo from '@components/icons/logoIcon';
 import SignInLogo from '@components/icons/SignInLogo';
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
+import { CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/solid';
+
+const passwordRules = [
+  {
+    key: 'length',
+    label: 'At least 8 characters',
+    errorMessage: 'Password must be at least 8 characters long.',
+    test: (value: string) => value.length >= 8,
+  },
+  {
+    key: 'uppercase',
+    label: 'At least 1 uppercase letter',
+    errorMessage: 'Password must include at least 1 uppercase letter.',
+    test: (value: string) => /[A-Z]/.test(value),
+  },
+  {
+    key: 'number',
+    label: 'At least 1 number',
+    errorMessage: 'Password must include at least 1 number.',
+    test: (value: string) => /\d/.test(value),
+  },
+  {
+    key: 'special',
+    label: 'At least 1 special character (!@#$%^&*()-__+.)',
+    errorMessage: 'Password must include at least 1 special character (!@#$%^&*()-__+.).',
+    test: (value: string) => /[!@#$%^&*()\-__+.]/.test(value),
+  },
+];
 
 type Step = 'request' | 'reset';
 
@@ -82,17 +110,12 @@ export default function ForgotPasswordPage() {
   };
 
   const validatePassword = (value: string): string | null => {
-    if (!value || value.length < 8) {
+    if (!value) {
       return 'Password must be at least 8 characters long.';
     }
-    const hasLetter = /[a-zA-Z]/.test(value);
-    const hasDigit = /\d/.test(value);
 
-    if (!hasLetter || !hasDigit) {
-      return 'Password must include both letters and numbers.';
-    }
-
-    return null;
+    const failingRule = passwordRules.find((rule) => !rule.test(value));
+    return failingRule ? failingRule.errorMessage : null;
   };
 
   const handleReset = async (event: React.FormEvent) => {
@@ -173,12 +196,12 @@ export default function ForgotPasswordPage() {
 
   const hasPasswordMismatch =
     step === 'reset' && Boolean(password) && Boolean(confirmPassword) && password !== confirmPassword;
-  const passwordRequirementError =
-    step === 'reset' && password ? validatePassword(password) : null;
+  const passwordChecks = passwordRules.map((rule) => ({ key: rule.key, label: rule.label, valid: rule.test(password) }));
+  const passwordRequirementError = step === 'reset' && password ? validatePassword(password) : null;
   const disableReset =
     loading ||
     hasPasswordMismatch ||
-    Boolean(passwordRequirementError) ||
+    passwordChecks.some((rule) => !rule.valid) ||
     (step === 'reset' && code.trim().length < 6);
 
   return (
@@ -260,7 +283,6 @@ export default function ForgotPasswordPage() {
 
               <div className="space-y-4">
                 <label className="flex flex-col gap-2 text-xs font-medium text-[#a5a6ac]">
-                  <span>Password must contain at least 8 characters and include both letters and numbers.</span>
                   <div className="relative">
                   <input
                     type={showPassword ? 'text' : 'password'}
@@ -281,6 +303,7 @@ export default function ForgotPasswordPage() {
                   </button>
                   </div>
                 </label>
+
                 <div className="relative">
                   <input
                     type={showConfirmPassword ? 'text' : 'password'}
@@ -306,6 +329,19 @@ export default function ForgotPasswordPage() {
                 {passwordRequirementError && (
                   <p className="text-xs text-red-400">{passwordRequirementError}</p>
                 )}
+                <ul className="space-y-1 text-xs font-medium">
+                  <span className='text-sm text-[#a5a6ac] mb-2'>Password Must Contains:</span>
+                  {passwordChecks.map((rule) => (
+                    <li key={rule.key} className="flex items-center gap-2">
+                      {rule.valid ? (
+                        <CheckCircleIcon className="h-4 w-4 text-emerald-400" />
+                      ) : (
+                        <XCircleIcon className="h-4 w-4 text-red-400" />
+                      )}
+                      <span className={rule.valid ? 'text-emerald-300' : 'text-[#a5a6ac]'}>{rule.label}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
 
               <div className="mt-12 mb-5">
