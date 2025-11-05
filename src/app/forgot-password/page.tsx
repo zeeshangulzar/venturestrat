@@ -27,6 +27,8 @@ export default function ForgotPasswordPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  const isValidEmail = (value: string) => /.+@.+\..+/.test(value.trim());
+
   useEffect(() => {
     if (user) {
       router.replace('/');
@@ -51,6 +53,12 @@ export default function ForgotPasswordPage() {
     if (!isLoaded || !signIn) return;
 
     setError(null);
+
+    if (!isValidEmail(email)) {
+      setError('Please enter a valid email address.');
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -60,8 +68,14 @@ export default function ForgotPasswordPage() {
       });
       setStep('reset');
     } catch (err: any) {
-      const clerkError = err?.errors?.[0]?.message;
-      setError(clerkError || 'Unable to send reset instructions. Please try again.');
+      const clerkError = err?.errors?.[0]?.message as string | undefined;
+      const normalizedMessage = clerkError?.toLowerCase() ?? '';
+
+      if (normalizedMessage.includes('identifier is invalid')) {
+        setError('Please enter a valid email address.');
+      } else {
+        setError(clerkError || 'Unable to send reset instructions. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
