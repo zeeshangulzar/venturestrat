@@ -396,14 +396,14 @@ export default function EmailManagementInterface({ userId, mode = 'draft', refre
     }
   };
 
-  const handleEmailUpdate = (updatedEmail: EmailDraft) => {
+  const handleEmailUpdate = (updatedEmail: EmailDraft, options?: { preserveSelection?: boolean }) => {
     setDrafts(prevDrafts => 
       prevDrafts.map(draft => 
         draft.id === updatedEmail.id ? updatedEmail : draft
       )
     );
     // Also update the selected email if it's the same one
-    if (selectedEmailId === updatedEmail.id) {
+    if (!options?.preserveSelection && selectedEmailId === updatedEmail.id) {
       setSelectedEmail(updatedEmail);
     }
     // Clear pending save status when update is complete
