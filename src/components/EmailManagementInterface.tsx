@@ -5,6 +5,7 @@ import { getApiUrl } from '@lib/api';
 import EmailSidebar from './EmailSidebar';
 import EmailViewer from './EmailViewer';
 import type { MailSectionType } from './MailTabs';
+import type { EmailCountDelta } from '../types/emailCounts';
 
 interface EmailDraft {
   id: string;
@@ -35,9 +36,10 @@ interface EmailManagementInterfaceProps {
   onSaveRefReady?: (saveRef: React.MutableRefObject<(() => Promise<void>) | null>) => void; // Add callback for save ref
   onAttachmentUploadStatusChange?: (isUploading: boolean) => void;
   onRequestTabChange?: (section: MailSectionType) => void;
+  onCountsAdjust?: (delta: EmailCountDelta) => void;
 }
 
-export default function EmailManagementInterface({ userId, mode = 'draft', refreshTrigger, onEmailSent, onSaveStart, onSaveEnd, selectEmailId, isAIEmail, onSelectEmailProcessed, onSaveRefReady, onAttachmentUploadStatusChange, onRequestTabChange }: EmailManagementInterfaceProps) {
+export default function EmailManagementInterface({ userId, mode = 'draft', refreshTrigger, onEmailSent, onSaveStart, onSaveEnd, selectEmailId, isAIEmail, onSelectEmailProcessed, onSaveRefReady, onAttachmentUploadStatusChange, onRequestTabChange, onCountsAdjust }: EmailManagementInterfaceProps) {
   const [drafts, setDrafts] = useState<EmailDraft[]>([]);
   const [selectedEmailId, setSelectedEmailId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -583,6 +585,7 @@ export default function EmailManagementInterface({ userId, mode = 'draft', refre
           loading={isFetchingIndividualEmail || isTransitioning}
           saveRef={saveRef}
           onAttachmentUploadStatusChange={onAttachmentUploadStatusChange}
+          onCountsAdjust={onCountsAdjust}
           onRequestTabChange={onRequestTabChange}
         />
       </div>

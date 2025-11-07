@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { getApiUrl } from '@lib/api';
 import MailTabs, { MailSectionType } from './MailTabs';
 import EmailManagementInterface from './EmailManagementInterface';
+import type { EmailCounts, EmailCountDelta } from '../types/emailCounts';
 
 interface EmailTabsManagerProps {
   userId: string;
@@ -14,14 +15,6 @@ interface EmailTabsManagerProps {
   onEmailProcessed?: () => void; // Add callback for when email is processed
   onEmailSent?: (investorId?: string) => Promise<void> | void; // Add callback when an email is sent
   onAttachmentUploadStatusChange?: (isUploading: boolean) => void; // Notify parent when attachments upload
-}
-
-interface EmailCounts {
-  all: number;
-  sent: number;
-  opened: number;
-  answered: number;
-  scheduled: number;
 }
 
 export default function EmailTabsManager({ userId, refreshTrigger, selectEmailId, isAIEmail, onTabSwitch, onEmailProcessed, onEmailSent, onAttachmentUploadStatusChange }: EmailTabsManagerProps) {
@@ -40,6 +33,29 @@ export default function EmailTabsManager({ userId, refreshTrigger, selectEmailId
   
   // Ref to store the save function from EmailManagementInterface
   const saveRef = useRef<(() => Promise<void>) | null>(null);
+
+  const adjustCounts = useCallback((delta: EmailCountDelta) => {
+    setCounts(prevCounts => {
+      let hasChanges = false;
+      const nextCounts: EmailCounts = { ...prevCounts };
+
+      (Object.entries(delta) as [keyof EmailCounts, number][]).forEach(([key, change]) => {
+        if (typeof change !== 'number' || Number.isNaN(change) || change === 0) {
+          return;
+        }
+
+        const currentValue = nextCounts[key] ?? 0;
+        const updatedValue = Math.max(0, currentValue + change);
+
+        if (updatedValue !== currentValue) {
+          nextCounts[key] = updatedValue;
+          hasChanges = true;
+        }
+      });
+
+      return hasChanges ? nextCounts : prevCounts;
+    });
+  }, []);
 
   const fetchCounts = async () => {
     if (!userId) return;
@@ -219,6 +235,7 @@ export default function EmailTabsManager({ userId, refreshTrigger, selectEmailId
             onSelectEmailProcessed={handleSelectEmailProcessed}
             onSaveRefReady={handleSaveRefReady}
             onAttachmentUploadStatusChange={onAttachmentUploadStatusChange}
+            onCountsAdjust={adjustCounts}
             onRequestTabChange={(section) => { handleSectionChange(section); }}
           />
         )}
@@ -235,6 +252,7 @@ export default function EmailTabsManager({ userId, refreshTrigger, selectEmailId
             onSelectEmailProcessed={handleSelectEmailProcessed}
             onSaveRefReady={handleSaveRefReady}
             onAttachmentUploadStatusChange={onAttachmentUploadStatusChange}
+            onCountsAdjust={adjustCounts}
             onRequestTabChange={(section) => { handleSectionChange(section); }}
           />
         )}
@@ -266,6 +284,7 @@ export default function EmailTabsManager({ userId, refreshTrigger, selectEmailId
             onSelectEmailProcessed={handleSelectEmailProcessed}
             onSaveRefReady={handleSaveRefReady}
             onAttachmentUploadStatusChange={onAttachmentUploadStatusChange}
+            onCountsAdjust={adjustCounts}
             onRequestTabChange={(section) => { handleSectionChange(section); }}
           />
         )}
@@ -281,6 +300,8 @@ export default function EmailTabsManager({ userId, refreshTrigger, selectEmailId
             selectEmailId={undefined}
             onSelectEmailProcessed={handleSelectEmailProcessed}
             onSaveRefReady={handleSaveRefReady}
+            onAttachmentUploadStatusChange={onAttachmentUploadStatusChange}
+            onCountsAdjust={adjustCounts}
             onRequestTabChange={(section) => { handleSectionChange(section); }}
           />
         )}
