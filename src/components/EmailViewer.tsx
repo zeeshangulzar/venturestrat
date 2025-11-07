@@ -43,7 +43,7 @@ interface EmailViewerProps {
   email: EmailDraft | null;
   userId?: string;
   mode?: 'draft' | 'sent' | 'answered' | 'scheduled';
-  onEmailUpdate: (updatedEmail: EmailDraft) => void;
+  onEmailUpdate: (updatedEmail: EmailDraft, options?: { preserveSelection?: boolean }) => void;
   onEmailSent?: (investorId?: string) => Promise<void> | void;
   onScheduledEmailCancel?: (messageId: string) => Promise<void> | void;
   onEmailSaveStart?: () => void;
@@ -673,7 +673,7 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
           ...(payload as Partial<EmailDraft>),
         };
         if (onEmailUpdate) {
-          onEmailUpdate(normalizedEmail);
+          onEmailUpdate(normalizedEmail, { preserveSelection: true });
         }
       }
 
