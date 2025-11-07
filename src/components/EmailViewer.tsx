@@ -12,6 +12,7 @@ import AuthModal from './AuthModal';
 import { AttachmentItem } from '../types/attachments';
 import ScheduleFollowUpModal from './ScheduleFollowUpModal';
 import type { MailSectionType } from './MailTabs';
+import type { EmailCountDelta } from '../types/emailCounts';
 
 interface EmailDraft {
   id: string;
@@ -53,6 +54,7 @@ interface EmailViewerProps {
   saveRef?: React.MutableRefObject<(() => Promise<void>) | null>;
   onAttachmentUploadStatusChange?: (isUploading: boolean) => void;
   onRequestTabChange?: (section: MailSectionType) => void;
+  onCountsAdjust?: (delta: EmailCountDelta) => void;
 }
 
 const MAX_ATTACHMENT_SIZE = 75 * 1024 * 1024; // 75MB
@@ -93,7 +95,7 @@ const deleteAttachmentMetadata = async (messageId: string, key: string) => {
   }
 };
 
-export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUpdate, onEmailSent, onScheduledEmailCancel, onEmailSaveStart, onEmailSaveEnd, onEmailRefresh, readOnly = false, loading = false, saveRef, onAttachmentUploadStatusChange, onRequestTabChange }: EmailViewerProps) {
+export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUpdate, onEmailSent, onScheduledEmailCancel, onEmailSaveStart, onEmailSaveEnd, onEmailRefresh, readOnly = false, loading = false, saveRef, onAttachmentUploadStatusChange, onRequestTabChange, onCountsAdjust }: EmailViewerProps) {
   const router = useRouter();
   const [editedSubject, setEditedSubject] = useState('');
   const [editedBody, setEditedBody] = useState('');
@@ -264,12 +266,12 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
       }
 
       // Refresh the email list
-      if (onScheduledEmailCancel) {
-        await onScheduledEmailCancel(email.id);
+      if (onCountsAdjust) {
+        onCountsAdjust({ scheduled: -1, all: 1 });
       }
 
-      if (onRequestTabChange) {
-        onRequestTabChange('scheduled');
+      if (onScheduledEmailCancel) {
+        await onScheduledEmailCancel(email.id);
       }
 
       if (onEmailRefresh) {
@@ -398,16 +400,22 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
         
         console.log("here is the current mode", mode);
         if (mode === 'scheduled') {
+          if (onCountsAdjust) {
+            onCountsAdjust({ scheduled: -1, sent: 1 });
+          }
+
+          if (email?.id && onScheduledEmailCancel) {
+            await onScheduledEmailCancel(email.id);
+          }
+
           if (onEmailSent) {
             await onEmailSent(investorId);
           }
-          if (onEmailRefresh) {
-            await onEmailRefresh();
-          }
-          if (onRequestTabChange) {
-            onRequestTabChange('scheduled');
-          }
         } else {
+          if (mode === 'draft') {
+            onCountsAdjust?.({ all: -1, sent: 1 });
+          }
+
           console.log('Opening schedule modal immediately');
           setShowScheduleModal(true);
           if (onEmailSent) {
@@ -652,8 +660,23 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
         throw new Error('Failed to update email');
       }
 
-      const updatedEmail = await response.json();
-      
+      const updatedEmailResponse = await response.json();
+
+      const payload =
+        updatedEmailResponse?.data ??
+        updatedEmailResponse?.message ??
+        updatedEmailResponse;
+
+      if (payload && typeof payload === 'object') {
+        const normalizedEmail: EmailDraft = {
+          ...email,
+          ...(payload as Partial<EmailDraft>),
+        };
+        if (onEmailUpdate) {
+          onEmailUpdate(normalizedEmail);
+        }
+      }
+
       // Update sidebar only for drafts. For scheduled mode, avoid refreshing to prevent loader flicker
       // and allow smooth typing/attachments handling.
       if (mode === 'draft' && onEmailRefresh) {
