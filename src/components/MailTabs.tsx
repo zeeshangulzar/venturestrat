@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import MailTabButton from './MailTabButton';
 import MailSection from './MailSection';
+import type { EmailCounts } from '../types/emailCounts';
 
 export type MailSectionType = 'all' | 'sent' | 'opened' | 'answered' | 'scheduled';
 
@@ -8,13 +9,7 @@ interface MailTabsProps {
   activeSection: MailSectionType;
   onSectionChange: (section: MailSectionType) => void;
   children: ReactNode;
-  counts?: {
-    all?: number;
-    sent?: number;
-    opened?: number;
-    answered?: number;
-    scheduled?: number;
-  };
+  counts?: Partial<EmailCounts>;
   disabled?: boolean;
 }
 
