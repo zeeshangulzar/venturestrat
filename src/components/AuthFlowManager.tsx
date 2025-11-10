@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import { useUser } from '@clerk/nextjs';
+import { useUser, useSession } from '@clerk/nextjs';
 import { useRouter, usePathname } from 'next/navigation';
 import { useGlobalLoading } from './GlobalLoadingProvider';
 import { fetchUserData } from '@lib/api';
@@ -13,6 +13,7 @@ interface AuthFlowManagerProps {
 
 const AuthFlowManager: React.FC<AuthFlowManagerProps> = ({ children }) => {
   const { user, isLoaded } = useUser();
+  const { session } = useSession();
   const router = useRouter();
   const pathname = usePathname();
   const { showLoading, hideLoading } = useGlobalLoading();
@@ -21,6 +22,7 @@ const AuthFlowManager: React.FC<AuthFlowManagerProps> = ({ children }) => {
   const [isCompletingOnboarding, setIsCompletingOnboarding] = useState(false);
   const [onboardingStatus, setOnboardingStatus] = useState<boolean | null>(null);
   const [isRedirecting, setIsRedirecting] = useState(false);
+  const [isSessionVerified, setIsSessionVerified] = useState(false);
   const gmailWatchAttemptRef = useRef<string | null>(null);
 
   // Check if current route is onboarding or auth-related
@@ -78,6 +80,45 @@ const AuthFlowManager: React.FC<AuthFlowManagerProps> = ({ children }) => {
       window.removeEventListener('onboarding:complete', handleOnboardingComplete);
     };
   }, [showLoading]);
+
+  useEffect(() => {
+    if (!isProcessingAuth && !isRedirecting) {
+      return;
+    }
+
+    let isActive = true;
+
+    const verifySession = async () => {
+      if (isActive) {
+        setIsSessionVerified(false);
+      }
+
+      if (!session) {
+        if (isActive) {
+          setIsSessionVerified(false);
+        }
+        return;
+      }
+
+      try {
+        const token = await session.getToken();
+        if (isActive) {
+          setIsSessionVerified(Boolean(token));
+        }
+      } catch (error) {
+        console.error('Failed to verify Clerk session token:', error);
+        if (isActive) {
+          setIsSessionVerified(false);
+        }
+      }
+    };
+
+    void verifySession();
+
+    return () => {
+      isActive = false;
+    };
+  }, [session, isProcessingAuth, isRedirecting]);
 
   useEffect(() => {
     if (!isLoaded) {
@@ -146,6 +187,29 @@ const AuthFlowManager: React.FC<AuthFlowManagerProps> = ({ children }) => {
 
     setIsProcessingAuth(false);
   }, [user, isLoaded, router, showLoading, hideLoading, isOnboardingRoute, isAuthRoute, hasShownLoading, isCompletingOnboarding, isRedirecting, onboardingStatus]);
+
+  useEffect(() => {
+    if (!isRedirecting) {
+      return;
+    }
+
+    if (isOnboardingRoute) {
+      return;
+    }
+
+    if (!isLoaded || !user) {
+      return;
+    }
+
+    if (!isSessionVerified) {
+      return;
+    }
+
+    hideLoading();
+    setIsRedirecting(false);
+    setIsProcessingAuth(false);
+    setHasShownLoading(false);
+  }, [isRedirecting, isOnboardingRoute, isLoaded, user, isSessionVerified, hideLoading]);
 
   useEffect(() => {
     if (!isLoaded || !user) {
