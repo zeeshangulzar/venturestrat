@@ -75,14 +75,26 @@ export default function SignInPage() {
       }
     } catch (err: unknown) {
       let errorMessage = 'Sign in failed';
-      
-      if (err && typeof err === 'object' && 'errors' in err && Array.isArray((err as { errors: unknown[] }).errors) && (err as { errors: unknown[] }).errors.length > 0) {
-        const firstError = (err as { errors: unknown[] }).errors[0];
-        if (firstError && typeof firstError === 'object' && 'message' in firstError) {
-          errorMessage = String(firstError.message) || 'Sign in failed';
+
+      const hasClerkErrors =
+        err &&
+        typeof err === 'object' &&
+        'errors' in err &&
+        Array.isArray((err as { errors: unknown[] }).errors) &&
+        (err as { errors: unknown[] }).errors.length > 0;
+
+      if (hasClerkErrors) {
+        const firstError = (err as { errors: Record<string, unknown>[] }).errors[0];
+        const clerkMessage = typeof firstError?.message === 'string' ? firstError.message : undefined;
+        const clerkCode = typeof firstError?.code === 'string' ? firstError.code : undefined;
+
+        if (clerkCode === 'strategy_invalid' || clerkMessage?.toLowerCase().includes('invalid verification strategy')) {
+          errorMessage = 'Invalid Password.';
+        } else if (clerkMessage) {
+          errorMessage = clerkMessage;
         }
       }
-      
+
       setError(errorMessage);
     } finally {
       setLoading(false)
