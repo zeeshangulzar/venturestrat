@@ -1,7 +1,10 @@
 'use client';
 
-import React, { useState, useEffect, useLayoutEffect } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useMemo } from 'react';
+import { useUser } from '@clerk/nextjs';
 import { getApiUrl } from '@lib/api';
+import { useUserCompany } from '../hooks/useUserCompany';
+import { appendSignatureToBody, buildSignatureHtml } from '@utils/signature';
 
 interface ScheduleFollowUpModalProps {
   isOpen: boolean;
@@ -23,12 +26,31 @@ interface ScheduleFollowUpModalProps {
 }
 
 export default function ScheduleFollowUpModal({ isOpen, onClose, onSchedule, email }: ScheduleFollowUpModalProps) {
+  const { user } = useUser();
+  const { companyName, companyLogo, position: companyPosition } = useUserCompany();
   const [scheduledDate, setScheduledDate] = useState('');
   const [scheduledTime, setScheduledTime] = useState('');
   const [isScheduling, setIsScheduling] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [currentStep, setCurrentStep] = useState<'confirm' | 'form'>('confirm');
+  const signatureData = useMemo(() => {
+    if (!user) return null;
+    const clerkMetadata = (user.publicMetadata || {}) as Record<string, unknown>;
+    return {
+      displayName:
+        [user.firstName?.trim() ?? '', user.lastName?.trim() ?? '']
+          .filter(Boolean)
+          .join(' ') || user.emailAddresses?.[0]?.emailAddress?.trim() || '',
+      email: user.emailAddresses?.[0]?.emailAddress?.trim(),
+      position:
+        companyPosition ||
+        (clerkMetadata.position as string | undefined) ||
+        undefined,
+      companyName: companyName || (clerkMetadata.companyName as string | undefined),
+      logoUrl: companyLogo || (clerkMetadata.companyLogo as string | undefined),
+    };
+  }, [user, companyName, companyLogo]);
 
   console.log('🎭 ScheduleFollowUpModal render:', { isOpen, email: email ? 'exists' : 'null' });
 
@@ -125,6 +147,8 @@ Generate a follow-up that:
       const chatgptData = await chatgptResponse.json();
       const followUpSubject = chatgptData.subject || `Re: ${email.subject}`;
       const followUpBody = chatgptData.body || email.body;
+      const signatureHtml = buildSignatureHtml(signatureData ?? {});
+      const bodyWithSignature = appendSignatureToBody(followUpBody, signatureHtml);
 
       setIsGenerating(false);
 
@@ -139,7 +163,7 @@ Generate a follow-up that:
           cc: email.cc || [],
           subject: followUpSubject,
           from: email.from,
-          body: followUpBody,
+          body: bodyWithSignature,
           scheduledFor: scheduledDateTime.toISOString(),
           threadId: email.threadId,
            previousMessageId: email.id,

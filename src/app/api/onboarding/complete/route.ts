@@ -7,6 +7,7 @@ interface OnboardingMetadata {
   firstName: string;
   lastName: string;
   companyName: string;
+  position: string;
   siteUrl: string;
   userCountry: string;
   incorporationCountry: string;
@@ -31,6 +32,7 @@ export async function POST(request: Request) {
       firstName,
       lastName,
       companyName, 
+      position,
       siteUrl,
       userCountry,
       incorporationCountry, 
@@ -55,6 +57,7 @@ export async function POST(request: Request) {
       firstName: firstName ?? '',
       lastName: lastName ?? '',
       companyName: companyName ?? '',
+      position: position ?? '',
       siteUrl: siteUrl ?? '',
       userCountry: userCountry ?? '',
       incorporationCountry: incorporationCountry ?? '',

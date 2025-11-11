@@ -258,7 +258,8 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
     'bold', 'italic', 'underline', 'strike',
     'color', 'background',
     'list', 'bullet',
-    'align'
+    'align',
+    'image'
   ];
 
   useEffect(() => {

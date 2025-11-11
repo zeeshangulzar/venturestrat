@@ -36,11 +36,9 @@ export async function POST(request: NextRequest) {
             8. Always insert the empty line before closing ("Best Regards")
             9. Use proper paragraph spacing - each paragraph should be wrapped in <p> tags
             10. After adding all bullet points please add a <p><br></p> before continuing the rest of the email
-            11. For signatures, use proper HTML structure with <p> tags.
-            12. Make sure the each signature is wrapped in a seperate <p> without <br> tags
-            13. Do not use \\n characters within HTML content - use proper HTML tags instead
-            14. Ensure the signature is properly aligned with proper spacing
-            15. Remove the phone number from the signature`
+            11. Do not include a signature block; the platform will append one automatically.
+            12. Do not use \\n characters within HTML content - use proper HTML tags instead
+            13. End with a polite closing (e.g., "Best regards") even though you are not adding a signature yourself.`
           },
           {
             role: 'user',

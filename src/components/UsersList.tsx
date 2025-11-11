@@ -6,6 +6,7 @@ import { getApiUrl } from '@lib/api';
 
 type PublicMetaData = {
   companyName?: string;
+  position?: string;
   userCountry?: string;
   incorporationCountry?: string;
   [key: string]: unknown;
