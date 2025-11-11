@@ -630,6 +630,7 @@ export default function SettingsPage() {
             publicMetaData?: { 
               companyName?: string; 
               siteUrl?: string; 
+              position?: string;
               userCountry?: string; 
               incorporationCountry?: string; 
               operationalRegions?: string[]; 
@@ -647,6 +648,7 @@ export default function SettingsPage() {
           publicMetaData?: { 
             companyName?: string; 
             siteUrl?: string; 
+            position?: string;
             userCountry?: string; 
             incorporationCountry?: string; 
             operationalRegions?: string[]; 

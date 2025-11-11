@@ -37,11 +37,13 @@ export const useUserCompany = (): UserCompanyData => {
             user?: { 
               publicMetaData?: { 
                 companyName?: string;
+                position?: string;
               };
               companyLogo?: string;
             }; 
             publicMetaData?: { 
               companyName?: string;
+              position?: string;
             };
             companyLogo?: string;
           } | null;
