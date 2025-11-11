@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { getApiUrl } from '@lib/api';
+import { useUserCompany } from '../hooks/useUserCompany';
+import { appendSignatureToBody, buildSignatureHtml } from '@utils/signature';
 
 interface ChatGPTIntegrationProps {
   investor: {
@@ -19,9 +21,13 @@ interface ChatGPTIntegrationProps {
     firstName?: string | null;
     lastName?: string | null;
     emailAddresses: Array<{ emailAddress: string }>;
+    imageUrl?: string;
+    profileImageUrl?: string | null;
+    publicMetadata?: Record<string, unknown>;
   };
   userData: {
     companyName?: string;
+    companyLogo?: string;
     businessSectors?: string[];
     stages?: string;
     fundingAmount?: number;
@@ -43,7 +49,58 @@ export default function ChatGPTIntegration({
 }: ChatGPTIntegrationProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [hasDraft, setHasDraft] = useState(investor.hasDraft ?? false);
-  
+  const {
+    companyLogo: storedCompanyLogo,
+    companyName: fallbackCompanyName,
+  } = useUserCompany();
+
+  const signatureMetadata = (() => {
+    const primaryEmail = user.emailAddresses?.[0]?.emailAddress?.trim() ?? '';
+    const first = user.firstName?.trim() ?? '';
+    const last = user.lastName?.trim() ?? '';
+    const displayName = [first, last].filter(Boolean).join(' ') || primaryEmail;
+    const clerkPublicMetadata = user.publicMetadata as Record<string, unknown> | undefined;
+    const positionCandidates = [
+      (userData as Record<string, unknown> | null)?.title,
+      (userData as Record<string, unknown> | null)?.role,
+      (userData as Record<string, unknown> | null)?.position,
+      clerkPublicMetadata?.position,
+    ];
+    const position = positionCandidates
+      .map((candidate) => (typeof candidate === 'string' ? candidate.trim() : ''))
+      .find((value) => value.length > 0);
+
+    const companyNameCandidate =
+      (typeof userData?.companyName === 'string' && userData.companyName.trim()) ||
+      (typeof clerkPublicMetadata?.companyName === 'string'
+        ? (clerkPublicMetadata.companyName as string).trim()
+        : '') ||
+      fallbackCompanyName ||
+      '';
+
+    const backendLogoCandidates = [
+      storedCompanyLogo,
+      userData?.companyLogo,
+      clerkPublicMetadata?.companyLogo,
+    ];
+
+    const backendLogo = backendLogoCandidates
+      .map((candidate) => (typeof candidate === 'string' ? candidate.trim() : ''))
+      .find((value) => value.length > 0);
+
+    const fallbackLogo = [user.profileImageUrl, user.imageUrl]
+      .map((candidate) => (typeof candidate === 'string' ? candidate.trim() : ''))
+      .find((value) => value.length > 0);
+
+    return {
+      displayName,
+      email: primaryEmail,
+      position,
+      companyName: companyNameCandidate,
+      logoUrl: backendLogo || fallbackLogo || undefined,
+    };
+  })();
+
   useEffect(() => {
     setHasDraft(investor.hasDraft ?? false);
   }, [investor.hasDraft]);
@@ -88,6 +145,9 @@ export default function ChatGPTIntegration({
       const data = await response.json();
       const { subject, body, emailContent } = data;
 
+      const signatureHtml = buildSignatureHtml(signatureMetadata);
+      const bodyWithSignature = appendSignatureToBody(body, signatureHtml);
+
       // Send the generated email to the backend
       const investorEmails = investor.emails.map(e => e.email);
       const userEmail = user.emailAddresses[0]?.emailAddress || '';
@@ -103,7 +163,7 @@ export default function ChatGPTIntegration({
           to: investorEmails,
           from: userEmail,
           subject: subject,
-          body: body,
+          body: bodyWithSignature,
         }),
       });
 

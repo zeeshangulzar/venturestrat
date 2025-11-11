@@ -5,6 +5,7 @@ import { useUserDataRefresh } from '../contexts/UserDataContext';
 
 interface UserCompanyData {
   companyName: string;
+  position?: string;
   companyLogo?: string;
   userProfileImage?: string;
   isLoading: boolean;
@@ -18,6 +19,7 @@ export const useUserCompany = (): UserCompanyData => {
   const { refreshTrigger } = useUserDataRefresh();
   const [companyData, setCompanyData] = useState<UserCompanyData>({
     companyName: '',
+    position: 'Founder',
     companyLogo: undefined,
     userProfileImage: undefined,
     isLoading: true,
@@ -62,6 +64,7 @@ export const useUserCompany = (): UserCompanyData => {
           
           setCompanyData({
             companyName: publicMetaData.companyName || 'RTYST',
+            position: publicMetaData.position as string | undefined || 'Founder',
             companyLogo: actualUserData.companyLogo,
             userProfileImage: user.imageUrl,
             isLoading: false,
@@ -73,6 +76,7 @@ export const useUserCompany = (): UserCompanyData => {
           console.error('Failed to load user company data:', error);
           setCompanyData({
             companyName: 'RTYST',
+            position: 'Founder',
             companyLogo: undefined,
             userProfileImage: user?.imageUrl,
             isLoading: false,
