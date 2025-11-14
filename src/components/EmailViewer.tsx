@@ -266,9 +266,7 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
       }
 
       // Refresh the email list
-      if (onCountsAdjust) {
-        onCountsAdjust({ scheduled: -1, all: 1 });
-      }
+      onCountsAdjust?.({ scheduled: -1 });
 
       if (onScheduledEmailCancel) {
         await onScheduledEmailCancel(email.id);
