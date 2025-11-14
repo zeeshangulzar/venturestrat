@@ -104,7 +104,7 @@ export const buildSignatureHtml = (data: SignatureData): string | null => {
       <tbody>
         <tr>
           ${safeLogoUrl
-        ? `<td style="padding-right:16px;border-right:2px solid #BDBDBD;vertical-align:top;">
+        ? `<td style="padding-right:16px;border-right:2px solid #BDBDBD;">
              ${logoMarkup}
            </td>
            <td style="padding-left:20px;vertical-align:top;">
