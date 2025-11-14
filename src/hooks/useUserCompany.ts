@@ -66,12 +66,16 @@ export const useUserCompany = (): UserCompanyData => {
 
           const actualUserData = userData.user || userData;
           const publicMetaData = actualUserData.publicMetaData || {};
-          
+          const actualCompanyWebsite =
+            typeof (actualUserData as Record<string, unknown>).companyWebsite === 'string'
+              ? ((actualUserData as Record<string, unknown>).companyWebsite as string).trim()
+              : '';
+
           setCompanyData({
             companyName: publicMetaData.companyName || 'RTYST',
             position: publicMetaData.position as string | undefined || 'Founder',
             companyLogo: actualUserData.companyLogo,
-            companyWebsite: actualUserData.companyWebsite || '',
+            companyWebsite: actualCompanyWebsite,
             userProfileImage: user.imageUrl,
             isLoading: false,
             error: null,

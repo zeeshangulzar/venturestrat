@@ -242,7 +242,7 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
     }
   }, [isClient]);
 
-  const baseToolbarModules = useMemo(
+  const baseToolbarModules = useMemo<Record<string, unknown>>(
     () => ({
       toolbar: [
         [{ font: FONT_PICKER_OPTIONS }],
@@ -256,7 +256,8 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
     }),
     [],
   );
-  const [internalModules, setInternalModules] = useState(baseToolbarModules);
+  const [internalModules, setInternalModules] =
+    useState<Record<string, unknown>>(baseToolbarModules);
 
   // Default formats - UPDATED with font
   const defaultFormats = [
