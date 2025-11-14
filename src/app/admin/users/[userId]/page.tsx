@@ -15,6 +15,7 @@ type UserData = {
   createdAt: string;
   publicMetaData?: {
     companyName?: string;
+    position?: string;
     userCountry?: string;
     revenue?: string;
     stages?: string[];
@@ -146,6 +147,12 @@ export default async function UserShowPage({
                 <div>
                   <label className="text-sm font-medium text-slate-700">Company Name</label>
                   <p className="text-slate-900">{user.publicMetaData.companyName}</p>
+                </div>
+              )}
+              {user.publicMetaData.position && (
+                <div>
+                  <label className="text-sm font-medium text-slate-700">Position</label>
+                  <p className="text-slate-900">{user.publicMetaData.position}</p>
                 </div>
               )}
               <div className='flex flex-row gap-4'>

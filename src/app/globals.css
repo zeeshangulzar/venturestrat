@@ -109,3 +109,6 @@ body {
   display: block;
   margin: auto;
 }
+.ql-editor > p img {
+  height: 20px;
+}

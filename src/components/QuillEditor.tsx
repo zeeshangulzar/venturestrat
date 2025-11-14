@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import 'react-quill/dist/quill.snow.css';
 import '../styles/quill-fonts.css';
 import { AttachmentItem, AttachmentStatus } from '../types/attachments';
@@ -126,6 +126,9 @@ import AIEditModal from './AIEditModal';
 import QuillAISelectionHandler from './QuillAISelectionHandler';
 import { useModal } from '../contexts/ModalContext';
 
+let signatureBlotRegistered = false;
+let QuillDeltaConstructor: any = null;
+
 const renderAttachmentStatus = (status: AttachmentStatus, error?: string) => {
   switch (status) {
     case 'pending':
@@ -239,18 +242,22 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
     }
   }, [isClient]);
 
-  // Default modules configuration - email safe fonts
-  const defaultModules = {
-    toolbar: [
-      [{ font: FONT_PICKER_OPTIONS }],
-      [{ 'size': ['small', false, 'large', 'huge'] }],
-      ['bold', 'italic', 'underline', 'strike'],
-      [{ 'color': [] }, { 'background': [] }],
-      [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-      [{ 'align': [] }],
-      ['clean']
-    ],
-  };
+  const baseToolbarModules = useMemo<Record<string, unknown>>(
+    () => ({
+      toolbar: [
+        [{ font: FONT_PICKER_OPTIONS }],
+        [{ size: ['small', false, 'large', 'huge'] }],
+        ['bold', 'italic', 'underline', 'strike'],
+        [{ color: [] }, { background: [] }],
+        [{ list: 'ordered' }, { list: 'bullet' }],
+        [{ align: [] }],
+        ['clean'],
+      ],
+    }),
+    [],
+  );
+  const [internalModules, setInternalModules] =
+    useState<Record<string, unknown>>(baseToolbarModules);
 
   // Default formats - UPDATED with font
   const defaultFormats = [
@@ -258,7 +265,9 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
     'bold', 'italic', 'underline', 'strike',
     'color', 'background',
     'list', 'bullet',
-    'align'
+    'align',
+    'image',
+    'signature'
   ];
 
   useEffect(() => {
@@ -273,6 +282,54 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
         Quill.register(Font, true);
         console.log('Registered fonts:', Font.whitelist);
         console.log('Font whitelist length:', Font.whitelist.length);
+
+        if (!signatureBlotRegistered) {
+          const BlockEmbed = Quill.import('blots/block/embed');
+          const Delta = Quill.import('delta');
+          QuillDeltaConstructor = Delta;
+
+          class SignatureBlot extends BlockEmbed {
+            static blotName = 'signature';
+            static tagName = 'div';
+            static className = 'ql-signature';
+
+            static create(value: { html?: string } | string) {
+              const node = super.create(value) as HTMLElement;
+              const html = typeof value === 'string' ? value : value?.html || '';
+              node.setAttribute('data-user-signature', 'true');
+              node.setAttribute('contenteditable', 'false');
+              node.setAttribute('data-signature-html', html);
+              node.innerHTML = html;
+              return node;
+            }
+
+            static value(node: HTMLElement) {
+              return node.getAttribute('data-signature-html') || node.innerHTML || '';
+            }
+          }
+
+          Quill.register(SignatureBlot, true);
+          signatureBlotRegistered = true;
+        }
+
+        const signatureMatcher = (node: Element) => {
+          if (!QuillDeltaConstructor) {
+            const Delta = Quill.import('delta');
+            QuillDeltaConstructor = Delta;
+          }
+          const html =
+            (node as HTMLElement).getAttribute('data-signature-html') ||
+            (node as HTMLElement).innerHTML ||
+            '';
+          return new QuillDeltaConstructor().insert({ signature: html });
+        };
+
+        setInternalModules({
+          ...baseToolbarModules,
+          clipboard: {
+            matchers: [['div[data-user-signature]', signatureMatcher]],
+          },
+        });
         
         setReactQuill(() => module.default);
         setIsClient(true);
@@ -280,7 +337,7 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
         console.error('Failed to load React Quill:', error);
       });
     }
-  }, []);
+  }, [baseToolbarModules]);
 
   // Add custom attachment button to toolbar after Quill is loaded
   useEffect(() => {
@@ -672,7 +729,7 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
               }
               onChange(content);
             }}
-          modules={modules || defaultModules}
+          modules={modules || internalModules}
           formats={formats || defaultFormats}
           placeholder={placeholder}
           readOnly={readOnly}

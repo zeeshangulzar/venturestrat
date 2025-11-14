@@ -24,6 +24,7 @@ export default function FundraisingPage() {
   // State for user data
   const [userData, setUserData] = useState<{
     companyName?: string;
+    position?: string;
     businessSectors?: string[];
     stages?: string;
     fundingAmount?: number;
