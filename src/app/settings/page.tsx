@@ -35,7 +35,6 @@ type OnboardingData = {
   firstName: string;
   lastName: string;
   companyName: string;
-  position: string;
   siteUrl: string;
   companyWebsite: string;
   companyLogo: string;
@@ -67,7 +66,6 @@ export default function SettingsPage() {
     firstName: '',
     lastName: '',
     companyName: '',
-    position: 'Founder',
     siteUrl: '',
     companyWebsite: '',
     companyLogo: '',
@@ -629,8 +627,7 @@ export default function SettingsPage() {
           user?: { 
             publicMetaData?: { 
               companyName?: string; 
-              siteUrl?: string; 
-              position?: string;
+              siteUrl?: string;
               userCountry?: string; 
               incorporationCountry?: string; 
               operationalRegions?: string[]; 
@@ -647,8 +644,7 @@ export default function SettingsPage() {
           }; 
           publicMetaData?: { 
             companyName?: string; 
-            siteUrl?: string; 
-            position?: string;
+            siteUrl?: string;
             userCountry?: string; 
             incorporationCountry?: string; 
             operationalRegions?: string[]; 
@@ -672,7 +668,6 @@ export default function SettingsPage() {
             firstName: user.firstName || '',
             lastName: user.lastName || '',
             companyName: '',
-            position: 'Founder',
             siteUrl: '',
             companyWebsite: '',
             companyLogo: '',
@@ -700,7 +695,6 @@ export default function SettingsPage() {
             lastName: user.lastName || '',
             // All other data from backend
             companyName: actualUserData.publicMetaData?.companyName || '',
-            position: actualUserData.publicMetaData?.position || 'Founder',
             siteUrl: actualUserData.publicMetaData?.siteUrl || '',
             companyWebsite: actualUserData.companyWebsite || '',
             companyLogo: actualUserData.companyLogo || '',
@@ -725,7 +719,6 @@ export default function SettingsPage() {
             firstName: user.firstName || '',
             lastName: user.lastName || '',
             companyName: (metadata.companyName as string) || '',
-            position: (metadata.position as string) || 'Founder',
             siteUrl: (metadata.siteUrl as string) || '',
             companyWebsite: (metadata.companyWebsite as string) || '',
             companyLogo: (metadata.companyLogo as string) || '',
@@ -1119,7 +1112,7 @@ export default function SettingsPage() {
           </div>
 
           {/* Second Row: Password, Company + Country */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
             <div>
               <label className="not-italic font-medium text-sm leading-6 text-[#525A68] mb-2">Password</label>
               <div className="relative">
@@ -1148,17 +1141,6 @@ export default function SettingsPage() {
               {fieldErrors.companyName && (
                 <p className="text-red-500 text-xs mt-1 ml-1">{fieldErrors.companyName}</p>
               )}
-            </div>
-            <div>
-              <label className="not-italic font-medium text-sm leading-6 text-[#525A68] mb-2">Position</label>
-              <input
-                type="text"
-                name="position"
-                value={formData.position}
-                onChange={handleInputChange}
-                className="h-[46px] w-full px-3 py-2 bg-[#F6F6F7] border border-[#EDEEEF] rounded-[10px] focus:ring-2 focus:ring-blue-500 focus:border-blue-500 not-italic font-medium text-sm leading-6 text-[#0C2143]"
-                placeholder="Founder"
-              />
             </div>
             <div>
               <label className="not-italic font-medium text-sm leading-6 text-[#525A68] mb-2">Company Website</label>
