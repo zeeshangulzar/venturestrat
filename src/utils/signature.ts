@@ -59,12 +59,9 @@ export const buildSignatureHtml = (data: SignatureData): string | null => {
 
   const safeLogoUrl = logoUrl ? escapeAttribute(logoUrl) : '';
   const altText = escapeHtml(companyName || displayName || 'Company logo');
-  const logoMarkup = logoUrl
-    ? `<img src="${safeLogoUrl}" alt="${altText}" width="70" style="display:block;width:70px;height:auto;" />`
-    : `<div style="width:70px;height:70px;border-radius:16px;background:#F3F4F6;color:#0C2143;font-weight:700;font-size:22px;display:flex;align-items:center;justify-content:center;">
-        ${escapeHtml((companyName || displayName || 'VS').charAt(0).toUpperCase())}
-      </div>`;
-
+  const logoMarkup = safeLogoUrl
+  ? `<img src="${safeLogoUrl}" alt="${altText}" width="70" style="display:block;width:70px;height:auto;" />`
+  : '';
   const titleLine = displayName
     ? `<p style="margin:0;font-weight:700;font-size:16px;color:#646464;">${escapeHtml(displayName)}</p>`
     : '';
@@ -106,15 +103,22 @@ export const buildSignatureHtml = (data: SignatureData): string | null => {
     <table style="font-family:Arial,sans-serif;font-size:14px;color:#333;">
       <tbody>
         <tr>
-          <td style="padding-right:16px;border-right:2px solid #BDBDBD;">
-            ${logoMarkup}
-          </td>
-          <td style="padding-left:20px;vertical-align:top;">
+          ${safeLogoUrl
+        ? `<td style="padding-right:16px;border-right:2px solid #BDBDBD;vertical-align:top;">
+             ${logoMarkup}
+           </td>
+           <td style="padding-left:20px;vertical-align:top;">
             ${titleLine}
             ${roleCompanyLine}
             ${contactLine}
             ${locationLine}
-          </td>
+          </td>`
+        : `<td style="vertical-align:top;">
+            ${titleLine}
+            ${roleCompanyLine}
+            ${contactLine}
+            ${locationLine}
+          </td>`}
         </tr>
       </tbody>
     </table>
