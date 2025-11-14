@@ -1,7 +1,9 @@
 'use client';
 
-import React, { useState, useEffect, useLayoutEffect } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useMemo } from 'react';
+import { useUser } from '@clerk/nextjs';
 import { getApiUrl } from '@lib/api';
+import { appendSignatureToBody, useSignature } from '@utils/signature';
 
 interface ScheduleFollowUpModalProps {
   isOpen: boolean;
@@ -23,6 +25,7 @@ interface ScheduleFollowUpModalProps {
 }
 
 export default function ScheduleFollowUpModal({ isOpen, onClose, onSchedule, email }: ScheduleFollowUpModalProps) {
+  const { signatureHtml } = useSignature();
   const [scheduledDate, setScheduledDate] = useState('');
   const [scheduledTime, setScheduledTime] = useState('');
   const [isScheduling, setIsScheduling] = useState(false);
@@ -125,6 +128,7 @@ Generate a follow-up that:
       const chatgptData = await chatgptResponse.json();
       const followUpSubject = chatgptData.subject || `Re: ${email.subject}`;
       const followUpBody = chatgptData.body || email.body;
+      const bodyWithSignature = appendSignatureToBody(followUpBody, signatureHtml);
 
       setIsGenerating(false);
 
@@ -139,7 +143,7 @@ Generate a follow-up that:
           cc: email.cc || [],
           subject: followUpSubject,
           from: email.from,
-          body: followUpBody,
+          body: bodyWithSignature,
           scheduledFor: scheduledDateTime.toISOString(),
           threadId: email.threadId,
            previousMessageId: email.id,

@@ -5,7 +5,9 @@ import { useUserDataRefresh } from '../contexts/UserDataContext';
 
 interface UserCompanyData {
   companyName: string;
+  position?: string;
   companyLogo?: string;
+  companyWebsite?: string;
   userProfileImage?: string;
   isLoading: boolean;
   error: string | null;
@@ -18,7 +20,9 @@ export const useUserCompany = (): UserCompanyData => {
   const { refreshTrigger } = useUserDataRefresh();
   const [companyData, setCompanyData] = useState<UserCompanyData>({
     companyName: '',
+    position: 'Founder',
     companyLogo: undefined,
+    companyWebsite: '',
     userProfileImage: undefined,
     isLoading: true,
     error: null,
@@ -35,11 +39,13 @@ export const useUserCompany = (): UserCompanyData => {
             user?: { 
               publicMetaData?: { 
                 companyName?: string;
+                position?: string;
               };
               companyLogo?: string;
             }; 
             publicMetaData?: { 
               companyName?: string;
+              position?: string;
             };
             companyLogo?: string;
           } | null;
@@ -49,6 +55,7 @@ export const useUserCompany = (): UserCompanyData => {
             setCompanyData({
               companyName: 'RTYST',
               companyLogo: undefined,
+              companyWebsite: '',
               isLoading: false,
               error: null,
               refetch: loadUserCompanyData,
@@ -59,10 +66,16 @@ export const useUserCompany = (): UserCompanyData => {
 
           const actualUserData = userData.user || userData;
           const publicMetaData = actualUserData.publicMetaData || {};
-          
+          const actualCompanyWebsite =
+            typeof (actualUserData as Record<string, unknown>).companyWebsite === 'string'
+              ? ((actualUserData as Record<string, unknown>).companyWebsite as string).trim()
+              : '';
+
           setCompanyData({
             companyName: publicMetaData.companyName || 'RTYST',
+            position: publicMetaData.position as string | undefined || 'Founder',
             companyLogo: actualUserData.companyLogo,
+            companyWebsite: actualCompanyWebsite,
             userProfileImage: user.imageUrl,
             isLoading: false,
             error: null,
@@ -73,7 +86,9 @@ export const useUserCompany = (): UserCompanyData => {
           console.error('Failed to load user company data:', error);
           setCompanyData({
             companyName: 'RTYST',
+            position: 'Founder',
             companyLogo: undefined,
+            companyWebsite: '',
             userProfileImage: user?.imageUrl,
             isLoading: false,
             error: error instanceof Error ? error.message : 'Failed to load company data',
@@ -92,6 +107,7 @@ export const useUserCompany = (): UserCompanyData => {
           setCompanyData({
             companyName: 'RTYST',
             companyLogo: undefined,
+            companyWebsite: '',
             userProfileImage: undefined,
             isLoading: false,
             error: null,

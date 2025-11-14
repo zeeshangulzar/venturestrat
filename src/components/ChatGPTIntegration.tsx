@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { getApiUrl } from '@lib/api';
+import { appendSignatureToBody, buildSignatureHtml, useSignature } from '@utils/signature';
 
 interface ChatGPTIntegrationProps {
   investor: {
@@ -19,9 +20,19 @@ interface ChatGPTIntegrationProps {
     firstName?: string | null;
     lastName?: string | null;
     emailAddresses: Array<{ emailAddress: string }>;
+    imageUrl?: string;
+    profileImageUrl?: string | null;
+    publicMetadata?: Record<string, unknown>;
   };
   userData: {
     companyName?: string;
+    companyLogo?: string;
+    companyWebsite?: string;
+    incorporationCountry?: string;
+    operationalRegions?: string[];
+    phone?: string;
+    phoneNumber?: string;
+    location?: string;
     businessSectors?: string[];
     stages?: string;
     fundingAmount?: number;
@@ -43,7 +54,8 @@ export default function ChatGPTIntegration({
 }: ChatGPTIntegrationProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [hasDraft, setHasDraft] = useState(investor.hasDraft ?? false);
-  
+  const { signatureHtml } = useSignature();
+
   useEffect(() => {
     setHasDraft(investor.hasDraft ?? false);
   }, [investor.hasDraft]);
@@ -87,6 +99,7 @@ export default function ChatGPTIntegration({
 
       const data = await response.json();
       const { subject, body, emailContent } = data;
+      const bodyWithSignature = appendSignatureToBody(body, signatureHtml);
 
       // Send the generated email to the backend
       const investorEmails = investor.emails.map(e => e.email);
@@ -103,7 +116,7 @@ export default function ChatGPTIntegration({
           to: investorEmails,
           from: userEmail,
           subject: subject,
-          body: body,
+          body: bodyWithSignature,
         }),
       });
 

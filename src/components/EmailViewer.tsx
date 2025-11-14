@@ -97,6 +97,7 @@ const deleteAttachmentMetadata = async (messageId: string, key: string) => {
 
 export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUpdate, onEmailSent, onScheduledEmailCancel, onEmailSaveStart, onEmailSaveEnd, onEmailRefresh, readOnly = false, loading = false, saveRef, onAttachmentUploadStatusChange, onRequestTabChange, onCountsAdjust }: EmailViewerProps) {
   const router = useRouter();
+  const { user } = useUser();
   const [editedSubject, setEditedSubject] = useState('');
   const [editedBody, setEditedBody] = useState('');
   const [editedFrom, setEditedFrom] = useState('');
@@ -129,7 +130,6 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
   
   // Authentication context
   const { hasAccount, checkAuthStatus } = useAuthAccount();
-  const { user } = useUser();
   const currentUserId = userIdProp || user?.id || '';
   const [sendMessage, setSendMessage] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -546,11 +546,10 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
   useEffect(() => {
     if (email) {
       const subject = email.subject || '';
-      // Handle both HTML and plain text body content
       const body = email.body || '';
       const from = email.from || '';
       const cc = Array.isArray(email.cc) ? email.cc.join(', ') : (email.cc || '');
-      
+
       setEditedSubject(subject);
       setEditedBody(body);
       setEditedFrom(from);
@@ -568,34 +567,28 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
       }));
       setAttachments(hydratedAttachments);
       
-      // Clear any pending auto-save timeout when switching emails
       if (autoSaveTimeoutRef.current) {
         clearTimeout(autoSaveTimeoutRef.current);
         autoSaveTimeoutRef.current = null;
       }
       
-      // Update ref values
       currentValuesRef.current = {
         editedSubject: subject,
         editedBody: body,
         editedFrom: from,
-        editedCc: cc
+        editedCc: cc,
       };
       
-      // Initialize previous body length
       previousBodyLengthRef.current = body.length;
       
-      // Set flag to prevent auto-save when setting initial data
       isSettingInitialDataRef.current = true;
-      
-      // Reset flag after a short delay to allow React Quill to initialize
       setTimeout(() => {
         isSettingInitialDataRef.current = false;
       }, 200);
     } else {
       setAttachments([]);
     }
-  }, [email]);
+  }, [email, mode]);
 
   // Cleanup timeout on unmount (same pattern as settings page)
   useEffect(() => {
@@ -634,9 +627,9 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
       
       // Only save if the current values are actually different from the email values
       if (currentValues.editedSubject === emailSubject && 
-          currentValues.editedBody === emailBody && 
-          currentValues.editedFrom === emailFrom &&
-          currentValues.editedCc === emailCc) {
+        currentValues.editedBody === emailBody &&
+            currentValues.editedFrom === emailFrom &&
+            currentValues.editedCc === emailCc) {
         console.log('Skipping autoSave - no changes detected');
         return;
       }
@@ -771,7 +764,7 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
         setEditedSubject(value);
         currentValuesRef.current.editedSubject = value;
         break;
-      case 'body':
+      case 'body': {
         setEditedBody(value);
         currentValuesRef.current.editedBody = value;
         
@@ -785,6 +778,7 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
         // Update previous length for next comparison
         previousBodyLengthRef.current = value.length;
         break;
+      }
       case 'from':
         setEditedFrom(value);
         currentValuesRef.current.editedFrom = value;
