@@ -7,6 +7,7 @@ interface UserCompanyData {
   companyName: string;
   position?: string;
   companyLogo?: string;
+  companyWebsite?: string;
   userProfileImage?: string;
   isLoading: boolean;
   error: string | null;
@@ -21,6 +22,7 @@ export const useUserCompany = (): UserCompanyData => {
     companyName: '',
     position: 'Founder',
     companyLogo: undefined,
+    companyWebsite: '',
     userProfileImage: undefined,
     isLoading: true,
     error: null,
@@ -53,6 +55,7 @@ export const useUserCompany = (): UserCompanyData => {
             setCompanyData({
               companyName: 'RTYST',
               companyLogo: undefined,
+              companyWebsite: '',
               isLoading: false,
               error: null,
               refetch: loadUserCompanyData,
@@ -68,6 +71,7 @@ export const useUserCompany = (): UserCompanyData => {
             companyName: publicMetaData.companyName || 'RTYST',
             position: publicMetaData.position as string | undefined || 'Founder',
             companyLogo: actualUserData.companyLogo,
+            companyWebsite: actualUserData.companyWebsite || '',
             userProfileImage: user.imageUrl,
             isLoading: false,
             error: null,
@@ -80,6 +84,7 @@ export const useUserCompany = (): UserCompanyData => {
             companyName: 'RTYST',
             position: 'Founder',
             companyLogo: undefined,
+            companyWebsite: '',
             userProfileImage: user?.imageUrl,
             isLoading: false,
             error: error instanceof Error ? error.message : 'Failed to load company data',
@@ -98,6 +103,7 @@ export const useUserCompany = (): UserCompanyData => {
           setCompanyData({
             companyName: 'RTYST',
             companyLogo: undefined,
+            companyWebsite: '',
             userProfileImage: undefined,
             isLoading: false,
             error: null,
