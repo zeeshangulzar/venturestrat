@@ -794,6 +794,12 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
             ...prev,
             cc: ccError
           }));
+        } else if (fieldErrors.cc) {
+          setFieldErrors(prev => {
+            const next = { ...prev };
+            delete next.cc;
+            return next;
+          });
         }
         break;
     }
@@ -980,7 +986,7 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
                   value={editedCc}
                   onChange={(e) => handleFieldChange('cc', e.target.value)}
                   disabled={mode === 'scheduled'}
-                  className={`ml-2 h-[46px] w-full max-w-md min-w-0 px-3 py-2 bg-[#F6F6F7] border rounded-[10px] focus:ring-2 focus:ring-blue-500 focus:border-blue-500 not-italic font-medium text-sm leading-6 text-[#0C2143] ${
+                  className={`outline-0 ml-2 h-[46px] w-full max-w-md min-w-0 px-3 py-2 bg-[#F6F6F7] border rounded-[10px] focus:ring-2 focus:ring-blue-500 focus:border-blue-500 not-italic font-medium text-sm leading-6 text-[#0C2143] ${
                     fieldErrors.cc 
                       ? 'border-red-500 focus:border-red-500 focus:ring-red-500' 
                       : mode === 'scheduled' 
@@ -992,6 +998,9 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
                   title={mode === 'scheduled' ? 'CC is fixed for scheduled replies' : 'Separate multiple emails with commas'}
                 />
               </div>
+              {fieldErrors.cc && (
+                <div className="text-xs text-red-500 mt-1 ml-2">{fieldErrors.cc}</div>
+              )}
               {!fieldErrors.cc && mode !== 'scheduled' && (
                 <div className="text-xs text-gray-500 mt-1 ml-2">
                   Separate multiple emails with commas
