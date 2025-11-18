@@ -104,15 +104,15 @@ export const buildSignatureHtml = (data: SignatureData): string | null => {
       <tbody>
         <tr>
           ${safeLogoUrl
-        ? `<td style="padding-right:16px;border-right:2px solid #BDBDBD;">
+        ? `<td data-signature-logo-cell="true" style="outline: none; padding-right:16px;border-right:2px solid #BDBDBD;" contenteditable="true">
              ${logoMarkup}
            </td>
-           <td style="padding-left:20px;vertical-align:top;">
+           <td style="padding-left:20px;vertical-align:top; outline: none;" contenteditable="true" data-signature-logo-right-cell="true">
             ${titleLine}
             ${roleCompanyLine}
             ${contactLine}
             ${locationLine}</td>`
-        : `<td style="vertical-align:top;">
+        : `<td style="outline: none; vertical-align:top;" contenteditable="true">
             ${titleLine}
             ${roleCompanyLine}
             ${contactLine}
