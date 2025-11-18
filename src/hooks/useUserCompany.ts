@@ -9,6 +9,8 @@ interface UserCompanyData {
   companyLogo?: string;
   companyWebsite?: string;
   userProfileImage?: string;
+  subscriptionPlan?: string;
+  subscriptionStatus?: string | null;
   isLoading: boolean;
   error: string | null;
   refetch: () => void;
@@ -24,6 +26,8 @@ export const useUserCompany = (): UserCompanyData => {
     companyLogo: undefined,
     companyWebsite: '',
     userProfileImage: undefined,
+    subscriptionPlan: 'FREE',
+    subscriptionStatus: null,
     isLoading: true,
     error: null,
     refetch: () => {},
@@ -56,6 +60,8 @@ export const useUserCompany = (): UserCompanyData => {
               companyName: 'RTYST',
               companyLogo: undefined,
               companyWebsite: '',
+              subscriptionPlan: 'FREE',
+              subscriptionStatus: null,
               isLoading: false,
               error: null,
               refetch: loadUserCompanyData,
@@ -77,6 +83,8 @@ export const useUserCompany = (): UserCompanyData => {
             companyLogo: actualUserData.companyLogo,
             companyWebsite: actualCompanyWebsite,
             userProfileImage: user.imageUrl,
+            subscriptionPlan: (actualUserData as { subscriptionPlan?: string }).subscriptionPlan || 'FREE',
+            subscriptionStatus: (actualUserData as { subscriptionStatus?: string | null }).subscriptionStatus ?? null,
             isLoading: false,
             error: null,
             refetch: loadUserCompanyData,
@@ -90,6 +98,8 @@ export const useUserCompany = (): UserCompanyData => {
             companyLogo: undefined,
             companyWebsite: '',
             userProfileImage: user?.imageUrl,
+            subscriptionPlan: 'FREE',
+            subscriptionStatus: null,
             isLoading: false,
             error: error instanceof Error ? error.message : 'Failed to load company data',
             refetch: loadUserCompanyData,

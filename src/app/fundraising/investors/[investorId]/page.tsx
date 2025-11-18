@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import InvestorHeader from '@components/InvestorCardHeader';
 import { getApiUrl } from '@lib/api';
+import ContactInfoMask from '@components/ContactInfoMask';
 import Link from 'next/link';
 import Image from 'next/image';
 import InitialsAvatar from '@components/InitialsAvatar';
@@ -171,7 +172,13 @@ export default function InvestorShowPage() {
             <section className="rounded-lg border border-slate-200 bg-white p-4">
               <h3 className="mb-4 text-sm font-semibold text-slate-900">Contact Information</h3>
               <div className="space-y-3">
-                <Row label="Phone" value={investor.phone || '—'} />
+                <Row label="Phone" value={
+                  investor.phone ? (
+                    <ContactInfoMask>
+                      {investor.phone}
+                    </ContactInfoMask>
+                  ) : '—'
+                } />
                 <Row
                   label="Website"
                   value={
@@ -201,7 +208,11 @@ export default function InvestorShowPage() {
                 {investor.emails?.length ? (
                   investor.emails.map((e) => (
                     <div key={e.id} className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
-                      <span className="text-sm text-slate-800">{e.email}</span>
+                      <span className="text-sm text-slate-800">
+                        <ContactInfoMask>
+                          {e.email}
+                        </ContactInfoMask>
+                      </span>
                       <span
                         className={`rounded-full px-2 py-0.5 text-xs font-semibold ring-1 ring-inset ${
                           e.status === 'VALID'

@@ -1,14 +1,39 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@clerk/nextjs/server';
 
 export async function POST(request: NextRequest) {
   try {
-    const { prompt } = await request.json();
+    const { prompt, userId } = await request.json();
 
     if (!prompt) {
       return NextResponse.json(
         { error: 'Prompt is required' },
         { status: 400 }
       );
+    }
+
+    // Validate subscription for AI draft
+    if (userId) {
+      const validationResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/subscription/validate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, action: 'ai_draft' })
+      });
+
+      if (validationResponse.ok) {
+        const validation = await validationResponse.json();
+        if (!validation.allowed) {
+          return NextResponse.json(
+            { 
+              error: 'Subscription limit reached',
+              reason: validation.reason,
+              currentUsage: validation.currentUsage,
+              limits: validation.limits
+            },
+            { status: 403 }
+          );
+        }
+      }
     }
 
     // Call OpenAI API
@@ -98,6 +123,19 @@ export async function POST(request: NextRequest) {
       // If no subject line found, use a default subject and the entire content as body
       subject = 'Partnership Opportunity';
       body = trimmedContent;
+    }
+
+    // Track usage after successful generation
+    if (userId) {
+      try {
+        await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/subscription/track`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId, action: 'ai_draft' })
+        });
+      } catch (error) {
+        console.error('Error tracking AI draft usage:', error);
+      }
     }
 
     return NextResponse.json({
