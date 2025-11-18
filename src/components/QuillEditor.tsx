@@ -193,6 +193,52 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
       setAttachments(externalAttachments);
     }
   }, [externalAttachments]);
+
+  // Ensure edits inside the signature block trigger onChange/autosave
+  useEffect(() => {
+    if (!quillRef.current || !onChange || readOnly) {
+      return;
+    }
+
+    const quillInstance = quillRef.current.getEditor?.();
+    if (!quillInstance || !quillInstance.root) {
+      return;
+    }
+
+    const handleSignatureInput = (event: Event) => {
+      if (!(event.target instanceof HTMLElement)) {
+        return;
+      }
+      const signatureContainer = event.target.closest('div[data-user-signature]') as HTMLElement | null;
+      if (!signatureContainer) {
+        return;
+      }
+      const logoCell = signatureContainer.querySelector('[data-signature-logo-cell]') as HTMLElement | null;
+      const logoRightCell = signatureContainer.querySelector('[data-signature-logo-right-cell]') as HTMLElement | null;
+      if (logoCell && logoRightCell) {
+        const hasLogo = !!logoCell.querySelector('img');
+        if (!hasLogo) {
+          logoCell.style.borderRight = '';
+          logoCell.style.paddingRight = '';
+          logoRightCell.style.paddingLeft = '';
+        } else {
+          logoCell.style.borderRight = '2px solid #BDBDBD';
+          logoCell.style.paddingRight = '16px';
+          logoRightCell.style.paddingLeft = '20px';
+        }
+      }
+      // Preserve the edited HTML so the custom blot serializes the latest version
+      signatureContainer.setAttribute('data-signature-html', signatureContainer.innerHTML);
+      const html = quillInstance.root.innerHTML;
+      onChange(html);
+    };
+
+    const root = quillInstance.root;
+    root.addEventListener('input', handleSignatureInput);
+    return () => {
+      root.removeEventListener('input', handleSignatureInput);
+    };
+  }, [onChange, readOnly, isClient]);
   
   // Use global modal state directly
   const { openModal, closeModal, isModalOpen } = useModal();
