@@ -41,20 +41,6 @@ export const AuthAccountProvider: React.FC<AuthAccountProviderProps> = ({ childr
     // User can only have ONE account (either Google OR Microsoft, not both)
     const hasAnyAccount = hasGoogleAccount || hasMicrosoftAccount;
     setHasAccount(hasAnyAccount);
-    
-    // Log for debugging
-    console.log('Auth status check:', {
-      userId: user.id,
-      hasGoogleAccount,
-      hasMicrosoftAccount,
-      hasAnyAccount,
-      externalAccounts: user.externalAccounts?.map(acc => ({
-        provider: acc.provider,
-        id: acc.id,
-        verificationStatus: acc.verification?.status,
-        approvedScopes: acc.approvedScopes,
-      }))
-    });
   };
 
   useEffect(() => {

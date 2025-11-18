@@ -123,8 +123,6 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
   
   // Debug effect to track showScheduleModal changes
   useEffect(() => {
-    console.log('🔍 showScheduleModal changed:', showScheduleModal);
-    console.log('🔍 lastSentEmail:', lastSentEmail);
   }, [showScheduleModal, lastSentEmail]);
 
   
