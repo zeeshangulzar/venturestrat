@@ -33,10 +33,7 @@ export default function ScheduleFollowUpModal({ isOpen, onClose, onSchedule, ema
   const [isGenerating, setIsGenerating] = useState(false);
   const [currentStep, setCurrentStep] = useState<'confirm' | 'form'>('confirm');
 
-  console.log('🎭 ScheduleFollowUpModal render:', { isOpen, email: email ? 'exists' : 'null' });
-
   useEffect(() => {
-    console.log('🎭 ScheduleFollowUpModal mounted with props:', { isOpen, hasEmail: !!email });
   }, [isOpen, email]);
 
   useLayoutEffect(() => {
@@ -51,7 +48,6 @@ export default function ScheduleFollowUpModal({ isOpen, onClose, onSchedule, ema
   }, [isOpen, email?.id]);
 
   if (!isOpen || !email) {
-    console.log('🎭 Modal returning null:', { isOpen, hasEmail: !!email });
     return null;
   }
 
