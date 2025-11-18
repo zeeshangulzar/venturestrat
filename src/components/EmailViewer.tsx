@@ -13,6 +13,7 @@ import { AttachmentItem } from '../types/attachments';
 import ScheduleFollowUpModal from './ScheduleFollowUpModal';
 import type { MailSectionType } from './MailTabs';
 import type { EmailCountDelta } from '../types/emailCounts';
+import SubscriptionLimitModal from './SubscriptionLimitModal';
 
 interface EmailDraft {
   id: string;
@@ -432,6 +433,8 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
       setIsSending(false);
     }
   };
+  const [showLimitModal, setShowLimitModal] = useState(false);
+  const [limitModalData, setLimitModalData] = useState<any>(null);
   
   // Debounced auto-save functionality (same pattern as settings page)
   const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -812,6 +815,84 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
     
     // If user has account, proceed with sending
     await proceedWithEmailSending();
+    setIsSending(true);
+    setSendStatus('idle');
+    setSendMessage('');
+    
+    try {
+      // Create FormData to handle attachments
+      const formData = new FormData();
+      
+      // Add attachments to FormData
+      attachments.forEach((file, index) => {
+        formData.append(`attachment_${index}`, file);
+      });
+      
+      // Add other email data
+      formData.append('messageId', email.id);
+      formData.append('attachments', JSON.stringify(attachments.map(f => ({ name: f.name, size: f.size, type: f.type }))));
+      
+      console.log('=== FRONTEND DEBUGGING ===');
+      console.log('Attachments being sent:', attachments);
+      console.log('FormData entries:', Array.from(formData.entries()));
+      
+      const response = await fetch(`/api/message/${email.id}/send`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        console.log('=== SUBSCRIPTION LIMIT DEBUG ===');
+        console.log('Response status:', response.status);
+        console.log('Response result:', result);
+        console.log('Error type:', result.error);
+        
+        // Handle subscription limit reached
+        if (response.status === 403 && result.error === 'Subscription limit reached') {
+          console.log('Showing subscription limit modal');
+          setLimitModalData({
+            action: 'send_email',
+            currentUsage: result.currentUsage,
+            limits: result.limits
+          });
+          setShowLimitModal(true);
+          setIsSending(false); // Reset sending state
+          return;
+        }
+        
+        // Extract error message from response
+        const errorMessage = result.message || result.error || `Failed to send email: ${response.statusText}`;
+        setSendStatus('error');
+        setSendMessage(errorMessage);
+        setIsSending(false); // Reset sending state
+        console.error('Error sending email:', errorMessage);
+        return;
+      }
+
+      console.log('Email sent successfully:', result);
+      setSendStatus('success');
+      setSendMessage(result.message || 'Email sent successfully!');
+      
+      // Notify parent component that email was sent (to refresh draft list)
+      if (onEmailSent) {
+        onEmailSent(investorId);
+      }
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => {
+        setSendStatus('idle');
+        setSendMessage('');
+      }, 3000);
+      
+    } catch (error) {
+      console.error('Error sending email:', error);
+      setSendStatus('error');
+      setSendMessage(error instanceof Error ? error.message : 'Failed to send email. Please try again.');
+    } finally {
+      setIsSending(false);
+    }
   };
 
 
@@ -1167,6 +1248,19 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
         )}
         </div>
       </div>
+      
+      {showLimitModal && limitModalData && (
+        <SubscriptionLimitModal
+          isOpen={showLimitModal}
+          onClose={() => {
+            setShowLimitModal(false);
+            setIsSending(false); // Reset sending state
+          }}
+          action={limitModalData.action}
+          currentUsage={limitModalData.currentUsage}
+          limits={limitModalData.limits}
+        />
+      )}
     </div>
     {modalComponents}
   </React.Fragment>

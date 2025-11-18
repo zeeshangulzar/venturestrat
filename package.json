@@ -12,6 +12,8 @@
     "@ckeditor/ckeditor5-react": "6.2.0",
     "@clerk/nextjs": "^6.28.1",
     "@heroicons/react": "^2.2.0",
+    "@stripe/react-stripe-js": "^2.8.0",
+    "@stripe/stripe-js": "^4.10.0",
     "country-state-city": "^3.2.1",
     "lodash.debounce": "^4.0.8",
     "next": "15.4.5",

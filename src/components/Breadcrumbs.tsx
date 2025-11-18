@@ -44,6 +44,9 @@ export default function Breadcrumbs() {
     else if (segments[0] === 'settings') {
       breadcrumbs.push({ label: 'Settings' });
     }
+    else if (segments[0] === 'subscription') {
+      breadcrumbs.push({ label: 'Subscription' });
+    }
     else if (segments[0] === 'onboarding') {
       breadcrumbs.push({ label: 'Onboarding' });
     }
