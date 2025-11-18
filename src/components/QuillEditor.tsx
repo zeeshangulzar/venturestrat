@@ -189,6 +189,18 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
   const signatureSelectionRef = useRef<Range | null>(null);
   const lastUserSignatureRangeRef = useRef<Range | null>(null);
 
+  const preserveDomSelection = useCallback(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    const selection = window.getSelection();
+    if (selection && selection.rangeCount > 0 && !selection.isCollapsed) {
+      const currentRange = selection.getRangeAt(0).cloneRange();
+      signatureSelectionRef.current = currentRange.cloneRange();
+      lastUserSignatureRangeRef.current = currentRange.cloneRange();
+    }
+  }, []);
+
   const getSignatureTextCell = (container: HTMLElement): HTMLElement | null => {
     return (
       (container.querySelector('[data-signature-logo-right-cell]') as HTMLElement | null) ||
@@ -224,17 +236,20 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
     if (!activeRange || !container || coversEntireSignature) {
       if (!lastUserSignatureRangeRef.current) {
         signatureSelectionRef.current = null;
+        console.log('[signature] getSignatureSelectionContext no stored range');
         return null;
       }
       activeRange = lastUserSignatureRangeRef.current.cloneRange();
       container = resolveContainer(activeRange);
       if (!container) {
         signatureSelectionRef.current = null;
+        console.log('[signature] stored range lost container');
         return null;
       }
       if (selection) {
         selection.removeAllRanges();
         selection.addRange(activeRange.cloneRange());
+        console.log('[signature] restored selection from stored range');
       }
     }
 
@@ -249,8 +264,10 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
       }
       const context = getSignatureSelectionContext();
       if (!context) {
+        console.log('[signature] no context for format', format);
         return false;
       }
+      console.log('[signature] context for format', format, context.range);
       const signatureContainer = context.container;
 
       const commandMap: Record<string, string> = {
@@ -260,19 +277,30 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
         strike: 'strikeThrough',
         color: 'foreColor',
         background: 'backColor',
+        font: 'fontName',
+        size: 'fontSize',
       };
 
       const command = commandMap[format];
       if (!command) {
+        console.log('[signature] unsupported format', format);
         return false;
       }
 
-      const commandValue =
-        format === 'color' || format === 'background'
-          ? typeof value === 'string'
-            ? value
-            : undefined
-          : undefined;
+      let commandValue: string | undefined;
+      if ((format === 'color' || format === 'background') && typeof value === 'string') {
+        commandValue = value;
+      } else if (format === 'font' && typeof value === 'string') {
+        commandValue = value;
+      } else if (format === 'size' && typeof value === 'string') {
+        const sizeMap: Record<string, string> = {
+          small: '2',
+          normal: '3',
+          large: '4',
+          huge: '5',
+        };
+        commandValue = sizeMap[value] || value;
+      }
 
       document.execCommand(command, false, commandValue);
       signatureContainer.setAttribute('data-signature-html', signatureContainer.innerHTML);
@@ -281,7 +309,19 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
       if (currentSelection && currentSelection.rangeCount > 0) {
         const updatedRange = currentSelection.getRangeAt(0).cloneRange();
         signatureSelectionRef.current = updatedRange.cloneRange();
-        lastUserSignatureRangeRef.current = updatedRange.cloneRange();
+        const containerAfterUpdate =
+          getSignatureContainer(updatedRange.startContainer) ||
+          getSignatureContainer(updatedRange.endContainer);
+        const coversEntireSignature =
+          containerAfterUpdate &&
+          updatedRange.startContainer === containerAfterUpdate &&
+          updatedRange.endContainer === containerAfterUpdate;
+        if (!coversEntireSignature) {
+          lastUserSignatureRangeRef.current = updatedRange.cloneRange();
+          console.log('[signature] toolbar stored new range', updatedRange);
+        } else {
+          console.log('[signature] toolbar selection expanded to signature');
+        }
       }
 
       return true;
@@ -302,7 +342,6 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
     const selection = window.getSelection();
     if (!selection || selection.rangeCount === 0 || selection.isCollapsed) {
       signatureSelectionRef.current = null;
-      lastUserSignatureRangeRef.current = null;
       return;
     }
 
@@ -320,7 +359,7 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
       range.startContainer === container && range.endContainer === container;
 
     signatureSelectionRef.current = range.cloneRange();
-    if (!isWholeContainer) {
+    if (!isWholeContainer && range.toString().length > 0) {
       lastUserSignatureRangeRef.current = range.cloneRange();
     }
   }, []);
@@ -388,34 +427,6 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
     };
   }, [handleSelectionChange]);
 
-  useEffect(() => {
-    if (typeof document === 'undefined') {
-      return;
-    }
-    const handleSelectionChange = () => {
-      const selection = window.getSelection();
-      if (!selection || selection.rangeCount === 0 || selection.isCollapsed) {
-        signatureSelectionRef.current = null;
-        return;
-      }
-      const range = selection.getRangeAt(0);
-      const node =
-        range.startContainer.nodeType === Node.ELEMENT_NODE
-          ? (range.startContainer as Element)
-          : range.startContainer.parentElement;
-      const container = node?.closest('div[data-user-signature]');
-      if (container) {
-        signatureSelectionRef.current = range.cloneRange();
-      } else {
-        signatureSelectionRef.current = null;
-      }
-    };
-    document.addEventListener('selectionchange', handleSelectionChange);
-    return () => {
-      document.removeEventListener('selectionchange', handleSelectionChange);
-    };
-  }, []);
-  
   // Use global modal state directly
   const { openModal, closeModal, isModalOpen } = useModal();
   const isAIModalOpen = isModalOpen('ai-edit-modal');
@@ -502,8 +513,6 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
         const Font = Quill.import('formats/font');
         Font.whitelist = Array.from(EMAIL_SAFE_FONTS);
         Quill.register(Font, true);
-        console.log('Registered fonts:', Font.whitelist);
-        console.log('Font whitelist length:', Font.whitelist.length);
 
         if (!signatureBlotRegistered) {
           const BlockEmbed = Quill.import('blots/block/embed');
@@ -566,6 +575,7 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
     if (quillRef.current && !readOnly) {
       const quill = quillRef.current.getEditor();
       const toolbar = quill.getModule('toolbar');
+      const cleanupFns: Array<() => void> = [];
       
       if (toolbar && toolbar.container) {
         // Check if attachment button already exists
@@ -609,9 +619,27 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
             toolbar.container.appendChild(buttonWrapper);
           }
         }
+        const fontSelect = toolbar.container.querySelector('select.ql-font');
+        const sizeSelect = toolbar.container.querySelector('select.ql-size');
+        const preserveSelectionHandler = (event: Event) => {
+          preserveDomSelection();
+          event.stopPropagation();
+        };
+        if (fontSelect) {
+          fontSelect.addEventListener('mousedown', preserveSelectionHandler, true);
+          cleanupFns.push(() => fontSelect.removeEventListener('mousedown', preserveSelectionHandler, true));
+        }
+        if (sizeSelect) {
+          sizeSelect.addEventListener('mousedown', preserveSelectionHandler, true);
+          cleanupFns.push(() => sizeSelect.removeEventListener('mousedown', preserveSelectionHandler, true));
+        }
       }
+
+      return () => {
+        cleanupFns.forEach((cleanup) => cleanup());
+      };
     }
-  }, [isClient, readOnly]);
+  }, [isClient, readOnly, preserveDomSelection]);
 
   useEffect(() => {
     if (!quillRef.current || !isClient || readOnly) {
@@ -623,9 +651,10 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
       return;
     }
 
-    const formatsToIntercept = ['bold', 'italic', 'underline', 'strike', 'color', 'background'] as const;
+    const formatsToIntercept = ['bold', 'italic', 'underline', 'strike', 'color', 'background', 'font', 'size',] as const;
     const previousHandlers = new Map<string, ((value: unknown) => void) | undefined>();
 
+    
     const wrapHandler = (format: string) => (value: unknown) => {
       if (applySignatureToolbarFormat(format, value)) {
         return;
@@ -636,6 +665,7 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
         return;
       }
       const range = quill.getSelection();
+      console.log('No previous handler for format:', format, "range ", range);
       if (!range) {
         return;
       }
@@ -676,7 +706,7 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
       return;
     }
 
-    const formatsToIntercept = ['bold', 'italic', 'underline', 'strike', 'color', 'background'] as const;
+    const formatsToIntercept = ['bold', 'italic', 'underline', 'strike', 'color', 'background', 'size', 'font'] as const;
     const previousHandlers = new Map<string, ((value: unknown) => void) | undefined>();
 
     const wrapHandler = (format: string) => (value: unknown) => {
@@ -1045,8 +1075,6 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
             ref={quillRef}
             value={value}
             onChange={(content: string) => {
-              console.log('Quill content changed:', content);
-              console.log('Content length:', content.length);
               // Check if content contains font classes
               if (content.includes('ql-font-')) {
                 console.log('Font classes detected in content!');
