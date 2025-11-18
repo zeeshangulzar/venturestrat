@@ -111,14 +111,12 @@ export const buildSignatureHtml = (data: SignatureData): string | null => {
             ${titleLine}
             ${roleCompanyLine}
             ${contactLine}
-            ${locationLine}
-          </td>`
+            ${locationLine}</td>`
         : `<td style="vertical-align:top;">
             ${titleLine}
             ${roleCompanyLine}
             ${contactLine}
-            ${locationLine}
-          </td>`}
+            ${locationLine}</td>`}
         </tr>
       </tbody>
     </table>
