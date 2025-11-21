@@ -11,6 +11,7 @@ import { useAuthAccount } from '../contexts/AuthAccountContext';
 import AuthModal from './AuthModal';
 import { AttachmentItem } from '../types/attachments';
 import ScheduleFollowUpModal from './ScheduleFollowUpModal';
+import ScheduleDateTimeModal from './ScheduleDateTimeModal';
 import type { MailSectionType } from './MailTabs';
 import type { EmailCountDelta } from '../types/emailCounts';
 import SubscriptionLimitModal from './SubscriptionLimitModal';
@@ -122,7 +123,9 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
     }
   }, [isAttachmentUploading, onAttachmentUploadStatusChange]);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [showSchedulePicker, setShowSchedulePicker] = useState(false);
   const [lastSentEmail, setLastSentEmail] = useState<EmailDraft | null>(null);
+  const [isSchedulingUpdate, setIsSchedulingUpdate] = useState(false);
   
   // Debug effect to track showScheduleModal changes
   useEffect(() => {
@@ -222,7 +225,6 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
   const hasUploadErrors = attachments.some(attachment => attachment.status === 'error');
   const isSendDisabled = isSending || hasPendingUploads || hasUploadErrors;
   const sendButtonLabel = (() => {
-    if (mode === 'scheduled') return 'Send Now';
     if (isSending) return 'Sending...';
     if (hasPendingUploads) return 'Uploading attachments...';
     return 'Send';
@@ -232,6 +234,7 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
     if (mode === 'answered') return true;
     return isSendDisabled;
   })();
+  const shouldShowScheduleButton = mode === 'scheduled' && !email?.scheduledFor;
 
   // Modal handlers
   const handleAuthSuccess = () => {
@@ -282,6 +285,60 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
       setSendMessage('Failed to cancel scheduled email');
     } finally {
       setIsCancelling(false);
+    }
+  };
+
+  const handleScheduleExistingEmail = async (scheduledFor: string) => {
+    if (!email?.id) return;
+
+    setIsSchedulingUpdate(true);
+    setSendStatus('idle');
+    setSendMessage('');
+
+    try {
+      const response = await fetch(getApiUrl(`/api/message/${email.id}/schedule`), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ scheduledFor }),
+      });
+
+      const result = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        const errorMessage = result?.message || result?.error || 'Failed to schedule email';
+        throw new Error(errorMessage);
+      }
+
+      const payload =
+        result?.data ??
+        result?.message ??
+        result;
+
+      if (payload && typeof payload === 'object') {
+        const normalizedEmail: EmailDraft = {
+          ...email,
+          ...(payload as Partial<EmailDraft>),
+        };
+        if (onEmailUpdate) {
+          onEmailUpdate(normalizedEmail, { preserveSelection: true });
+        }
+      }
+
+      setSendStatus('success');
+      setSendMessage('Email scheduled successfully');
+      setShowSchedulePicker(false);
+
+      if (onEmailRefresh) {
+        await onEmailRefresh();
+      }
+    } catch (error: any) {
+      setSendStatus('error');
+      setSendMessage(error?.message || 'Failed to schedule email');
+      console.error('Error scheduling email:', error);
+    } finally {
+      setIsSchedulingUpdate(false);
     }
   };
 
@@ -893,6 +950,12 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
           userId: currentUserId
         } : null}
       />
+      <ScheduleDateTimeModal
+        isOpen={showSchedulePicker}
+        onClose={() => setShowSchedulePicker(false)}
+        onConfirm={handleScheduleExistingEmail}
+        isSubmitting={isSchedulingUpdate}
+      />
     </React.Fragment>
   );
 
@@ -926,12 +989,12 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
   return (
     <React.Fragment>
       <div className="relative flex-1 flex flex-col h-full">
-        {showScheduleModal && (
+        {(showScheduleModal || showSchedulePicker) && (
           <div className="absolute inset-0 bg-[#0c2143]/15 z-30 transition-opacity pointer-events-none" />
         )}
         <div
           className={`flex-1 flex flex-col bg-white h-full relative z-20 transition duration-200 ${
-            showScheduleModal ? 'blur-sm scale-[0.99] pointer-events-none select-none' : ''
+            showScheduleModal || showSchedulePicker ? 'blur-sm scale-[0.99] pointer-events-none select-none' : ''
           }`}
         >
       {/* Loading overlay */}
@@ -1164,41 +1227,67 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
                     {isCancelling ? 'Cancelling…' : 'Cancel Scheduled'}
                   </button>
                 )}
-                <button
-                  type="button"
-                  onClick={async () => {
-                    if (mode === 'scheduled') {
-                      const confirmed = window.confirm('Send this scheduled email right now?');
-                      if (!confirmed) {
-                        return;
-                      }
-                    }
-                    await handleSendEmail();
-                  }}
-                  disabled={isSendButtonDisabled}
-                  aria-disabled={isSendButtonDisabled}
-                  className={`${isSendButtonDisabled ? 'bg-gray-300 text-gray-600 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700'} flex items-center gap-2 px-6 py-2 rounded-md font-medium transition-colors`}
-                >
-                  {isSending && (
-                    <svg className="animate-spin -ml-1 h-4 w-4 text-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                {shouldShowScheduleButton ? (
+                  <button
+                    type="button"
+                    onClick={() => setShowSchedulePicker(true)}
+                    disabled={isSendButtonDisabled || isSchedulingUpdate}
+                    aria-disabled={isSendButtonDisabled || isSchedulingUpdate}
+                    className={`${isSendButtonDisabled || isSchedulingUpdate ? 'bg-gray-300 text-gray-600 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700'} flex items-center gap-2 px-6 py-2 rounded-md font-medium transition-colors`}
+                  >
+                    {isSchedulingUpdate && (
+                      <svg className="animate-spin -ml-1 h-4 w-4 text-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                    )}
+                    <span>{isSchedulingUpdate ? 'Scheduling...' : 'Schedule'}</span>
+                    <svg width="21" height="20" viewBox="0 0 21 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                      <g clipPath="url(#clip0_1403_3442)">
+                        <path d="M16.333 10H4.66634" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M16.333 10L12.9997 13.3333" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M16.333 10.0001L12.9997 6.66675" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      </g>
+                      <defs>
+                        <clipPath id="clip0_1403_3442">
+                          <rect width="20" height="20" fill="white" transform="matrix(-1 0 0 1 20.5 0)"/>
+                        </clipPath>
+                      </defs>
                     </svg>
-                  )}
-                  <span>{sendButtonLabel}</span>
-                  <svg width="21" height="20" viewBox="0 0 21 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                    <g clipPath="url(#clip0_1403_3442)">
-                      <path d="M16.333 10H4.66634" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M16.333 10L12.9997 13.3333" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M16.333 10.0001L12.9997 6.66675" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    </g>
-                    <defs>
-                      <clipPath id="clip0_1403_3442">
-                        <rect width="20" height="20" fill="white" transform="matrix(-1 0 0 1 20.5 0)"/>
-                      </clipPath>
-                    </defs>
-                  </svg>
-                </button>
+                  </button>
+                ) : (
+                  mode !== 'scheduled' && (
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        await handleSendEmail();
+                      }}
+                      disabled={isSendButtonDisabled}
+                      aria-disabled={isSendButtonDisabled}
+                      className={`${isSendButtonDisabled ? 'bg-gray-300 text-gray-600 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700'} flex items-center gap-2 px-6 py-2 rounded-md font-medium transition-colors`}
+                    >
+                      {isSending && (
+                        <svg className="animate-spin -ml-1 h-4 w-4 text-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                      )}
+                      <span>{sendButtonLabel}</span>
+                      <svg width="21" height="20" viewBox="0 0 21 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                        <g clipPath="url(#clip0_1403_3442)">
+                          <path d="M16.333 10H4.66634" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M16.333 10L12.9997 13.3333" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M16.333 10.0001L12.9997 6.66675" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        </g>
+                        <defs>
+                          <clipPath id="clip0_1403_3442">
+                            <rect width="20" height="20" fill="white" transform="matrix(-1 0 0 1 20.5 0)"/>
+                          </clipPath>
+                        </defs>
+                      </svg>
+                    </button>
+                  )
+                )}
               </div>
             </div>
           </div>
