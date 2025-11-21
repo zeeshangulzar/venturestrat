@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useLayoutEffect, useMemo } from 'react';
+import React, { useState, useLayoutEffect } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { getApiUrl } from '@lib/api';
 import { appendSignatureToBody, useSignature } from '@utils/signature';
@@ -26,21 +26,12 @@ interface ScheduleFollowUpModalProps {
 
 export default function ScheduleFollowUpModal({ isOpen, onClose, onSchedule, email }: ScheduleFollowUpModalProps) {
   const { signatureHtml } = useSignature();
-  const [scheduledDate, setScheduledDate] = useState('');
-  const [scheduledTime, setScheduledTime] = useState('');
   const [isScheduling, setIsScheduling] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [currentStep, setCurrentStep] = useState<'confirm' | 'form'>('confirm');
-
-  useEffect(() => {
-  }, [isOpen, email]);
 
   useLayoutEffect(() => {
     if (isOpen && email) {
-      setCurrentStep('confirm');
-      setScheduledDate('');
-      setScheduledTime('');
       setError(null);
       setIsScheduling(false);
       setIsGenerating(false);
@@ -51,56 +42,11 @@ export default function ScheduleFollowUpModal({ isOpen, onClose, onSchedule, ema
     return null;
   }
 
-  const handleCancel = async () => {
-    setCurrentStep('confirm');
-    setScheduledDate('');
-    setScheduledTime('');
-    await onClose();
-  };
-
-  if (currentStep === 'confirm' && isOpen) {
-    return (
-      <div className="fixed inset-0 bg-transparent flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6 border border-gray-200">
-          <div className="mb-3 px-3 py-2 rounded-md bg-green-50 text-green-700 border border-green-200 text-sm font-medium">
-            Email sent successfully!
-          </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Schedule Follow-Up Email</h2>
-          <p className="text-sm text-gray-600 mb-6">
-            Do you want to schedule an automated follow-up email for this investor?
-          </p>
-          <div className="flex justify-end gap-3">
-            <button
-              onClick={handleCancel}
-              className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-400"
-            >
-              Not now
-            </button>
-            <button
-              onClick={() => setCurrentStep('form')}
-              className="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              Yes, schedule
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   const handleSchedule = async () => {
-    if (!scheduledDate || !scheduledTime) {
-      setError('Please select both date and time');
-      return;
-    }
-
     setIsScheduling(true);
     setError(null);
 
     try {
-      // Combine date and time
-      const scheduledDateTime = new Date(`${scheduledDate}T${scheduledTime}`);
-
       // Generate follow-up email using ChatGPT
       setIsGenerating(true);
       const prompt = `Generate a professional follow-up email based on this conversation. The email should be concise, respectful, and add value to the conversation. Use the same tone and style as the original message.
@@ -140,7 +86,7 @@ Generate a follow-up that:
           subject: followUpSubject,
           from: email.from,
           body: bodyWithSignature,
-          scheduledFor: scheduledDateTime.toISOString(),
+          scheduledFor: null,
           threadId: email.threadId,
            previousMessageId: email.id,
         }),
@@ -152,9 +98,6 @@ Generate a follow-up that:
       }
 
       await onSchedule();
-      setCurrentStep('confirm');
-      setScheduledDate('');
-      setScheduledTime('');
 
     } catch (error) {
       console.error('Error scheduling follow-up:', error);
@@ -165,25 +108,18 @@ Generate a follow-up that:
     }
   };
 
-  const getMinDateTime = () => {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    return {
-      date: `${year}-${month}-${day}`,
-      time: `${hours}:${minutes}`,
-    };
-  };
-
-  const minDateTime = getMinDateTime();
-
   return (
-    <div className="fixed inset-0 bg-transparent flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6 border border-gray-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-[#0c2143]/15 backdrop-blur-sm" />
+      <div className="relative bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6 border border-gray-200">
+        <div className="mb-3 px-3 py-2 rounded-md bg-green-50 text-green-700 border border-green-200 text-sm font-medium">
+          Email sent successfully!
+        </div>
         <h2 className="text-2xl font-bold text-gray-900 mb-4">Schedule Follow-Up Email</h2>
+
+        <p className="text-sm text-gray-600 mb-6">
+          We will create a follow-up email now and keep it in your Schedule tab. You can pick a date and time later.
+        </p>
 
         {error && (
           <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md text-red-700 text-sm">
@@ -197,58 +133,20 @@ Generate a follow-up that:
           </div>
         )}
 
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Date
-            </label>
-            <input
-              type="date"
-              value={scheduledDate}
-              onChange={(e) => setScheduledDate(e.target.value)}
-              min={minDateTime.date}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Time
-            </label>
-            <input
-              type="time"
-              value={scheduledTime}
-              onChange={(e) => setScheduledTime(e.target.value)}
-              min={scheduledDate === minDateTime.date ? minDateTime.time : undefined}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            />
-          </div>
-
-          <div className="text-sm text-gray-600 mt-4">
-            <p className="mb-2">The system will automatically:</p>
-            <ul className="list-disc list-inside space-y-1">
-              <li>Generate a follow-up email using AI</li>
-              <li>Send it at the scheduled time</li>
-            </ul>
-          </div>
-        </div>
-
         <div className="flex justify-end space-x-3 mt-6">
           <button
-            onClick={handleCancel}
-            disabled={isScheduling}
+            onClick={onClose}
+            disabled={isScheduling || isGenerating}
             className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 disabled:opacity-50"
           >
             Cancel
           </button>
           <button
             onClick={handleSchedule}
-            disabled={isScheduling || !scheduledDate || !scheduledTime}
+            disabled={isScheduling}
             className="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
           >
-            {isScheduling ? 'Scheduling...' : 'Schedule Email'}
+            {isScheduling ? 'Creating...' : 'Yes, schedule'}
           </button>
         </div>
       </div>
