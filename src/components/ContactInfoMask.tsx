@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { useSubscription } from '../contexts/SubscriptionContext';
+import { useSubscription } from '@contexts/SubscriptionContext';
 
 interface ContactInfoMaskProps {
   children: React.ReactNode;
@@ -50,7 +50,7 @@ export default function ContactInfoMask({
   console.log('ContactInfoMask - plan:', subscriptionInfo?.plan, 'subscriptionInfo:', subscriptionInfo);
 
   // Show full content for paid plans
-  if (subscriptionInfo?.plan === 'PREMIUM' || subscriptionInfo?.plan === 'EXCLUSIVE') {
+  if (subscriptionInfo?.plan === 'STARTER' || subscriptionInfo?.plan === 'PRO' || subscriptionInfo?.plan === 'SCALE') {
     console.log('ContactInfoMask - showing full content for paid plan');
     return <>{children}</>;
   }
@@ -60,7 +60,7 @@ export default function ContactInfoMask({
   return (
     <span 
       className="cursor-pointer"
-      title="Upgrade to Premium to see full contact information"
+      title="Upgrade to Pro to see full contact information"
     >
       {maskedContent}
     </span>

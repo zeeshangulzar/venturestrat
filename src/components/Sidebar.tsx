@@ -31,7 +31,7 @@ import SubscriptionIcon from './icons/SubscriptionIcon';
 const Sidebar = () => {
   const pathname = usePathname(); // Get the current pathname
   const { isAdmin } = useRole(); // Get admin status from client-side hook
-  const { companyName, companyLogo, userProfileImage, subscriptionPlan, isLoading } = useUserCompany(); // Get user company data
+  const { companyName, companyLogo, userProfileImage, subscriptionPlan, isLoading, isTrialExpired } = useUserCompany(); // Get user company data
   const [isFundraisingOpen, setIsFundraisingOpen] = useState(false);
   const fundraisingRef = useRef<HTMLDivElement>(null);
 
@@ -130,7 +130,11 @@ const Sidebar = () => {
               {isLoading ? 'Loading...' : companyName}
             </span>
             <div className="flex items-center gap-1">
-              <span className="h-2 w-2 rounded-full bg-green-500"></span>
+              <span
+                className={`h-2 w-2 rounded-full ${
+                  isTrialExpired ? 'bg-red-500' : 'bg-green-500'
+                }`}>
+              </span>
               <p className="text-white/70 text-xs capitalize">
                 {isLoading ? 'Loading plan...' : `${(subscriptionPlan || 'FREE').toLowerCase()} plan`}
               </p>

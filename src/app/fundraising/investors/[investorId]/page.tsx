@@ -8,6 +8,7 @@ import ContactInfoMask from '@components/ContactInfoMask';
 import Link from 'next/link';
 import Image from 'next/image';
 import InitialsAvatar from '@components/InitialsAvatar';
+import SocialLinkMask from '@components/SocialLinkMask';
 
 type SocialLinks = { [key: string]: string };
 
@@ -240,14 +241,11 @@ export default function InvestorShowPage() {
                   {Object.entries(investor.social_links).map(([platform, url]) => (
                     <div key={platform} className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
                       <span className="text-sm font-medium text-slate-600 capitalize">{platform}</span>
-                      <a
-                        href={url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-sm text-blue-600 hover:underline"
-                      >
-                        {url}
-                      </a>
+                      <SocialLinkMask url={url} platform={platform}>
+                        <ContactInfoMask maskedText="******">
+                          {url}
+                        </ContactInfoMask>
+                      </SocialLinkMask>
                     </div>
                   ))}
                 </div>

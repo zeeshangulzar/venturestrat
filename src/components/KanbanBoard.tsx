@@ -5,6 +5,7 @@ import { updateInvestorStatus } from '@lib/api';
 import ChatGPTIntegration from '@components/ChatGPTIntegration';
 import Tooltip from '@components/Tooltip';
 import { Investor } from '@hooks/useUserShortlist';
+import ContactInfoMask from './ContactInfoMask';
 
 interface KanbanBoardProps {
   investors: Investor[];
@@ -181,9 +182,9 @@ export default function KanbanBoard({
                     <div className='w-1/2 flex flex-col justify-start pl-3 overflow-hidden'>
                       <div className="not-italic font-normal text-[14px] leading-[24px] tracking-[-0.02em] text-[#787F89] mb-1">Email Address</div>
                       <div className="flex items-center gap-1 w-full min-w-0">
-                        <Tooltip content={investor.emails?.[0]?.email || 'N/A'}>
+                        <Tooltip content={investor.emails?.[0]?.email || 'N/A'} shouldMask={true}>
                           <div className="not-italic font-semibold text-[16px] leading-[24px] tracking-[-0.02em] text-[#0C2143] truncate w-full min-w-0 text-ellipsis">
-                            {investor.emails?.[0]?.email || 'N/A'}
+                            <ContactInfoMask>{investor.emails?.[0]?.email || 'N/A'}</ContactInfoMask>
                           </div>
                         </Tooltip>
                         <svg className="w-4 h-4 text-gray-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">

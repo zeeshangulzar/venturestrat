@@ -38,7 +38,7 @@ type PaymentMethodSummary = {
 };
 
 type PlanOption = {
-  id: 'FREE' | 'PREMIUM' | 'EXCLUSIVE';
+  id: 'FREE' | 'STARTER' | 'PRO' | 'SCALE';
   name: string;
   price: string;
   headline: string;
@@ -61,16 +61,34 @@ const PLAN_OPTIONS: PlanOption[] = [
       {
         title: 'Core Features',
         items: [
-          'Add 5 investors to CRM per day',
-          'Sending email 1/day',
-          'AI drafts: up to 1/day',
+          'Add 25 investors to CRM per month',
+          'Sending email 3/day',
+          'AI drafts: up to 3/day',
         ],
       },
     ],
   },
   {
-    id: 'PREMIUM',
-    name: 'Premium',
+    id: 'STARTER',
+    name: 'Starter',
+    price: '$69 / month',
+    headline: '',
+    subheading: '',
+    badge: 'Starter',
+    featureGroups: [
+      {
+        title: 'Core Features',
+        items: [
+          'Add 125 investors to CRM per month',
+          'Send up to 125 emails/month',
+          'AI drafts: up to 125/month',
+        ],
+      },
+    ],
+  },
+  {
+    id: 'PRO',
+    name: 'Pro',
     price: '$99 / month',
     headline: '',
     subheading: '',
@@ -79,26 +97,29 @@ const PLAN_OPTIONS: PlanOption[] = [
       {
         title: 'Core Features',
         items: [
-          'Add 150 investors to CRM per month',
-          'Send up to 150 emails/month',
-          'AI drafts: up to 5/day',
+          'Add 500 investors to CRM per month',
+          'Send up to 500 emails/month',
+          'AI drafts: up to 500/month',
+          'Auto follow-ups',
         ],
       },
     ],
   },
   {
-    id: 'EXCLUSIVE',
-    name: 'Exclusive',
-    price: '$249 / month',
+    id: 'SCALE',
+    name: 'Scale',
+    price: '$179 / month',
     headline: '',
     subheading: '',
     featureGroups: [
       {
         title: 'Core Features',
         items: [
-          'Add 750 investors to CRM per month',
-          'Send up to 750 emails/month',
-          'AI drafts: up to 25/day',
+          'Add 1000 investors to CRM per month',
+          'Send up to 1000 emails/month',
+          'AI drafts: up to 1000/month',
+          'Auto follow-up',
+          'Fundraising Profile Assessment'
         ],
       },
     ],
@@ -167,7 +188,7 @@ type PlanManagerProps = {
   stripePromise: Promise<Stripe | null> | null;
 };
 
-const planRequiresPayment = (plan: 'FREE' | 'PREMIUM' | 'EXCLUSIVE' | null): boolean =>
+const planRequiresPayment = (plan: 'FREE' | 'STARTER' | 'PRO' | 'SCALE' | null): boolean =>
   Boolean(plan && plan !== 'FREE');
 
 const PlanManager: React.FC<PlanManagerProps> = ({ stripePromise }) => {
@@ -177,7 +198,7 @@ const PlanManager: React.FC<PlanManagerProps> = ({ stripePromise }) => {
   const [subscription, setSubscription] =
     useState<SubscriptionResponse['subscription'] | null>(null);
   const [selectedPlan, setSelectedPlan] =
-    useState<'FREE' | 'PREMIUM' | 'EXCLUSIVE' | null>(null);
+    useState<'FREE' | 'STARTER' | 'PRO' | 'SCALE' | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethodSummary | null>(null);
   const [isFetching, setIsFetching] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
@@ -187,9 +208,11 @@ const PlanManager: React.FC<PlanManagerProps> = ({ stripePromise }) => {
   const [paymentStripe, setPaymentStripe] = useState<Stripe | null>(null);
   const [paymentElements, setPaymentElements] = useState<StripeElements | null>(null);
   const [isPreparingPaymentElement, setIsPreparingPaymentElement] = useState(false);
-  const [cardFlow, setCardFlow] = useState<{ mode: 'plan'; targetPlan: 'FREE' | 'PREMIUM' | 'EXCLUSIVE' } | { mode: 'card' } | null>(null);
+  const [cardFlow, setCardFlow] = useState<{ mode: 'plan'; targetPlan: 'FREE' | 'STARTER' | 'PRO' | 'SCALE' } | { mode: 'card' } | null>(null);
 
   const stripeEnabled = Boolean(stripePromise);
+  const [availablePlans, setAvailablePlans] = useState<PlanOption[]>(PLAN_OPTIONS);
+
 
   useEffect(() => {
     const loadSubscription = async () => {
@@ -203,7 +226,7 @@ const PlanManager: React.FC<PlanManagerProps> = ({ stripePromise }) => {
       try {
         const response = (await fetchSubscription(user.id)) as SubscriptionResponse;
         setSubscription(response.subscription);
-        setSelectedPlan(response.subscription.plan as 'FREE' | 'PREMIUM' | 'EXCLUSIVE');
+        setSelectedPlan(response.subscription.plan as 'FREE' | 'STARTER' | 'PRO' | 'SCALE');
         setPaymentMethod(response.paymentMethod ?? null);
       } catch (err) {
         console.error('Failed to fetch subscription', err);
@@ -218,7 +241,19 @@ const PlanManager: React.FC<PlanManagerProps> = ({ stripePromise }) => {
     }
   }, [isLoaded, user?.id]);
 
-  const currentPlanId = (subscription?.plan || 'FREE') as 'FREE' | 'PREMIUM' | 'EXCLUSIVE';
+  useEffect(() => {
+    if (!subscription?.plan) return;
+
+    const currentPlanId = subscription.plan.toUpperCase() as 'FREE' | 'STARTER' | 'PRO' | 'SCALE';
+
+    setAvailablePlans(
+      currentPlanId !== 'FREE'
+        ? PLAN_OPTIONS.filter((plan) => plan.id !== 'FREE')
+        : PLAN_OPTIONS
+    );
+  }, [subscription?.plan]);
+
+  const currentPlanId = (subscription?.plan || 'FREE') as 'FREE' | 'STARTER' | 'PRO' | 'SCALE';
   const closeCardFlow = useCallback(() => {
     setCardFlow(null);
     setClientSecret(null);
@@ -226,7 +261,7 @@ const PlanManager: React.FC<PlanManagerProps> = ({ stripePromise }) => {
     setPaymentElements(null);
     setSelectedPlan(
       subscription?.plan
-        ? (subscription.plan as 'FREE' | 'PREMIUM' | 'EXCLUSIVE')
+        ? (subscription.plan as 'FREE' | 'STARTER' |'PRO' | 'SCALE')
         : null
     );
   }, [subscription?.plan]);
@@ -263,7 +298,7 @@ const PlanManager: React.FC<PlanManagerProps> = ({ stripePromise }) => {
 
   const executePlanUpdate = useCallback(
     async (
-      planId: 'FREE' | 'PREMIUM' | 'EXCLUSIVE',
+      planId: 'FREE' | 'STARTER' | 'PRO' | 'SCALE',
       paymentMethodId?: string,
       successText?: string
     ) => {
@@ -279,7 +314,7 @@ const PlanManager: React.FC<PlanManagerProps> = ({ stripePromise }) => {
 
         setSubscription(response.subscription);
         setPaymentMethod(response.paymentMethod ?? null);
-        setSelectedPlan(response.subscription.plan as 'FREE' | 'PREMIUM' | 'EXCLUSIVE');
+        setSelectedPlan(response.subscription.plan as 'FREE' | 'STARTER' | 'PRO' | 'SCALE');
         setSuccessMessage(
           successText ??
             `Subscription updated to the ${formatPlanName(response.subscription.plan)} plan.`
@@ -295,7 +330,7 @@ const PlanManager: React.FC<PlanManagerProps> = ({ stripePromise }) => {
     [triggerRefresh, user?.id]
   );
 
-  const handlePlanChange = async (planId: 'FREE' | 'PREMIUM' | 'EXCLUSIVE') => {
+  const handlePlanChange = async (planId: 'FREE' | 'STARTER' | 'PRO' | 'SCALE') => {
     setError(null);
     setSuccessMessage(null);
     setSelectedPlan(planId);
@@ -377,7 +412,7 @@ const PlanManager: React.FC<PlanManagerProps> = ({ stripePromise }) => {
     const planId =
       cardFlow.mode === 'plan'
         ? cardFlow.targetPlan
-        : ((subscription?.plan ?? 'FREE') as 'FREE' | 'PREMIUM' | 'EXCLUSIVE');
+        : ((subscription?.plan ?? 'FREE') as 'FREE' | 'STARTER' | 'PRO' | 'SCALE');
 
     await executePlanUpdate(
       planId,
@@ -499,7 +534,7 @@ const PlanManager: React.FC<PlanManagerProps> = ({ stripePromise }) => {
                 {renderStatusPill()}
               </div>
               <p className="text-sm text-slate-500">
-                {currentPeriodEnd ? `Renews on ${currentPeriodEnd}` : 'Renews monthly'}
+                {subscription?.plan === "FREE" ? `Trial's end on ${currentPeriodEnd}` : 'Renews monthly'}
               </p>
             </div>
             <div className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-2 text-sm text-slate-600">
@@ -618,10 +653,10 @@ const PlanManager: React.FC<PlanManagerProps> = ({ stripePromise }) => {
       <div className="mt-12 space-y-5">
         <h3 className="text-xl font-semibold text-slate-900">Available plans</h3>
         <div className="grid gap-6 md:grid-cols-3">
-          {PLAN_OPTIONS.map((plan) => {
+          {availablePlans.map((plan) => {
             const isCurrent = plan.id === currentPlanId;
             const isSelected = plan.id === selectedPlan;
-            const isHighlighted = plan.id === 'PREMIUM';
+            const isHighlighted = plan.id === 'PRO';
 
             const borderClass = isHighlighted
               ? 'border-amber-400 shadow-lg shadow-amber-100'
@@ -635,12 +670,18 @@ const PlanManager: React.FC<PlanManagerProps> = ({ stripePromise }) => {
                 button: 'bg-slate-200 text-slate-700 hover:bg-slate-300',
                 badge: 'bg-slate-200 text-slate-600',
               },
-              PREMIUM: {
+              STARTER: {
+                header: 'bg-indigo-50',
+                button: 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200',
+                badge: 'bg-indigo-100 text-indigo-700',
+              },
+
+              PRO: {
                 header: 'bg-amber-50',
                 button: 'bg-amber-500 text-white hover:bg-amber-600',
                 badge: 'bg-amber-500 text-white',
               },
-              EXCLUSIVE: {
+              SCALE: {
                 header: 'bg-emerald-50',
                 button: 'bg-emerald-500 text-white hover:bg-emerald-600',
                 badge: 'bg-emerald-500 text-white',
