@@ -8,6 +8,7 @@ import Pagination from '@components/Pagination';
 import InvestorFilter from '@components/InvestorFilter';
 import PaginationNumbers from '@components/PaginationNumbers';
 import { useInvestorScope } from '@hooks/useInvestorScope';
+import { useSubscription } from '@contexts/SubscriptionContext';
 
 type Filters = {
   country: string;
@@ -56,6 +57,8 @@ export default function FundraisingInvestorsPage() {
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPageState] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(20);
+  const { subscriptionInfo } = useSubscription();
+  const disabledFilters = !subscriptionInfo?.features?.advancedFilters;
   const [pagination, setPagination] = useState({
     currentPage: 1,
     totalPages: 1,
@@ -310,6 +313,7 @@ export default function FundraisingInvestorsPage() {
             investmentType: filters.investmentType,   // InvestorType values (strings)
           }}
           setFilters={updateFilters}
+          disabled={false}
         />
       </div>
 

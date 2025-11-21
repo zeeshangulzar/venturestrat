@@ -14,6 +14,7 @@ import ScheduleFollowUpModal from './ScheduleFollowUpModal';
 import type { MailSectionType } from './MailTabs';
 import type { EmailCountDelta } from '../types/emailCounts';
 import SubscriptionLimitModal from './SubscriptionLimitModal';
+import { useSubscription } from '@contexts/SubscriptionContext';
 
 interface EmailDraft {
   id: string;
@@ -110,6 +111,7 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
   const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [sendStatus, setSendStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const { subscriptionInfo } = useSubscription();
   const isAttachmentUploading = attachments.some(
     attachment => attachment.status === 'pending' || attachment.status === 'uploading'
   );
@@ -355,6 +357,16 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
       }
 
       if (!response.ok) {
+        if (response.status === 403 && result?.error === 'Subscription limit reached') {
+          setLimitModalData({
+            action: 'send_email',
+            currentUsage: result?.currentUsage,
+            limits: result?.limits,
+          });
+          setShowLimitModal(true);
+          return;
+        }
+
         const errorMessage = result?.message || result?.error || `Failed to send email: ${response.statusText}`;
         
         // Check if it's an authentication error and redirect to settings
@@ -414,7 +426,24 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
           }
 
           console.log('Opening schedule modal immediately');
-          setShowScheduleModal(true);
+          const response = await fetch(getApiUrl('/api/subscription/validate'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              userId: user?.id,
+              action: 'follow_up_email',
+            }),
+          });
+          console.log('Follow up email response:', response);
+
+          const data = await response.json();
+
+          console.log('CSV permission data:', data);
+          if (subscriptionInfo?.plan !== 'FREE'){
+            if (data.allowed) {
+              setShowScheduleModal(true);
+            }
+          }
           if (onEmailSent) {
             void onEmailSent(investorId);
           }
@@ -809,7 +838,7 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
   };
 
   const handleSendEmail = async () => {
-    if (!email?.id) return;
+    if (!email?.id || isSending) return;
     
     // Check if user has authenticated with Google or Microsoft
     if (!hasAccount) {
@@ -817,86 +846,7 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
       return;
     }
     
-    // If user has account, proceed with sending
     await proceedWithEmailSending();
-    setIsSending(true);
-    setSendStatus('idle');
-    setSendMessage('');
-    
-    try {
-      // Create FormData to handle attachments
-      const formData = new FormData();
-      
-      // Add attachments to FormData
-      attachments.forEach((file, index) => {
-        formData.append(`attachment_${index}`, file);
-      });
-      
-      // Add other email data
-      formData.append('messageId', email.id);
-      formData.append('attachments', JSON.stringify(attachments.map(f => ({ name: f.name, size: f.size, type: f.type }))));
-      
-      console.log('=== FRONTEND DEBUGGING ===');
-      console.log('Attachments being sent:', attachments);
-      console.log('FormData entries:', Array.from(formData.entries()));
-      
-      const response = await fetch(`/api/message/${email.id}/send`, {
-        method: 'POST',
-        body: formData,
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        console.log('=== SUBSCRIPTION LIMIT DEBUG ===');
-        console.log('Response status:', response.status);
-        console.log('Response result:', result);
-        console.log('Error type:', result.error);
-        
-        // Handle subscription limit reached
-        if (response.status === 403 && result.error === 'Subscription limit reached') {
-          console.log('Showing subscription limit modal');
-          setLimitModalData({
-            action: 'send_email',
-            currentUsage: result.currentUsage,
-            limits: result.limits
-          });
-          setShowLimitModal(true);
-          setIsSending(false); // Reset sending state
-          return;
-        }
-        
-        // Extract error message from response
-        const errorMessage = result.message || result.error || `Failed to send email: ${response.statusText}`;
-        setSendStatus('error');
-        setSendMessage(errorMessage);
-        setIsSending(false); // Reset sending state
-        console.error('Error sending email:', errorMessage);
-        return;
-      }
-
-      console.log('Email sent successfully:', result);
-      setSendStatus('success');
-      setSendMessage(result.message || 'Email sent successfully!');
-      
-      // Notify parent component that email was sent (to refresh draft list)
-      if (onEmailSent) {
-        onEmailSent(investorId);
-      }
-      
-      // Clear success message after 3 seconds
-      setTimeout(() => {
-        setSendStatus('idle');
-        setSendMessage('');
-      }, 3000);
-      
-    } catch (error) {
-      console.error('Error sending email:', error);
-      setSendStatus('error');
-      setSendMessage(error instanceof Error ? error.message : 'Failed to send email. Please try again.');
-    } finally {
-      setIsSending(false);
-    }
   };
 
 

@@ -1,12 +1,12 @@
 'use client';
 
 import React from 'react';
-import { useSubscription } from '../contexts/SubscriptionContext';
+import { useSubscription } from '@contexts/SubscriptionContext';
 
 interface SubscriptionLimitModalProps {
   isOpen: boolean;
   onClose: () => void;
-  action: 'ai_draft' | 'send_email' | 'add_investor';
+  action: 'ai_draft' | 'send_email' | 'add_investor' | 'download_csv';
   currentUsage: {
     aiDraftsUsed?: number;
     emailsSent?: number;
@@ -42,6 +42,8 @@ export default function SubscriptionLimitModal({
         return 'Send Email';
       case 'add_investor':
         return 'Add Investor to CRM';
+      case 'download_csv':
+        return 'Download CSV File';
       default:
         return 'Action';
     }
@@ -63,6 +65,8 @@ export default function SubscriptionLimitModal({
         } else {
           return `${currentUsage.monthlyInvestorsAdded || 0}/${limits.investorsPerMonth || 0} investors added this month`;
         }
+      case 'download_csv':
+        return `CSV downloads are not available on your current plan.`;
       default:
         return '';
     }
@@ -70,9 +74,12 @@ export default function SubscriptionLimitModal({
 
   const getUpgradeMessage = () => {
     if (subscriptionInfo?.plan === 'FREE') {
-      return 'Upgrade to Premium or Exclusive to increase your limits and unlock more features.';
-    } else if (subscriptionInfo?.plan === 'PREMIUM') {
-      return 'Upgrade to Exclusive for even higher limits and premium features.';
+      return 'Upgrade to Starter, Pro, or Scale to increase your limits and access additional features.';
+    }else if (subscriptionInfo?.plan === 'STARTER') {
+      return 'Upgrade to Pro or Scale for even higher limits and premium features.';
+    }
+    else if (subscriptionInfo?.plan === 'PRO') {
+      return 'Upgrade to Scale for even higher limits and premium features.';
     }
     return 'Contact support to discuss custom limits.';
   };
@@ -117,49 +124,91 @@ export default function SubscriptionLimitModal({
           <div className="space-y-3">
             {subscriptionInfo?.plan === 'FREE' && (
               <>
+
                 <div className="border rounded-lg p-3">
                   <div className="flex justify-between items-center mb-2">
-                    <h3 className="font-semibold text-gray-900">Premium - $99/month</h3>
+                    <h3 className="font-semibold text-gray-900">Starter - $69/month</h3>
+                    <span className="bg-indigo-50 text-indigo-700 text-xs px-2 py-1 rounded">STARTER</span>
+                  </div>
+                  <ul className="text-sm text-gray-600 space-y-1">
+                    <li>• Add 125 investors to CRM per month</li>
+                    <li>• Send up to 125 emails/month</li>
+                    <li>• AI drafts: up to 125/month</li>
+                    <li>• Full contact information</li>
+                  </ul>
+                </div>
+                <div className="border rounded-lg p-3">
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className="font-semibold text-gray-900">Pro - $99/month</h3>
                     <span className="bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded">BEST VALUE</span>
                   </div>
                   <ul className="text-sm text-gray-600 space-y-1">
-                    <li>• Add 150 investors to CRM per month</li>
-                    <li>• Send up to 150 emails/month</li>
-                    <li>• AI drafts: up to 5/day</li>
+                    <li>• Add 500 investors to CRM per month</li>
+                    <li>• Send up to 500 emails/month</li>
+                    <li>• AI drafts: up to 500/month</li>
                     <li>• Full contact information</li>
                   </ul>
                 </div>
                 
                 <div className="border rounded-lg p-3">
                   <div className="flex justify-between items-center mb-2">
-                    <h3 className="font-semibold text-gray-900">Exclusive - $249/month</h3>
-                    <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">PREMIUM</span>
+                    <h3 className="font-semibold text-gray-900">Scale - $179/month</h3>
+                    <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">EXLUSIVE</span>
                   </div>
                   <ul className="text-sm text-gray-600 space-y-1">
-                    <li>• Add 750 investors to CRM per month</li>
-                    <li>• Send up to 750 emails/month</li>
-                    <li>• AI drafts: up to 25/day</li>
-                    <li>• All Premium features</li>
+                    <li>• Add 1000 investors to CRM per month</li>
+                    <li>• Send up to 1000 emails/month</li>
+                    <li>• AI drafts: up to 1000/month</li>
+                    <li>• All Pro features</li>
                   </ul>
                 </div>
               </>
             )}
             
-            {subscriptionInfo?.plan === 'PREMIUM' && (
-              <div className="border rounded-lg p-3">
-                <div className="flex justify-between items-center mb-2">
-                  <h3 className="font-semibold text-gray-900">Exclusive - $249/month</h3>
-                  <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">PREMIUM</span>
+            {subscriptionInfo?.plan === 'STARTER' && (
+              <>
+                <div className="border rounded-lg p-3">
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className="font-semibold text-gray-900">Pro - $99/month</h3>
+                    <span className="bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded">BEST VALUE</span>
+                  </div>
+                  <ul className="text-sm text-gray-600 space-y-1">
+                    <li>• Add 500 investors to CRM per month</li>
+                    <li>• Send up to 500 emails/month</li>
+                    <li>• AI drafts: up to 500/month</li>
+                    <li>• Full contact information</li>
+                  </ul>
                 </div>
-                <ul className="text-sm text-gray-600 space-y-1">
-                  <li>• Add 750 investors to CRM per month</li>
-                  <li>• Send up to 750 emails/month</li>
-                  <li>• AI drafts: up to 25/day</li>
-                  <li>• All Premium features</li>
-                  <li>• Custom integrations</li>
-                  <li>• Dedicated support</li>
-                </ul>
-              </div>
+                <div className="border rounded-lg p-3">
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className="font-semibold text-gray-900">Scale - $179/month</h3>
+                    <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">EXLUSIVE</span>
+                  </div>
+                  <ul className="text-sm text-gray-600 space-y-1">
+                    <li>• Add 1000 investors to CRM per month</li>
+                    <li>• Send up to 1000 emails/month</li>
+                    <li>• AI drafts: up to 1000/month</li>
+                    <li>• All Scale features</li>
+                  </ul>
+                </div>
+              </>
+            )}
+
+            {subscriptionInfo?.plan === 'PRO' && (
+              <>
+                <div className="border rounded-lg p-3">
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className="font-semibold text-gray-900">Scale - $179/month</h3>
+                    <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">EXLUSIVE</span>
+                  </div>
+                  <ul className="text-sm text-gray-600 space-y-1">
+                    <li>• Add 1000 investors to CRM per month</li>
+                    <li>• Send up to 1000 emails/month</li>
+                    <li>• AI drafts: up to 1000/month</li>
+                    <li>• All Scale features</li>
+                  </ul>
+                </div>
+              </>
             )}
           </div>
         </div>

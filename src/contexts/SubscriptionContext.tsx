@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { getApiUrl } from '@lib/api';
-
+import { usePathname } from 'next/navigation';
 interface SubscriptionInfo {
   plan: string;
   planName: string;
@@ -43,7 +43,7 @@ interface SubscriptionContextType {
   usageStats: UsageStats | null;
   isLoading: boolean;
   error: string | null;
-  checkSubscription: (action: 'ai_draft' | 'send_email' | 'add_investor') => Promise<boolean>;
+  checkSubscription: (action: 'ai_draft' | 'send_email' | 'add_investor' | 'follow_up_email') => Promise<boolean>;
   refreshSubscription: () => Promise<void>;
 }
 
@@ -106,7 +106,7 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
   };
 
-  const checkSubscription = async (action: 'ai_draft' | 'send_email' | 'add_investor'): Promise<boolean> => {
+  const checkSubscription = async (action: 'ai_draft' | 'send_email' | 'add_investor' | 'follow_up_email'): Promise<boolean> => {
     if (!user?.id) return false;
 
     try {
@@ -130,12 +130,13 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const refreshSubscription = async () => {
     await Promise.all([fetchSubscriptionInfo(), fetchUsageStats()]);
   };
-
+  const pathname = usePathname();
+  
   useEffect(() => {
     if (isLoaded && user?.id) {
       refreshSubscription();
     }
-  }, [isLoaded, user?.id]);
+  }, [pathname, isLoaded, user?.id]);
 
   const value: SubscriptionContextType = {
     subscriptionInfo,

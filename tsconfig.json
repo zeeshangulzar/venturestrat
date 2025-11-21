@@ -27,6 +27,7 @@
       "@types/*": ["types/*"],
       "@admin/*": ["admin/*"],
       "@hooks/*": ["hooks/*"],
+      "@contexts/*": ["contexts/*"],
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],

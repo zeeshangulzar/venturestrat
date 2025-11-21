@@ -31,9 +31,10 @@ type InvestorFilters = {
 type Props = {
   filters: InvestorFilters;
   setFilters: (filters: InvestorFilters) => void;
+  disabled?: boolean;
 };
 
-export default function InvestorFilter({ filters, setFilters }: Props) {
+export default function InvestorFilter({ filters, setFilters, disabled = false }: Props) {
   /** Location state */
   const countries = Country.getAllCountries();
   const [states, setStates] = useState(State.getStatesOfCountry(''));
@@ -250,7 +251,11 @@ export default function InvestorFilter({ filters, setFilters }: Props) {
   })();
 
   return (
-    <div className="investor-filters flex flex-wrap gap-[11px] bg-white items-center border-b border-[#EDEEEF] py-[24px] px-5">
+    <div
+      className={`investor-filters flex flex-wrap gap-[11px] bg-white 
+        items-center border-b border-[#EDEEEF] py-[24px] px-5
+        ${disabled ? 'opacity-50 pointer-events-none select-none' : ''}`}
+    >
       <span className="font-manrope font-semibold text-base">Filters:</span>
 
       {/* Investor Type - Using SearchableDropdown with Apply Button */}
