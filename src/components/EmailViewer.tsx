@@ -392,9 +392,7 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
       console.log('=== FRONTEND DEBUGGING ===');
       console.log('Attachments metadata being sent:', attachmentPayload);
 
-      const endpoint = mode === 'scheduled'
-        ? getApiUrl(`/api/message/${email.id}/send-reply`)
-        : getApiUrl(`/api/message/${email.id}/send`);
+      const endpoint = getApiUrl(`/api/message/${email.id}/send`);
       const response = await fetch(
         endpoint,
         {
