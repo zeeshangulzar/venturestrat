@@ -216,7 +216,7 @@ const InvestorCard: React.FC<{
         <div className="flex min-w-0 items-start gap-4 pt-4 pb-2 xl:pb-6 px-4
 +                 xl:flex-[0_0_370px] xl:max-w-none">
           <div className="flex items-start gap-3">
-            {investor.avatar ? (
+            {investor.avatar && investor.avatar !== "No Image" ? (
               <img
                 src={investor.avatar}
                 alt={investor.name || "Investor avatar"}
@@ -224,14 +224,14 @@ const InvestorCard: React.FC<{
                 height={60}
                 className="rounded-full object-cover"
               />
-
             ) : (
               <InitialsAvatar
-                name={investor.name || 'Investor'}
+                name={investor.name || "Investor"}
                 size="lg"
                 className="h-[60px] w-[60px] text-xl"
               />
             )}
+
 
             <div className="min-w-0 flex-1">
               <div className="flex items-start gap-2 mb-2">
