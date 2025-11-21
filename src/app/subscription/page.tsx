@@ -17,6 +17,7 @@ import {
   updateSubscriptionPlan,
 } from '@lib/api';
 import { getStripe } from '@lib/stripeClient';
+import { useUserCompany } from '@hooks/useUserCompany';
 
 type SubscriptionResponse = {
   subscription: {
@@ -208,6 +209,7 @@ const PlanManager: React.FC<PlanManagerProps> = ({ stripePromise }) => {
   const [paymentStripe, setPaymentStripe] = useState<Stripe | null>(null);
   const [paymentElements, setPaymentElements] = useState<StripeElements | null>(null);
   const [isPreparingPaymentElement, setIsPreparingPaymentElement] = useState(false);
+  const { isTrialExpired } = useUserCompany();
   const [cardFlow, setCardFlow] = useState<{ mode: 'plan'; targetPlan: 'FREE' | 'STARTER' | 'PRO' | 'SCALE' } | { mode: 'card' } | null>(null);
 
   const stripeEnabled = Boolean(stripePromise);
@@ -533,9 +535,23 @@ const PlanManager: React.FC<PlanManagerProps> = ({ stripePromise }) => {
                 </p>
                 {renderStatusPill()}
               </div>
-              <p className="text-sm text-slate-500">
-                {subscription?.plan === "FREE" ? `Trial's end on ${currentPeriodEnd}` : 'Renews monthly'}
+              <p className="text-sm text-slate-600 mt-1 leading-relaxed">
+                {subscription?.plan === "FREE" ? (
+                  isTrialExpired ? (
+                    <span className="text-red-600 font-medium">
+                      Your trial has ended. Please upgrade to continue.
+                    </span>
+                  ) : (
+                    <>
+                      Your free trial ends on{" "}
+                      <span className="font-medium text-blue-600">{currentPeriodEnd}</span>.
+                    </>
+                  )
+                ) : (
+                  <span className="font-medium text-blue-600">Your subscription renews monthly.</span>
+                )}
               </p>
+
             </div>
             <div className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-2 text-sm text-slate-600">
               You&rsquo;re on the {formatPlanName(subscription?.plan)} plan.
