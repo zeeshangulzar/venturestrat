@@ -29,11 +29,13 @@ export default function ScheduleFollowUpModal({ isOpen, onClose, onSchedule, ema
   const { user } = useUser();
   const [isScheduling, setIsScheduling] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showTemplates, setShowTemplates] = useState(false);
 
   useLayoutEffect(() => {
     if (isOpen && email) {
       setError(null);
       setIsScheduling(false);
+      setShowTemplates(false);
     }
   }, [isOpen, email?.id]);
 
@@ -126,15 +128,26 @@ Best,`,
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-[#0c2143]/15 backdrop-blur-sm" />
-      <div className="relative bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 p-6 border border-gray-200">
+      <div
+        className={`relative bg-white rounded-lg shadow-xl w-full mx-4 p-6 border border-gray-200 ${
+          showTemplates ? 'max-w-4xl' : 'max-w-lg'
+        }`}
+      >
         <div className="mb-3 px-3 py-2 rounded-md bg-green-50 text-green-700 border border-green-200 text-sm font-medium">
           Email sent successfully!
         </div>
         <h2 className="text-2xl font-bold text-gray-900 mb-4">Schedule Follow-Up Email</h2>
 
-        <p className="text-sm text-gray-600 mb-6">
-          We will create a follow-up email now and keep it in your draft tab. You can pick a date and time later.
-        </p>
+        {!showTemplates && (
+          <p className="text-sm text-gray-600 mb-6">
+            Do you want to schedule a follow-up email? You can choose a template next.
+          </p>
+        )}
+        {showTemplates && (
+          <p className="text-sm text-gray-600 mb-6">
+            Pick a template to create your follow-up draft now. You can edit it and pick date/time later.
+          </p>
+        )}
 
         {error && (
           <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md text-red-700 text-sm">
@@ -142,38 +155,59 @@ Best,`,
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {templates.map((tpl) => (
-            <div key={tpl.id} className="border rounded-md p-4 hover:border-blue-400 transition-colors h-full flex flex-col">
-              <div className="flex items-start justify-between gap-3">
-                <div className="pr-2">
-                  <p className="text-sm font-semibold text-gray-900">{tpl.title}</p>
-                  <p className="text-xs text-gray-500 mt-1">Subject: {tpl.subject}</p>
+        {!showTemplates ? (
+          <div className="flex justify-end space-x-3 mt-6">
+            <button
+              onClick={onClose}
+              disabled={isScheduling}
+              className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 disabled:opacity-50"
+            >
+              No, thanks
+            </button>
+            <button
+              onClick={() => setShowTemplates(true)}
+              disabled={isScheduling}
+              className="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+            >
+              Yes, schedule
+            </button>
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {templates.map((tpl) => (
+                <div key={tpl.id} className="border rounded-md p-4 hover:border-blue-400 transition-colors h-full flex flex-col">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="pr-2">
+                      <p className="text-sm font-semibold text-gray-900">{tpl.title}</p>
+                      <p className="text-xs text-gray-500 mt-1">Subject: {tpl.subject}</p>
+                    </div>
+                    <button
+                      onClick={() => handleSchedule(tpl.subject, tpl.body)}
+                      disabled={isScheduling}
+                      className="px-3 py-2 text-sm rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60 whitespace-nowrap"
+                    >
+                      {isScheduling ? 'Creating...' : 'Use this template'}
+                    </button>
+                  </div>
+                  <pre className="mt-3 whitespace-pre-wrap text-sm text-gray-700 bg-gray-50 border border-gray-100 rounded-md p-3 flex-1">
+                    {tpl.body}
+                  </pre>
                 </div>
-                <button
-                  onClick={() => handleSchedule(tpl.subject, tpl.body)}
-                  disabled={isScheduling}
-                  className="px-3 py-2 text-sm rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60 whitespace-nowrap"
-                >
-                  {isScheduling ? 'Creating...' : 'Use this template'}
-                </button>
-              </div>
-              <pre className="mt-3 whitespace-pre-wrap text-sm text-gray-700 bg-gray-50 border border-gray-100 rounded-md p-3 flex-1">
-                {tpl.body}
-              </pre>
+              ))}
             </div>
-          ))}
-        </div>
 
-        <div className="flex justify-end space-x-3 mt-6">
-          <button
-            onClick={onClose}
-            disabled={isScheduling}
-            className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 disabled:opacity-50"
-          >
-            Cancel
-          </button>
-        </div>
+            <div className="flex justify-end space-x-3 mt-6">
+              <button
+                onClick={onClose}
+                disabled={isScheduling}
+                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
