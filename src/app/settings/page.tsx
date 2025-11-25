@@ -3,7 +3,7 @@
 import { useUser, useReverification } from '@clerk/nextjs';
 import { isReverificationCancelledError } from '@clerk/nextjs/errors';
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useUserDataRefresh } from '../../contexts/UserDataContext';
 import { Country } from 'country-state-city';
 import { buildRegionCountryOptions, buildCountryOptions } from '@lib/regions';
@@ -72,6 +72,7 @@ type OnboardingData = {
 export default function SettingsPage() {
   const { user, isLoaded } = useUser();
   const router = useRouter();
+  const pathname = usePathname();
   const { triggerRefresh } = useUserDataRefresh();
   const ensureReverified = useReverification(ensureRecentVerification);
   const [currentCategory, setCurrentCategory] = useState('financials');
@@ -105,11 +106,25 @@ export default function SettingsPage() {
   const [isDisconnecting, setIsDisconnecting] = useState(false);
 
   const hasGoogleAccount = useMemo(
-    () => hasVerifiedExternalAccount(user?.externalAccounts, 'google'),
+    () => {
+      const accounts = user?.externalAccounts || [];
+      const anyGoogle = accounts.some((a: any) => {
+        const providerId = a.provider;
+        return providerId === 'google' || providerId === 'oauth_google' || providerId?.includes('google');
+      });
+      return hasVerifiedExternalAccount(accounts, 'google') || anyGoogle;
+    },
     [user?.externalAccounts],
   );
   const hasMicrosoftAccount = useMemo(
-    () => hasVerifiedExternalAccount(user?.externalAccounts, 'microsoft'),
+    () => {
+      const accounts = user?.externalAccounts || [];
+      const anyMicrosoft = accounts.some((a: any) => {
+        const providerId = a.provider;
+        return providerId === 'microsoft' || providerId === 'oauth_microsoft' || providerId?.includes('microsoft');
+      });
+      return hasVerifiedExternalAccount(accounts, 'microsoft') || anyMicrosoft;
+    },
     [user?.externalAccounts],
   );
 
@@ -132,8 +147,28 @@ export default function SettingsPage() {
   const googleApprovedScopes = (googleAccount?.approvedScopes ?? '').toString();
   const msApprovedScopes = (microsoftAccount?.approvedScopes ?? '').toString();
   const passwordEnabled = user?.passwordEnabled ?? false;
-  const googleTokenExpiry = useMemo(() => extractTokenExpiry(googleAccount), [googleAccount]);
-  const microsoftTokenExpiry = useMemo(() => extractTokenExpiry(microsoftAccount), [microsoftAccount]);
+const [stickyReconnectGoogle, setStickyReconnectGoogle] = useState<boolean>(() => {
+  if (typeof window === 'undefined') return false;
+  return window.localStorage.getItem('neda.integration.forceReconnect.google') === 'true';
+});
+const [stickyReconnectMicrosoft, setStickyReconnectMicrosoft] = useState<boolean>(() => {
+  if (typeof window === 'undefined') return false;
+  return window.localStorage.getItem('neda.integration.forceReconnect.microsoft') === 'true';
+});
+  const [integrationStatus, setIntegrationStatus] = useState<{
+    google?: { hasToken: boolean; expiresAt: number | null; isExpired: boolean };
+    microsoft?: { hasToken: boolean; expiresAt: number | null; isExpired: boolean };
+  }>({});
+  const lastStatusFetchRef = useRef(0);
+  const isFetchingStatusRef = useRef(false);
+  const googleTokenExpiry = useMemo(
+    () => integrationStatus.google?.expiresAt ?? extractTokenExpiry(googleAccount),
+    [googleAccount, integrationStatus.google?.expiresAt]
+  );
+  const microsoftTokenExpiry = useMemo(
+    () => integrationStatus.microsoft?.expiresAt ?? extractTokenExpiry(microsoftAccount),
+    [microsoftAccount, integrationStatus.microsoft?.expiresAt]
+  );
 
   const hasGoogleRequiredScopes = useMemo(() => {
     if (!googleApprovedScopes) return false;
@@ -154,16 +189,26 @@ export default function SettingsPage() {
   }, [msApprovedScopes]);
 
   const googleTokenExpired = useMemo(
-    () => Boolean(googleTokenExpiry && Date.now() >= googleTokenExpiry),
-    [googleTokenExpiry]
+    () => Boolean(googleTokenExpiry && Date.now() >= googleTokenExpiry) || integrationStatus.google?.isExpired,
+    [googleTokenExpiry, integrationStatus.google?.isExpired]
   );
   const microsoftTokenExpired = useMemo(
-    () => Boolean(microsoftTokenExpiry && Date.now() >= microsoftTokenExpiry),
-    [microsoftTokenExpiry]
+    () => Boolean(microsoftTokenExpiry && Date.now() >= microsoftTokenExpiry) || integrationStatus.microsoft?.isExpired,
+    [microsoftTokenExpiry, integrationStatus.microsoft?.isExpired]
   );
 
-  const needsGoogleReconnect = hasGoogleAccount && (!hasGoogleRequiredScopes || googleTokenExpired);
-  const needsMicrosoftReconnect = hasMicrosoftAccount && (!hasMicrosoftRequiredScopes || microsoftTokenExpired);
+ const needsGoogleReconnect =
+   hasGoogleAccount &&
+   (!hasGoogleRequiredScopes ||
+      googleTokenExpired ||
+      integrationStatus.google?.hasToken === false ||
+      stickyReconnectGoogle);
+  const needsMicrosoftReconnect =
+    hasMicrosoftAccount &&
+    (!hasMicrosoftRequiredScopes ||
+      microsoftTokenExpired ||
+      integrationStatus.microsoft?.hasToken === false ||
+      stickyReconnectMicrosoft);
 
   const openPopupAndWait = (url: string) => {
     return new Promise<void>((resolve) => {
@@ -418,12 +463,13 @@ export default function SettingsPage() {
         return;
       }
 
-      // Fallback: destroy then connect again with required scopes
-      if (account && typeof account.destroy === 'function') {
-        await account.destroy();
+      // If an account exists but no reauthorize method, keep it and skip destructive flows.
+      if (account) {
         await user.reload();
+        return;
       }
 
+      // Only create when there is no existing account
       const newAccount = await user.createExternalAccount({
         strategy: provider === 'google' ? 'oauth_google' : 'oauth_microsoft',
         additionalScopes: scopes,
@@ -620,6 +666,67 @@ export default function SettingsPage() {
       }
     }
   }, []);
+
+  // Load token status from backend (same logic as send email)
+  const loadIntegrationStatus = useCallback(
+    async (force = false) => {
+      if (!isLoaded || !user?.id) return;
+      const now = Date.now();
+      if (!force) {
+        if (isFetchingStatusRef.current) return;
+        if (now - lastStatusFetchRef.current < 2000) return;
+      }
+      isFetchingStatusRef.current = true;
+      try {
+        const res = await fetch(getApiUrl(`/api/user/${user.id}/status`));
+        if (!res.ok) return;
+        const data = await res.json();
+        setIntegrationStatus(data || {});
+        if (data?.google?.hasToken === false || data?.google?.isExpired) {
+          setStickyReconnectGoogle(true);
+          if (typeof window !== 'undefined') {
+            window.localStorage.setItem('neda.integration.forceReconnect.google', 'true');
+          }
+        } else if (data?.google?.hasToken === true && data?.google?.isExpired === false) {
+          setStickyReconnectGoogle(false);
+          if (typeof window !== 'undefined') {
+            window.localStorage.removeItem('neda.integration.forceReconnect.google');
+          }
+        }
+        if (data?.microsoft?.hasToken === false || data?.microsoft?.isExpired) {
+          setStickyReconnectMicrosoft(true);
+          if (typeof window !== 'undefined') {
+            window.localStorage.setItem('neda.integration.forceReconnect.microsoft', 'true');
+          }
+        } else if (data?.microsoft?.hasToken === true && data?.microsoft?.isExpired === false) {
+          setStickyReconnectMicrosoft(false);
+          if (typeof window !== 'undefined') {
+            window.localStorage.removeItem('neda.integration.forceReconnect.microsoft');
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to load integration status from backend:', err);
+      } finally {
+        lastStatusFetchRef.current = Date.now();
+        isFetchingStatusRef.current = false;
+      }
+    },
+    [isLoaded, user?.id]
+  );
+
+  useEffect(() => {
+    loadIntegrationStatus(true);
+  }, [loadIntegrationStatus]);
+
+  useEffect(() => {
+    const onFocus = () => loadIntegrationStatus();
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
+  }, [loadIntegrationStatus]);
+
+  useEffect(() => {
+    loadIntegrationStatus();
+  }, [pathname, loadIntegrationStatus]);
 
   // Fetch stages and business sectors from API
   useEffect(() => {
