@@ -23,6 +23,26 @@ import { ensureRecentVerification } from './actions';
 
 type FilterOption = { label: string; value: string; disabled?: boolean };
 
+const extractTokenExpiry = (account: any): number | null => {
+  if (!account) return null;
+  const candidates = [
+    account.tokenExpiresAt,
+    account.expiresAt,
+    account.token_expires_at,
+    account.accessTokenExpiresAt,
+  ];
+  for (const candidate of candidates) {
+    if (!candidate) continue;
+    const asNumber =
+      typeof candidate === 'string' ? Number(candidate) : typeof candidate === 'number' ? candidate : null;
+    if (asNumber && !Number.isNaN(asNumber)) {
+      // Clerk sometimes returns seconds; if it looks like seconds, convert to ms
+      return asNumber > 1e12 ? asNumber : asNumber * 1000;
+    }
+  }
+  return null;
+};
+
 const debounceSearch = (func: (search: string, type: string) => void, wait: number) => {
   let timeout: NodeJS.Timeout;
   return (search: string, type: string) => {
@@ -112,6 +132,8 @@ export default function SettingsPage() {
   const googleApprovedScopes = (googleAccount?.approvedScopes ?? '').toString();
   const msApprovedScopes = (microsoftAccount?.approvedScopes ?? '').toString();
   const passwordEnabled = user?.passwordEnabled ?? false;
+  const googleTokenExpiry = useMemo(() => extractTokenExpiry(googleAccount), [googleAccount]);
+  const microsoftTokenExpiry = useMemo(() => extractTokenExpiry(microsoftAccount), [microsoftAccount]);
 
   const hasGoogleRequiredScopes = useMemo(() => {
     if (!googleApprovedScopes) return false;
@@ -131,8 +153,17 @@ export default function SettingsPage() {
     );
   }, [msApprovedScopes]);
 
-  const needsGoogleReconnect = hasGoogleAccount && !hasGoogleRequiredScopes;
-  const needsMicrosoftReconnect = hasMicrosoftAccount && !hasMicrosoftRequiredScopes;
+  const googleTokenExpired = useMemo(
+    () => Boolean(googleTokenExpiry && Date.now() >= googleTokenExpiry),
+    [googleTokenExpiry]
+  );
+  const microsoftTokenExpired = useMemo(
+    () => Boolean(microsoftTokenExpiry && Date.now() >= microsoftTokenExpiry),
+    [microsoftTokenExpiry]
+  );
+
+  const needsGoogleReconnect = hasGoogleAccount && (!hasGoogleRequiredScopes || googleTokenExpired);
+  const needsMicrosoftReconnect = hasMicrosoftAccount && (!hasMicrosoftRequiredScopes || microsoftTokenExpired);
 
   const openPopupAndWait = (url: string) => {
     return new Promise<void>((resolve) => {
@@ -558,10 +589,14 @@ export default function SettingsPage() {
       const params = new URLSearchParams(window.location.search);
       const errorParam = params.get('error');
       const scrollToIntegration = params.get('scroll');
+      const authMessageParam = params.get('msg');
       
       if (errorParam === 'auth_failed' || scrollToIntegration === 'integration') {
         if (errorParam === 'auth_failed') {
-          setAuthErrorMessage('Permission required. Please reconnect to send emails from your account');
+          const decodedMessage = authMessageParam
+            ? decodeURIComponent(authMessageParam)
+            : 'Permission required. Please reconnect to send emails from your account';
+          setAuthErrorMessage(decodedMessage);
           
           // Auto-dismiss after 10 seconds
           setTimeout(() => {
@@ -1295,31 +1330,32 @@ export default function SettingsPage() {
               </div>
               <div className="flex items-center gap-2">
                 {hasGoogleAccount ? (
-                  <>
-                    {needsGoogleReconnect && (
-                      <button
-                        onClick={() => handleReconnect('google')}
-                        disabled={isConnecting !== null}
-                        className="px-3 py-2 text-sm rounded-lg bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-60"
-                        title="Grant email send and read permissions"
-                      >
-                        {isConnecting ? 'Fixing…' : 'Reconnect'}
-                      </button>
-                    )}
+                  needsGoogleReconnect ? (
                     <button
-                      onClick={handleDisconnect}
-                      disabled={isDisconnecting || !passwordEnabled}
-                      className={`px-3 py-2 text-sm rounded-lg transition-colors ${
-                        isDisconnecting || !passwordEnabled
-                          ? 'border border-gray-200 text-gray-500 bg-gray-100 cursor-not-allowed'
-                          : 'border border-red-200 text-red-700 hover:bg-red-50'
-                      }`}
-                      aria-disabled={isDisconnecting || !passwordEnabled}
-                      title={!passwordEnabled ? 'Account disconnection is not supported for this sign-in method.' : undefined}
+                      onClick={() => handleReconnect('google')}
+                      disabled={isConnecting !== null}
+                      className="px-3 py-2 text-sm rounded-lg bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-60"
+                      title="Grant email send and read permissions"
                     >
-                      {isDisconnecting ? 'Disconnecting...' : 'Disconnect'}
+                      {isConnecting ? 'Fixing…' : 'Reconnect'}
                     </button>
-                  </>
+                  ) : (
+                    <>
+                      <button
+                        onClick={handleDisconnect}
+                        disabled={isDisconnecting || !passwordEnabled}
+                        className={`px-3 py-2 text-sm rounded-lg transition-colors ${
+                          isDisconnecting || !passwordEnabled
+                            ? 'border border-gray-200 text-gray-500 bg-gray-100 cursor-not-allowed'
+                            : 'border border-red-200 text-red-700 hover:bg-red-50'
+                        }`}
+                        aria-disabled={isDisconnecting || !passwordEnabled}
+                        title={!passwordEnabled ? 'Account disconnection is not supported for this sign-in method.' : undefined}
+                      >
+                        {isDisconnecting ? 'Disconnecting...' : 'Disconnect'}
+                      </button>
+                    </>
+                  )
                 ) : (
                   <button
                     onClick={() => handleConnect('google')}
@@ -1340,7 +1376,9 @@ export default function SettingsPage() {
             </div>
             {hasGoogleAccount && needsGoogleReconnect && (
               <div className="p-3 rounded-md bg-amber-50 border border-amber-200 text-amber-800 text-xs">
-                We're missing permissions to send and read email. Click "Reconnect".
+                {googleTokenExpired
+                  ? 'Your Google token expired. Click "Reconnect" to refresh permissions.'
+                  : 'We are missing permissions to send and read email. Click "Reconnect".'}
               </div>
             )}
 
@@ -1366,31 +1404,32 @@ export default function SettingsPage() {
               </div>
               <div className="flex items-center gap-2">
                 {hasMicrosoftAccount ? (
-                  <>
-                    {needsMicrosoftReconnect && (
-                      <button
-                        onClick={() => handleReconnect('microsoft')}
-                        disabled={isConnecting !== null}
-                        className="px-3 py-2 text-sm rounded-lg bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-60"
-                        title="Grant email send and read permissions"
-                      >
-                        {isConnecting ? 'Fixing…' : 'Reconnect'}
-                      </button>
-                    )}
+                  needsMicrosoftReconnect ? (
                     <button
-                      onClick={handleDisconnect}
-                      disabled={isDisconnecting || !passwordEnabled}
-                      className={`px-3 py-2 text-sm rounded-lg transition-colors ${
-                        isDisconnecting || !passwordEnabled
-                          ? 'border border-gray-200 text-gray-500 bg-gray-100 cursor-not-allowed'
-                          : 'border border-red-200 text-red-700 hover:bg-red-50'
-                      }`}
-                      aria-disabled={isDisconnecting || !passwordEnabled}
-                      title={!passwordEnabled ? 'Set a password in your account before disconnecting.' : undefined}
+                      onClick={() => handleReconnect('microsoft')}
+                      disabled={isConnecting !== null}
+                      className="px-3 py-2 text-sm rounded-lg bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-60"
+                      title="Grant email send and read permissions"
                     >
-                      {isDisconnecting ? 'Disconnecting...' : 'Disconnect'}
+                      {isConnecting ? 'Fixing…' : 'Reconnect'}
                     </button>
-                  </>
+                  ) : (
+                    <>
+                      <button
+                        onClick={handleDisconnect}
+                        disabled={isDisconnecting || !passwordEnabled}
+                        className={`px-3 py-2 text-sm rounded-lg transition-colors ${
+                          isDisconnecting || !passwordEnabled
+                            ? 'border border-gray-200 text-gray-500 bg-gray-100 cursor-not-allowed'
+                            : 'border border-red-200 text-red-700 hover:bg-red-50'
+                        }`}
+                        aria-disabled={isDisconnecting || !passwordEnabled}
+                        title={!passwordEnabled ? 'Set a password in your account before disconnecting.' : undefined}
+                      >
+                        {isDisconnecting ? 'Disconnecting...' : 'Disconnect'}
+                      </button>
+                    </>
+                  )
                 ) : (
                   <button
                     onClick={() => handleConnect('microsoft')}
@@ -1411,7 +1450,9 @@ export default function SettingsPage() {
             </div>
             {hasMicrosoftAccount && needsMicrosoftReconnect && (
               <div className="p-3 rounded-md bg-amber-50 border border-amber-200 text-amber-800 text-xs">
-                We're missing permissions to send and read email. Click "Reconnect".
+                {microsoftTokenExpired
+                  ? 'Your Microsoft token expired. Click "Reconnect" to refresh permissions.'
+                  : 'We are missing permissions to send and read email. Click "Reconnect".'}
               </div>
             )}
           </div>
