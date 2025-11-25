@@ -38,6 +38,7 @@ interface EmailDraft {
   scheduledFor?: string;
   gmailMessageId?: string;
   gmailReferences?: string;
+  previousMessageId?: string;
 }
 
 interface EmailViewerProps {
@@ -231,7 +232,9 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
     if (mode === 'answered') return true;
     return isSendDisabled;
   })();
-  const shouldShowScheduleButton = mode === 'scheduled' && !email?.scheduledFor;
+  const shouldShowScheduleButton =
+    (mode === 'scheduled' && !email?.scheduledFor) ||
+    (mode === 'draft' && Boolean(email?.previousMessageId));
 
   // Modal handlers
   const handleAuthSuccess = () => {
@@ -414,8 +417,13 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
         const errorMessage = result?.message || result?.error || `Failed to send email: ${response.statusText}`;
         
         // Check if it's an authentication error and redirect to settings
-        if (errorMessage.includes('Authentication failed') || errorMessage.includes('reconnect your account')) {
-          router.push('/settings?error=auth_failed');
+        if (
+          errorMessage.includes('Authentication failed') ||
+          errorMessage.toLowerCase().includes('reconnect your account') ||
+          errorMessage.toLowerCase().includes('reconnect your google account')
+        ) {
+          const redirectMsg = encodeURIComponent(errorMessage);
+          router.push(`/settings?error=auth_failed&msg=${redirectMsg}`);
           return;
         }
         
@@ -435,14 +443,32 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
             ? (result.data as EmailDraft)
             : null;
 
+        const investorContext =
+          (latestPayload as any)?.investor ||
+          (email as any)?.investor ||
+          ((email as any)?.investorId
+            ? {
+                id: (email as any).investorId,
+                name:
+                  (email as any).investorName ||
+                  (Array.isArray(email?.to) && email.to.length
+                    ? email.to[0]
+                    : typeof email?.to === 'string'
+                      ? email.to
+                      : undefined),
+              }
+            : undefined);
+
         const latestMessage: EmailDraft = latestPayload
           ? {
               ...latestPayload,
               userId: currentUserId,
+              ...(investorContext ? { investor: investorContext, investorName: investorContext.name } : {}),
             }
           : {
               ...email,
               userId: currentUserId,
+              ...(investorContext ? { investor: investorContext, investorName: investorContext.name } : {}),
             };
 
         // Save for potential follow-up scheduling (prefer updated server response for thread IDs)
@@ -911,7 +937,7 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
             await onEmailRefresh();
           }
           if (onRequestTabChange) {
-            onRequestTabChange('scheduled');
+            onRequestTabChange('all');
           }
         }}
         email={lastSentEmail ? {
@@ -924,6 +950,14 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
         onClose={() => setShowSchedulePicker(false)}
         onConfirm={handleScheduleExistingEmail}
         isSubmitting={isSchedulingUpdate}
+        onSchedule={async () => {
+          if (onEmailRefresh) {
+            await onEmailRefresh();
+          }
+          if (onRequestTabChange) {
+            onRequestTabChange('scheduled');
+          }
+        }}
       />
     </React.Fragment>
   );
@@ -1193,7 +1227,7 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
                     disabled={isCancelling}
                     className="px-3 py-2 rounded-md border border-red-300 text-red-600 bg-white hover:bg-red-50 disabled:opacity-50"
                   >
-                    {isCancelling ? 'Cancelling…' : 'Cancel Scheduled'}
+                    {isCancelling ? 'Cancelling…' : 'Cancel'}
                   </button>
                 )}
                 {shouldShowScheduleButton ? (
