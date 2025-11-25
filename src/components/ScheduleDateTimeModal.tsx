@@ -4,12 +4,13 @@ import React, { useEffect, useMemo, useState } from 'react';
 
 interface ScheduleDateTimeModalProps {
   isOpen: boolean;
+  onSchedule: () => Promise<void> | void;
   onClose: () => void;
   onConfirm: (scheduledFor: string) => Promise<void> | void;
   isSubmitting?: boolean;
 }
 
-export default function ScheduleDateTimeModal({ isOpen, onClose, onConfirm, isSubmitting = false }: ScheduleDateTimeModalProps) {
+export default function ScheduleDateTimeModal({ isOpen, onClose, onConfirm, onSchedule, isSubmitting = false }: ScheduleDateTimeModalProps) {
   const [scheduledDate, setScheduledDate] = useState('');
   const [scheduledTime, setScheduledTime] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -51,6 +52,7 @@ export default function ScheduleDateTimeModal({ isOpen, onClose, onConfirm, isSu
 
     setError(null);
     await onConfirm(scheduledDateTime.toISOString());
+    await onSchedule();
   };
 
   return (
