@@ -92,7 +92,7 @@ Best Regards`,
     const paragraphs = parts
       .map((p) => p.trim())
       .filter(Boolean)
-      .map((p) => `<p>${toHtml(p)}</p>`);
+      .map((p) => `<p>${toHtml(p)}</p><br>`);
     const formattedMain = paragraphs.join('\n');
     return signaturePart ? `${formattedMain}\n${signaturePart}` : formattedMain;
   };

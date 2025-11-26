@@ -933,15 +933,28 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
         onSchedule={async (createdDraft) => {
           console.log('Schedule confirmed');
           setShowScheduleModal(false);
-          if (onEmailRefresh) {
-            await onEmailRefresh();
-          }
           if (onRequestTabChange) {
             onRequestTabChange('all');
           }
-          if (createdDraft && onEmailUpdate) {
-            onEmailUpdate(createdDraft, { preserveSelection: false });
+          if (createdDraft?.id && onEmailUpdate) {
+            try {
+              const res = await fetch(getApiUrl(`/api/message/${createdDraft.id}`));
+              if (res.ok) {
+                const data = await res.json();
+                const fetched = data?.message || data;
+                onEmailUpdate(fetched, { preserveSelection: false });
+              } else {
+                onEmailUpdate(createdDraft, { preserveSelection: false });
+              }
+            } catch {
+              onEmailUpdate(createdDraft, { preserveSelection: false });
+            }
           }
+          if (onEmailRefresh) {
+            await onEmailRefresh();
+          }
+          setSendStatus('success');
+          setSendMessage('Follow-up email drafted successfully');
         }}
         email={lastSentEmail ? {
           ...lastSentEmail,
