@@ -4,11 +4,12 @@ import React, { useState, useLayoutEffect, useMemo } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { getApiUrl } from '@lib/api';
 import { appendSignatureToBody, useSignature } from '@utils/signature';
+import { useUserCompany } from '@hooks/useUserCompany';
 
 interface ScheduleFollowUpModalProps {
   isOpen: boolean;
   onClose: () => Promise<void> | void;
-  onSchedule: () => Promise<void> | void;
+  onSchedule: (created?: any) => Promise<void> | void;
   email: {
     id: string;
     userId: string;
@@ -30,6 +31,7 @@ export default function ScheduleFollowUpModal({ isOpen, onClose, onSchedule, ema
   const [isScheduling, setIsScheduling] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showTemplates, setShowTemplates] = useState(false);
+  const [activeTemplateId, setActiveTemplateId] = useState<string | null>(null);
 
   useLayoutEffect(() => {
     if (isOpen && email) {
@@ -47,51 +49,66 @@ export default function ScheduleFollowUpModal({ isOpen, onClose, onSchedule, ema
     if (typeof email.to === 'string') return email.to;
     return 'there';
   }, [email]);
-  console.log('Investor Email:', email);
-
-  const businessName =
-    (user?.publicMetadata?.companyName as string) ||
-    (email?.subject ? email.subject.replace(/^Re:\s*/i, '') : 'our company');
+  const { companyName} = useUserCompany();
 
   const templates = useMemo(
     () => [
       {
         id: 'warm',
         title: 'Warm & Conversational',
-        subject: `${businessName} follow-up`,
+        subject: `${companyName} follow-up`,
         body: `Hi ${investorName},
 Hope your week’s going well!
 
-Just circling back—completely understand if timing is tough. If you’re open to it, I’d love to get your thoughts on what we’re building at ${businessName}. Even a quick glance at a one-pager would help us know if we’re a potential fit.
+Just circling back—completely understand if timing is tough. If you’re open to it, I’d love to get your thoughts on what we’re building at ${companyName}. Even a quick glance at a one-pager would help us know if we’re a potential fit.
 
-Appreciate your time,`,
+Appreciate your time`,
       },
       {
         id: 'nudge',
         title: 'Friendly, Light Nudge',
-        subject: `${businessName} follow-up`,
+        subject: `${companyName} follow-up`,
         body: `Hi ${investorName},
 
-Hope you’re well. Just wanted to follow up in case my earlier note about ${businessName} got lost in the inbox shuffle.
+Hope you’re well. Just wanted to follow up in case my earlier note about ${companyName} got lost in the inbox shuffle.
 
 I believe what we’re building aligns with your focus and I’d be happy to share a short overview or jump on a quick call if that’s helpful.
 
-Best,`,
+Best Regards`,
       },
     ],
-    [businessName, investorName]
+    [companyName, investorName]
   );
+
+  const formatTemplateBody = (raw: string) => {
+    const trimmed = (raw || '').trim();
+    if (!trimmed) return '';
+    // Preserve tables if present
+    if (trimmed.includes('<table')) return trimmed;
+    const toHtml = (value: string) => value.replace(/\n/g, '<br/>');
+    const [main, ...rest] = trimmed.split(/(?:\n|<br\s*\/?>)+--/);
+    const signaturePart = rest.length ? `--${rest.join('--')}` : '';
+    const parts = (main || '').split(/\n+/);
+    const paragraphs = parts
+      .map((p) => p.trim())
+      .filter(Boolean)
+      .map((p) => `<p>${toHtml(p)}</p>`);
+    const formattedMain = paragraphs.join('\n');
+    return signaturePart ? `${formattedMain}\n${signaturePart}` : formattedMain;
+  };
 
   if (!isOpen || !email) {
     return null;
   }
 
-  const handleSchedule = async (subject: string, body: string) => {
+  const handleSchedule = async (subject: string, body: string, templateId: string) => {
     setIsScheduling(true);
     setError(null);
+    setActiveTemplateId(templateId);
 
     try {
-      const bodyWithSignature = appendSignatureToBody(body, signatureHtml);
+      const formattedBody = templateId ? formatTemplateBody(body) : body;
+      const bodyWithSignature = appendSignatureToBody(formattedBody, signatureHtml);
       // Create scheduled email
       const response = await fetch(getApiUrl('/api/message/schedule'), {
         method: 'POST',
@@ -104,6 +121,7 @@ Best,`,
           subject,
           from: email.from,
           body: bodyWithSignature,
+          templateKey: templateId,
           scheduledFor: null,
           threadId: email.threadId,
            previousMessageId: email.id,
@@ -115,13 +133,15 @@ Best,`,
         throw new Error(errorData.message || 'Failed to schedule email');
       }
 
-      await onSchedule();
+      const created = await response.json().catch(() => null);
+      await onSchedule(created?.data || created);
 
     } catch (error) {
       console.error('Error scheduling follow-up:', error);
       setError(error instanceof Error ? error.message : 'Failed to schedule email');
     } finally {
       setIsScheduling(false);
+      setActiveTemplateId(null);
     }
   };
 
@@ -183,11 +203,11 @@ Best,`,
                       <p className="text-xs text-gray-500 mt-1">Subject: {tpl.subject}</p>
                     </div>
                     <button
-                      onClick={() => handleSchedule(tpl.subject, tpl.body)}
+                      onClick={() => handleSchedule(tpl.subject, tpl.body, tpl.id)}
                       disabled={isScheduling}
                       className="px-3 py-2 text-sm rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60 whitespace-nowrap"
                     >
-                      {isScheduling ? 'Creating...' : 'Use this template'}
+                      {isScheduling && activeTemplateId === tpl.id ? 'Creating...' : 'Use this template'}
                     </button>
                   </div>
                   <pre className="mt-3 whitespace-pre-wrap text-sm text-gray-700 bg-gray-50 border border-gray-100 rounded-md p-3 flex-1">
