@@ -22,6 +22,8 @@ const SIGNATURE_CLOSINGS = [
   'sincerely',
   'thank you',
   'thanks',
+  'Appreciate your time',
+  'Best Regards',
 ];
 
 const escapeHtml = (value: string): string =>
@@ -141,10 +143,6 @@ export const appendSignatureToBody = (
   const hasClosing = SIGNATURE_CLOSINGS.some(
     (phrase) => normalized.endsWith(phrase) || normalized.includes(`${phrase}.`),
   );
-
-  if (!hasClosing) {
-    cleanedContent += '<p style="margin:0 0 12px 0;">Best regards,</p>';
-  }
 
   if (cleanedContent && !/<p>\s*<br\s*\/?>(\s*<\/p>)?\s*$/i.test(cleanedContent)) {
     cleanedContent += '<p><br></p>';

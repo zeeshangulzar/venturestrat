@@ -930,7 +930,7 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
             await onEmailRefresh();
           }
         }}
-        onSchedule={async () => {
+        onSchedule={async (createdDraft) => {
           console.log('Schedule confirmed');
           setShowScheduleModal(false);
           if (onEmailRefresh) {
@@ -938,6 +938,9 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
           }
           if (onRequestTabChange) {
             onRequestTabChange('all');
+          }
+          if (createdDraft && onEmailUpdate) {
+            onEmailUpdate(createdDraft, { preserveSelection: false });
           }
         }}
         email={lastSentEmail ? {
@@ -1181,7 +1184,7 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
                   handleFieldChange('body', content);
                 }}
                 placeholder="Enter your email content..."
-                style={{ minHeight: '400px' }}
+                style={{ minHeight: '300px' }}
                 className="flex-1"
                 enableAIEditing={true}
                 onAttachmentsChange={handleAttachmentsChange}

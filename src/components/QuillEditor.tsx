@@ -164,7 +164,7 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
   onChange,
   placeholder = 'Enter your content...',
   readOnly = false,
-  height = '400px',
+  height = '300px',
   modules,
   formats,
   className = '',
