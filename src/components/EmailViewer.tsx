@@ -1069,10 +1069,17 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
           </div> */}
           
           {/* To Field - Display Only */}
-          <div>
-            <span className="font-medium text-gray-700">To:</span>
-            <span className="ml-2 text-gray-900">{getRecipients(email.to)}</span>
-          </div>
+          {mode === "answered" ? (
+            <div>
+              <span className="font-medium text-gray-700">From:</span>
+              <span className="ml-2 text-gray-900">{getRecipients(email.from)}</span>
+            </div>
+          ) : (
+            <div>
+              <span className="font-medium text-gray-700">To:</span>
+              <span className="ml-2 text-gray-900">{getRecipients(email.to)}</span>
+            </div>
+          )}
           
           {/* CC Field */}
           {!readOnly && (
