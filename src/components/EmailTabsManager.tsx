@@ -30,6 +30,9 @@ export default function EmailTabsManager({ userId, refreshTrigger, selectEmailId
   const [pendingSave, setPendingSave] = useState(false);
   const [userInitiatedTabChange, setUserInitiatedTabChange] = useState(false);
   const [processedSelectEmailId, setProcessedSelectEmailId] = useState<string | null>(null);
+  const [followUpRefresh, setFollowUpRefresh] = useState(0);
+  const [followUpSelectEmailId, setFollowUpSelectEmailId] = useState<string | null>(null);
+  const [followUpIsAI, setFollowUpIsAI] = useState(false);
   
   // Ref to store the save function from EmailManagementInterface
   const saveRef = useRef<(() => Promise<void>) | null>(null);
@@ -123,7 +126,7 @@ export default function EmailTabsManager({ userId, refreshTrigger, selectEmailId
 
   useEffect(() => {
     fetchCounts();
-  }, [userId, refreshTrigger]); // Add refreshTrigger to dependencies
+  }, [userId, refreshTrigger, followUpRefresh]); // Add refresh triggers to dependencies
 
   // Reset user-initiated flag when selectEmailId changes (new AI email created)
   useEffect(() => {
@@ -196,9 +199,15 @@ export default function EmailTabsManager({ userId, refreshTrigger, selectEmailId
   };
 
   const handleSelectEmailProcessed = () => {
-    setProcessedSelectEmailId(selectEmailId || null);
-    // Notify parent component to clear the selectEmailId immediately
-    if (onEmailProcessed && selectEmailId) {
+    const currentSelect = followUpSelectEmailId || selectEmailId || null;
+    setProcessedSelectEmailId(currentSelect);
+    // Clear follow-up selection state after it has been handled
+    if (followUpSelectEmailId) {
+      setFollowUpSelectEmailId(null);
+      setFollowUpIsAI(false);
+    }
+    // Notify parent component to clear the selectEmailId immediately (only for external select)
+    if (!followUpSelectEmailId && onEmailProcessed && selectEmailId) {
       onEmailProcessed();
     }
     // Clear the processed state after a short delay to allow for future selections
@@ -212,7 +221,25 @@ export default function EmailTabsManager({ userId, refreshTrigger, selectEmailId
   };
 
 
-  const willPassSelectEmailId = selectEmailId && processedSelectEmailId !== selectEmailId ? selectEmailId : undefined;
+  const combinedSelectEmailId = followUpSelectEmailId || selectEmailId || undefined;
+  const willPassSelectEmailId =
+    combinedSelectEmailId && processedSelectEmailId !== combinedSelectEmailId
+      ? combinedSelectEmailId
+      : undefined;
+  const combinedIsAIEmail = followUpIsAI || isAIEmail;
+
+  const handleFollowUpCreated = (emailId: string) => {
+    // Force drafts tab, refresh counts, and select the new draft similar to AI flow
+    setUserInitiatedTabChange(false);
+    setActiveSection('all');
+    setFollowUpIsAI(true); // reuse AI flow to bypass debounce and force fresh fetch
+    setFollowUpSelectEmailId(`${emailId}_${Date.now()}`);
+    setFollowUpRefresh(prev => prev + 1);
+    fetchCounts();
+    if (onTabSwitch) {
+      onTabSwitch('all');
+    }
+  };
 
   return (
     <MailTabs
@@ -226,17 +253,18 @@ export default function EmailTabsManager({ userId, refreshTrigger, selectEmailId
           <EmailManagementInterface 
             userId={userId} 
             mode="draft" 
-            refreshTrigger={refreshTrigger} 
+            refreshTrigger={(refreshTrigger || 0) + followUpRefresh} 
             onEmailSent={handleEmailSent}
             onSaveStart={handleSaveStart}
             onSaveEnd={handleSaveEnd}
             selectEmailId={willPassSelectEmailId}
-            isAIEmail={isAIEmail}
+            isAIEmail={combinedIsAIEmail}
             onSelectEmailProcessed={handleSelectEmailProcessed}
             onSaveRefReady={handleSaveRefReady}
             onAttachmentUploadStatusChange={onAttachmentUploadStatusChange}
             onCountsAdjust={adjustCounts}
             onRequestTabChange={(section) => { handleSectionChange(section); }}
+            onFollowUpCreated={handleFollowUpCreated}
           />
         )}
         
