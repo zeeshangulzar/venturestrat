@@ -57,6 +57,7 @@ interface EmailViewerProps {
   onAttachmentUploadStatusChange?: (isUploading: boolean) => void;
   onRequestTabChange?: (section: MailSectionType) => void;
   onCountsAdjust?: (delta: EmailCountDelta) => void;
+  onFollowUpCreated?: (emailId: string) => void;
 }
 
 const MAX_ATTACHMENT_SIZE = 75 * 1024 * 1024; // 75MB
@@ -97,7 +98,7 @@ const deleteAttachmentMetadata = async (messageId: string, key: string) => {
   }
 };
 
-export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUpdate, onEmailSent, onScheduledEmailCancel, onEmailSaveStart, onEmailSaveEnd, onEmailRefresh, readOnly = false, loading = false, saveRef, onAttachmentUploadStatusChange, onRequestTabChange, onCountsAdjust }: EmailViewerProps) {
+export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUpdate, onEmailSent, onScheduledEmailCancel, onEmailSaveStart, onEmailSaveEnd, onEmailRefresh, readOnly = false, loading = false, saveRef, onAttachmentUploadStatusChange, onRequestTabChange, onCountsAdjust, onFollowUpCreated }: EmailViewerProps) {
   const router = useRouter();
   const { user } = useUser();
   const [editedSubject, setEditedSubject] = useState('');
@@ -936,22 +937,12 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
           if (onRequestTabChange) {
             onRequestTabChange('all');
           }
-          if (createdDraft?.id && onEmailUpdate) {
-            try {
-              const res = await fetch(getApiUrl(`/api/message/${createdDraft.id}`));
-              if (res.ok) {
-                const data = await res.json();
-                const fetched = data?.message || data;
-                onEmailUpdate(fetched, { preserveSelection: false });
-              } else {
-                onEmailUpdate(createdDraft, { preserveSelection: false });
-              }
-            } catch {
-              onEmailUpdate(createdDraft, { preserveSelection: false });
-            }
-          }
           if (onEmailRefresh) {
             await onEmailRefresh();
+          }
+          if (createdDraft?.id) {
+            onFollowUpCreated?.(createdDraft.id);
+            onEmailUpdate?.(createdDraft, { preserveSelection: false });
           }
           setSendStatus('success');
           setSendMessage('Follow-up email drafted successfully');
@@ -972,6 +963,9 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
           }
           if (onRequestTabChange) {
             onRequestTabChange('scheduled');
+          }
+          if (onCountsAdjust) {
+            onCountsAdjust({ scheduled: 1, all: -1 });
           }
         }}
       />
