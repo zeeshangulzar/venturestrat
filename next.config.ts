@@ -34,18 +34,39 @@ const nextConfig: NextConfig = {
     })),
   },
   async headers() {
+    const ContentSecurityPolicy = `
+      default-src 'self' https://venturestrat.ai https://www.venturestrat.ai;
+
+      script-src 'self' 'unsafe-inline' 'unsafe-eval'
+        https://venturestrat.ai
+        https://www.venturestrat.ai
+        https://clerk.venturestrat.ai
+        https://accounts.venturestrat.ai;
+
+      connect-src 'self'
+        https://venturestrat.ai
+        https://www.venturestrat.ai
+        https://venturestrat-backend.onrender.com
+        https://clerk.venturestrat.ai
+        https://accounts.venturestrat.ai;
+
+      img-src 'self' data: blob:;
+      style-src 'self' 'unsafe-inline';
+      font-src 'self' data:;
+    `.replace(/\s{2,}/g, " ").trim();
+
     return [
       {
         source: "/:path*",
         headers: [
-          {
-            key: "X-Content-Type-Options",
-            value: "nosniff",
-          },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "Content-Security-Policy", value: ContentSecurityPolicy },
         ],
       },
     ];
-  },
+  }
+
+
 };
 
 export default nextConfig;
