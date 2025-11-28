@@ -20,6 +20,7 @@ const presetHosts = [
   "res-4.cloudinary.com",
   "res-5.cloudinary.com",
   "venturestrat-staging.s3.us-east-1.amazonaws.com",
+  "img.clerk.com",
 ];
 
 // ---------------------------------------------------------------------------
