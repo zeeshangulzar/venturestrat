@@ -76,6 +76,7 @@ const nextConfig: NextConfig = {
         ${FRONTEND_SRC}
         ${CLERK_SRC};
 
+      worker-src 'self' blob:;
       connect-src 'self'
         ${FRONTEND_SRC}
         ${CLERK_SRC}
