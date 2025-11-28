@@ -82,8 +82,10 @@ const nextConfig: NextConfig = {
         ${BACKEND_SRC};
 
       img-src 'self' data: blob: ${IMG_SRC};
-      style-src 'self' 'unsafe-inline';
-      font-src 'self' data:;
+      
+      style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+      
+      font-src 'self' data: https://fonts.gstatic.com;
     `.replace(/\s{2,}/g, " ").trim();
 
     return [
