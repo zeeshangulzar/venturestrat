@@ -22,6 +22,30 @@ const presetHosts = [
   "venturestrat-staging.s3.us-east-1.amazonaws.com",
 ];
 
+// ---------------------------------------------------------------------------
+// Load CSP domains from ENV
+// ---------------------------------------------------------------------------
+const FRONTEND_DOMAINS = (process.env.NEXT_PUBLIC_CSP_FRONTEND_DOMAINS || "")
+  .split(",")
+  .map((d) => d.trim())
+  .filter(Boolean);
+
+const CLERK_DOMAINS = (process.env.NEXT_PUBLIC_CSP_CLERK_DOMAINS || "")
+  .split(",")
+  .map((d) => d.trim())
+  .filter(Boolean);
+
+const BACKEND_DOMAINS = (process.env.NEXT_PUBLIC_CSP_BACKEND_DOMAINS || "")
+  .split(",")
+  .map((d) => d.trim())
+  .filter(Boolean);
+
+const noStoreHeaders = [
+  { key: "Cache-Control", value: "no-store, no-cache, must-revalidate, max-age=0, private" },
+  { key: "Pragma", value: "no-cache" },
+  { key: "Expires", value: "0" },
+];
+
 const imageHosts = Array.from(new Set([...presetHosts, ...extraHosts]));
 
 const nextConfig: NextConfig = {
@@ -33,24 +57,30 @@ const nextConfig: NextConfig = {
       pathname: "/**",
     })),
   },
+
   async headers() {
+    const FRONTEND_SRC = FRONTEND_DOMAINS.join(" ");
+    const CLERK_SRC = CLERK_DOMAINS.join(" ");
+    const BACKEND_SRC = BACKEND_DOMAINS.join(" ");
+
+    // ⭐ Build img-src list dynamically (fixing “images not loading” issue)
+    const IMG_SRC = imageHosts
+      .map((h) => `https://${h}`)
+      .join(" ");
+
     const ContentSecurityPolicy = `
-      default-src 'self' https://venturestrat.ai https://www.venturestrat.ai;
+      default-src 'self' ${FRONTEND_SRC};
 
       script-src 'self' 'unsafe-inline' 'unsafe-eval'
-        https://venturestrat.ai
-        https://www.venturestrat.ai
-        https://clerk.venturestrat.ai
-        https://accounts.venturestrat.ai;
+        ${FRONTEND_SRC}
+        ${CLERK_SRC};
 
       connect-src 'self'
-        https://venturestrat.ai
-        https://www.venturestrat.ai
-        https://venturestrat-backend.onrender.com
-        https://clerk.venturestrat.ai
-        https://accounts.venturestrat.ai;
+        ${FRONTEND_SRC}
+        ${CLERK_SRC}
+        ${BACKEND_SRC};
 
-      img-src 'self' data: blob:;
+      img-src 'self' data: blob: ${IMG_SRC};
       style-src 'self' 'unsafe-inline';
       font-src 'self' data:;
     `.replace(/\s{2,}/g, " ").trim();
@@ -63,10 +93,12 @@ const nextConfig: NextConfig = {
           { key: "Content-Security-Policy", value: ContentSecurityPolicy },
         ],
       },
+      {
+        source: "/(sign-in|sign-up|forgot-password)(.*)",
+        headers: noStoreHeaders,
+      },
     ];
-  }
-
-
+  },
 };
 
 export default nextConfig;
