@@ -95,6 +95,9 @@ const nextConfig: NextConfig = {
         headers: [
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "Content-Security-Policy", value: ContentSecurityPolicy },
+          { key: "X-Frame-Options", value: "DENY" },
+          { key: "Access-Control-Allow-Origin", value: "https://www.venturestrat.ai" },
+          { key: "Access-Control-Allow-Credentials", value: "true" },
         ],
       },
       {
