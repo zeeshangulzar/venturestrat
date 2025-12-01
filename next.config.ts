@@ -98,6 +98,7 @@ const nextConfig: NextConfig = {
           { key: "X-Frame-Options", value: "DENY" },
           { key: "Access-Control-Allow-Origin", value: "https://www.venturestrat.ai" },
           { key: "Access-Control-Allow-Credentials", value: "true" },
+          { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), fullscreen=(self)" },
         ],
       },
       {
