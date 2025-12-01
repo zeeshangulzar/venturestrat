@@ -11,6 +11,7 @@ import Logo from '@components/icons/logoIcon';
 import { setDefaultRole } from '@components/_actions';
 import SignInLogo from '@components/icons/SignInLogo';
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline'
+export const dynamic = "force-dynamic";
 
 
 export default function SignUpPage() {
