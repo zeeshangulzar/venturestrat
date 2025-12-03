@@ -109,3 +109,12 @@ body {
   display: block;
   margin: auto;
 }
+
+.bg-dots {
+  background-image: radial-gradient(#d0d0d0 1px, transparent 1px);
+  background-size: 12px 12px;
+}
+
+.cv-features {
+  font-feature-settings: 'cv11' on, 'cv01' on;
+}
