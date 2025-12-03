@@ -5,7 +5,7 @@ import { verifyBasicAuth, createBasicAuthResponse } from '@utils/basicAuth'
 
 const isAdminRoute = createRouteMatcher(['/admin(.*)'])
 const isProtectedRoute = createRouteMatcher(['/investor(.*)', '/onboarding', '/admin(.*)'])
-const isPublicRoute = createRouteMatcher(['/sign-in', '/sign-up', '/forgot-password', '/sso-callback', '/privacy-policy', '/terms-and-conditions', '/home', '/.well-known(.*)'])
+const isPublicRoute = createRouteMatcher(['/root','/sign-in', '/sign-up', '/forgot-password', '/sso-callback', '/privacy-policy', '/terms-and-conditions', '/home', '/.well-known(.*)'])
 
 export default clerkMiddleware(async (auth, req) => {
   const url = new URL(req.url)
