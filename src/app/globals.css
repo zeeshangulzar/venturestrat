@@ -118,3 +118,7 @@ body {
 .cv-features {
   font-feature-settings: 'cv11' on, 'cv01' on;
 }
+
+.font-helvitica {
+  font-family: Helvetica, Arial, sans-serif;
+}
