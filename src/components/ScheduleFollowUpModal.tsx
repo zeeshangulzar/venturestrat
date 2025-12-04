@@ -211,7 +211,7 @@ Best Regards,`,
                       {isScheduling && activeTemplateId === tpl.id ? 'Creating...' : 'Use This Email'}
                     </button>
                   </div>
-                  <pre className="mt-3 whitespace-pre-wrap text-sm bg-gray-50 border border-gray-100 rounded-md p-3 flex-1">
+                  <pre className="mt-3 whitespace-pre-wrap font-helvitica text-[13px] bg-gray-50 border border-gray-100 rounded-md p-3 flex-1" >
                     {tpl.body}
                   </pre>
                 </div>
