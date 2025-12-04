@@ -200,7 +200,7 @@ Best Regards,`,
                 <div key={tpl.id} className="border rounded-md p-4 hover:border-blue-400 transition-colors h-full flex flex-col">
                   <div className="flex items-start justify-between gap-3">
                     <div className="pr-2">
-                      <p className="text-sm">{tpl.title}</p>
+                      <p className="text-sm font-semibold text-gray-900">{tpl.title}</p>
                       <p className="text-sm mt-1">Subject: {tpl.subject}</p>
                     </div>
                     <button
