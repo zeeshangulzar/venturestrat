@@ -81,14 +81,14 @@ export const buildSignatureHtml = (data: SignatureData): string | null => {
   const contactSegments: string[] = [];
   if (formattedUrl) {
     contactSegments.push(
-      `<span style="color:#222222;text-decoration:none;">${formattedUrl.href}</span>`,
+      `<span style="color:#222222;text-decoration:none; font-size:12.5px;">${formattedUrl.href}</span>`,
     );
   }
 
   if (email) {
     const safeEmail = escapeAttribute(email);
     contactSegments.push(
-      `<span style="color:#222222;text-decoration:none;">${escapeHtml(email)}</span>`,
+      `<span style="color:#222222;text-decoration:none; font-size:12.5px;">${escapeHtml(email)}</span>`,
     );
   }
 
