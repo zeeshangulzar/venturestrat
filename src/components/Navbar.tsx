@@ -16,7 +16,7 @@ export default function Navbar() {
 
     {/* Menu */}
     <nav className="hidden md:flex items-center gap-8 font-poppins font-medium text-[16px] leading-[24px] text-black">
-      <Link href="#problems">Problem & Solution</Link>
+      <Link href="#question-answer">Problem & Solution</Link>
       <Link href="#how">How it works</Link>
       <Link href="#why">Why Venturestrat</Link>
       <Link href="#resources">Resources</Link>
