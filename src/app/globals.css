@@ -118,3 +118,18 @@ body {
 .cv-features {
   font-feature-settings: 'cv11' on, 'cv01' on;
 }
+
+.fade-mask {
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    black 20%,
+    black 80%,
+    transparent
+  );
+}
+
+.font-helvitica {
+  font-family: Helvetica, Arial, sans-serif;
+}
+
