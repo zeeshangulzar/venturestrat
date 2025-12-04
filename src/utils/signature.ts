@@ -70,7 +70,7 @@ export const buildSignatureHtml = (data: SignatureData): string | null => {
 
   const roleCompanyLine =
     position || companyName
-      ? `<p style="margin:0;color:#646464;font-size:14px;font-weight:700;">${[position, companyName]
+      ? `<p style="margin:0;color:#646464;font-size:13px;font-weight:700;">${[position, companyName]
           .filter(Boolean)
           .map((value) => escapeHtml(value!))
           .join(', ')}</p>`
