@@ -2,14 +2,6 @@ import React, { useRef, useState, useEffect } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import WarningIcon from '@components/icons/WarningIcon';
 
-// Check Icon for Solution Section
-const CheckIcon = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="12" cy="12" r="10" stroke="#8EE7A0" strokeWidth="2"/>
-    <path d="M8 12L11 15L16 9" stroke="#8EE7A0" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-  </svg>
-);
-
 export default function QuestionAnswer() {
   const [inView, setInView] = useState(false);
   const sectionRef = useRef(null);

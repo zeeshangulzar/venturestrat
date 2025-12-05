@@ -18,7 +18,7 @@ export default function Navbar() {
     <nav className="hidden md:flex items-center gap-8 font-poppins font-medium text-[16px] leading-[24px] text-black">
       <Link href="#question-answer">Problem & Solution</Link>
       <Link href="#how-it-works">How it works</Link>
-      <Link href="#why">Why Venturestrat</Link>
+      <Link href="#why-venturestrat">Why Venturestrat</Link>
       <Link href="#resources">Resources</Link>
 
       <span className="w-[12px] h-1 opacity-15 border-2 border-[#06060B] rotate-90"></span>
