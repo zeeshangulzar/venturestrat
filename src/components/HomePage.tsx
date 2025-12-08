@@ -1,11 +1,14 @@
 import Navbar from "./Navbar";
 import HeroSection from "@components/home/HeroSection";
-import ProductPreview from "@components/home/ProductPreview";
+import ProductPreview from "@components/home/ProductPreviewSection";
 import StatsSection from "@components/home/StatsSection";
-import QuestionAnswer from "@components/home/QuestionAnswer";
-import HowItWorks from "@components/home/HowItWorks";
-import WhyVentureStrat from "@components/home/WhyVenturStrat";
-import Resources from "@components/home/Resources"
+import QuestionAnswer from "@components/home/QuestionAnswerSection";
+import HowItWorks from "@components/home/HowItWorksSection";
+import WhyVentureStrat from "@components/home/WhyVenturStratSection";
+import Resources from "@components/home/ResourcesSection";
+import Pricing from "@components/home/PricingSection";
+import FAQ from "@components/home/FaqSection";
+import Footer from "./home/FooterSection";
 
 
 export default function HomePage() {
@@ -22,6 +25,9 @@ export default function HomePage() {
       <HowItWorks />
       <WhyVentureStrat />
       <Resources />
+      <Pricing />
+      <FAQ />
+      <Footer />
     </main>
   );
 }
