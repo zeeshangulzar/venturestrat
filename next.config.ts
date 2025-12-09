@@ -51,7 +51,6 @@ const imageHosts = Array.from(new Set([...presetHosts, ...extraHosts]));
 
 const nextConfig: NextConfig = {
   images: {
-    domains: imageHosts,
     remotePatterns: imageHosts.map((hostname) => ({
       protocol: "https",
       hostname,
