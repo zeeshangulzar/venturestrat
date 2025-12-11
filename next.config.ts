@@ -51,7 +51,6 @@ const imageHosts = Array.from(new Set([...presetHosts, ...extraHosts]));
 
 const nextConfig: NextConfig = {
   images: {
-    domains: imageHosts,
     remotePatterns: imageHosts.map((hostname) => ({
       protocol: "https",
       hostname,
@@ -63,6 +62,7 @@ const nextConfig: NextConfig = {
     const FRONTEND_SRC = FRONTEND_DOMAINS.join(" ");
     const CLERK_SRC = CLERK_DOMAINS.join(" ");
     const BACKEND_SRC = BACKEND_DOMAINS.join(" ");
+    const IMG_CONNECT_SRC = imageHosts.map((h) => `https://${h}`).join(" ");
 
     // ⭐ Build img-src list dynamically (fixing “images not loading” issue)
     const IMG_SRC = imageHosts
@@ -80,7 +80,8 @@ const nextConfig: NextConfig = {
       connect-src 'self'
         ${FRONTEND_SRC}
         ${CLERK_SRC}
-        ${BACKEND_SRC};
+        ${BACKEND_SRC}
+        ${IMG_CONNECT_SRC};
 
       img-src 'self' data: blob: ${IMG_SRC};
       
