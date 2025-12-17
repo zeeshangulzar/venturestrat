@@ -57,7 +57,7 @@ body {
 /* React Quill styling for proper scrolling */
 .ql-editor {
   height: 100% !important;
-  min-height: 400px !important;
+  min-height: 300px !important;
   background-color: #F4F6FB !important;
 }
 
@@ -108,4 +108,27 @@ body {
 .ql-toolbar .ql-attachment svg {
   display: block;
   margin: auto;
+}
+
+.bg-dots {
+  background-image: radial-gradient(#d0d0d0 1px, transparent 1px);
+  background-size: 12px 12px;
+}
+
+.cv-features {
+  font-feature-settings: 'cv11' on, 'cv01' on;
+}
+
+.fade-mask {
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    black 20%,
+    black 80%,
+    transparent
+  );
+}
+
+.font-helvitica {
+  font-family: Helvetica, Arial, sans-serif;
 }

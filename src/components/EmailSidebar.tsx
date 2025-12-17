@@ -96,7 +96,7 @@ export default function EmailSidebar({ drafts, selectedEmailId, onEmailSelect }:
                   <div className="flex justify-between items-start mb-2">
                     <div className="flex-1 min-w-0">
                       <p className="font-bold text-[16px] leading-[16px] tracking-[-0.02em] text-[#0C2143] mb-2 truncate">
-                        To: {getRecipients(draft.to)}
+                        { draft.status === "ANSWERED" ? `From: ${getRecipients(draft.from)}` : `To: ${getRecipients(draft.to)}`}
                       </p>
                       <p className="font-normal text-[14px] leading-[16px] tracking-[-0.02em] text-[#525A68] truncate">
                         Subject: {draft.subject}

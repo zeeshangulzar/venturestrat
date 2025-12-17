@@ -22,6 +22,8 @@ const SIGNATURE_CLOSINGS = [
   'sincerely',
   'thank you',
   'thanks',
+  'Appreciate your time',
+  'Best Regards',
 ];
 
 const escapeHtml = (value: string): string =>
@@ -68,7 +70,7 @@ export const buildSignatureHtml = (data: SignatureData): string | null => {
 
   const roleCompanyLine =
     position || companyName
-      ? `<p style="margin:0;color:#646464;font-size:16px;font-weight:700;">${[position, companyName]
+      ? `<p style="margin:0;color:#646464;font-size:13px;font-weight:700;">${[position, companyName]
           .filter(Boolean)
           .map((value) => escapeHtml(value!))
           .join(', ')}</p>`
@@ -79,14 +81,14 @@ export const buildSignatureHtml = (data: SignatureData): string | null => {
   const contactSegments: string[] = [];
   if (formattedUrl) {
     contactSegments.push(
-      `<span style="color:#222222;text-decoration:none;">${formattedUrl.href}</span>`,
+      `<span style="color:#222222;text-decoration:none; font-size:12.5px;">${formattedUrl.href}</span>`,
     );
   }
 
   if (email) {
     const safeEmail = escapeAttribute(email);
     contactSegments.push(
-      `<span style="color:#222222;text-decoration:none;">${escapeHtml(email)}</span>`,
+      `<span style="color:#222222;text-decoration:none; font-size:12.5px;">${escapeHtml(email)}</span>`,
     );
   }
 
@@ -141,10 +143,6 @@ export const appendSignatureToBody = (
   const hasClosing = SIGNATURE_CLOSINGS.some(
     (phrase) => normalized.endsWith(phrase) || normalized.includes(`${phrase}.`),
   );
-
-  if (!hasClosing) {
-    cleanedContent += '<p style="margin:0 0 12px 0;">Best regards,</p>';
-  }
 
   if (cleanedContent && !/<p>\s*<br\s*\/?>(\s*<\/p>)?\s*$/i.test(cleanedContent)) {
     cleanedContent += '<p><br></p>';
@@ -226,7 +224,7 @@ export const buildSignatureData = ({
 
 
   const location = buildLocation(
-    backendPublic.userCountry,
+    '',
   );
 
   return {

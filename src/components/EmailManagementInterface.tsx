@@ -37,9 +37,10 @@ interface EmailManagementInterfaceProps {
   onAttachmentUploadStatusChange?: (isUploading: boolean) => void;
   onRequestTabChange?: (section: MailSectionType) => void;
   onCountsAdjust?: (delta: EmailCountDelta) => void;
+  onFollowUpCreated?: (emailId: string) => void;
 }
 
-export default function EmailManagementInterface({ userId, mode = 'draft', refreshTrigger, onEmailSent, onSaveStart, onSaveEnd, selectEmailId, isAIEmail, onSelectEmailProcessed, onSaveRefReady, onAttachmentUploadStatusChange, onRequestTabChange, onCountsAdjust }: EmailManagementInterfaceProps) {
+export default function EmailManagementInterface({ userId, mode = 'draft', refreshTrigger, onEmailSent, onSaveStart, onSaveEnd, selectEmailId, isAIEmail, onSelectEmailProcessed, onSaveRefReady, onAttachmentUploadStatusChange, onRequestTabChange, onCountsAdjust, onFollowUpCreated }: EmailManagementInterfaceProps) {
   const [drafts, setDrafts] = useState<EmailDraft[]>([]);
   const [selectedEmailId, setSelectedEmailId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -587,6 +588,7 @@ export default function EmailManagementInterface({ userId, mode = 'draft', refre
           onAttachmentUploadStatusChange={onAttachmentUploadStatusChange}
           onCountsAdjust={onCountsAdjust}
           onRequestTabChange={onRequestTabChange}
+          onFollowUpCreated={onFollowUpCreated}
         />
       </div>
     </div>
