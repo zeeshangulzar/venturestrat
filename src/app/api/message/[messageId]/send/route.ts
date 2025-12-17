@@ -84,7 +84,12 @@ export async function POST(
     if (!backendResponse.ok) {
       const errorData = await backendResponse.json();
       return NextResponse.json(
-        { error: errorData.error || 'Failed to send message' },
+        { 
+          error: errorData.error || 'Failed to send message',
+          reason: errorData.reason,
+          currentUsage: errorData.currentUsage,
+          limits: errorData.limits
+        },
         { status: backendResponse.status }
       );
     }

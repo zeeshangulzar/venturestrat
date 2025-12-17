@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { getApiUrl } from '@lib/api';
 import { appendSignatureToBody, buildSignatureHtml, useSignature } from '@utils/signature';
+import SubscriptionLimitModal from './SubscriptionLimitModal';
 
 interface ChatGPTIntegrationProps {
   investor: {
@@ -56,6 +57,9 @@ export default function ChatGPTIntegration({
   const [hasDraft, setHasDraft] = useState(investor.hasDraft ?? false);
   const { signatureHtml } = useSignature();
 
+  const [showLimitModal, setShowLimitModal] = useState(false);
+  const [limitModalData, setLimitModalData] = useState<any>(null);
+  
   useEffect(() => {
     setHasDraft(investor.hasDraft ?? false);
   }, [investor.hasDraft]);
@@ -87,6 +91,7 @@ export default function ChatGPTIntegration({
         },
         body: JSON.stringify({
           prompt: prompt,
+          userId: user.id,
           investorName: investor.name,
           companyName: userData.companyName,
           userName: `${user.firstName || ''} ${user.lastName || ''}`.trim(),
@@ -94,7 +99,17 @@ export default function ChatGPTIntegration({
       });
 
       if (!response.ok) {
-        throw new Error('Failed to generate email');
+        const errorData = await response.json();
+        if (response.status === 403 && errorData.error === 'Subscription limit reached') {
+          setLimitModalData({
+            action: 'ai_draft',
+            currentUsage: errorData.currentUsage,
+            limits: errorData.limits
+          });
+          setShowLimitModal(true);
+          return;
+        }
+        throw new Error(errorData.error || 'Failed to generate email');
       }
 
       const data = await response.json();
@@ -142,16 +157,31 @@ export default function ChatGPTIntegration({
   };
 
   return (
-    <button
-      onClick={generateEmail}
-      disabled={isGenerating || hasDraft}
-      className={`w-full justify-center items-center ${isGenerating ? "px-2" : "px-5"} py-2.5 gap-1 h-[auto] left-4 top-[394px] bg-[#2563EB] rounded-[10px] font-manrope not-italic font-medium text-[14px] leading-[19px] tracking-[-0.02em] text-[#FFFFFF] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer`}
-    >
-      {isGenerating
-        ? 'Loading...'
-        : hasDraft
-          ? 'Email Drafted'
-          : 'AI Email'}
-    </button>
+    <>
+      <button
+        onClick={generateEmail}
+        disabled={isGenerating || hasDraft}
+        className={`w-full justify-center items-center ${isGenerating ? "px-2" : "px-5"} py-2.5 gap-1 h-[auto] left-4 top-[394px] bg-[#2563EB] rounded-[10px] font-manrope not-italic font-medium text-[14px] leading-[19px] tracking-[-0.02em] text-[#FFFFFF] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer`}
+      >
+        {isGenerating
+          ? 'Loading...'
+          : hasDraft
+            ? 'Email Drafted'
+            : 'AI Email'}
+      </button>
+      
+      {showLimitModal && limitModalData && (
+        <SubscriptionLimitModal
+          isOpen={showLimitModal}
+          onClose={() => {
+            setShowLimitModal(false);
+            setIsGenerating(false); // Reset generating state
+          }}
+          action={limitModalData.action}
+          currentUsage={limitModalData.currentUsage}
+          limits={limitModalData.limits}
+        />
+      )}
+    </>
   );
 }

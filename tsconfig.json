@@ -24,27 +24,14 @@
       }
     ],
     "paths": {
-      "@components/*": [
-        "components/*"
-      ],
-      "@lib/*": [
-        "lib/*"
-      ],
-      "@app/*": [
-        "app/*"
-      ],
-      "@utils/*": [
-        "utils/*"
-      ],
-      "@types/*": [
-        "types/*"
-      ],
-      "@admin/*": [
-        "admin/*"
-      ],
-      "@hooks/*": [
-        "hooks/*"
-      ]
+      "@components/*": ["components/*"],
+      "@lib/*": ["lib/*"],
+      "@app/*": ["app/*"],
+      "@utils/*": ["utils/*"],
+      "@types/*": ["types/*"],
+      "@admin/*": ["admin/*"],
+      "@hooks/*": ["hooks/*"],
+      "@contexts/*": ["contexts/*"],
     }
   },
   "include": [

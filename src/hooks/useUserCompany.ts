@@ -9,7 +9,11 @@ interface UserCompanyData {
   companyLogo?: string;
   companyWebsite?: string;
   userProfileImage?: string;
+  subscriptionPlan?: string;
+  subscriptionStatus?: string | null;
   isLoading: boolean;
+  subscriptionCurrentPeriodEnd?: string;
+  isTrialExpired: boolean;
   error: string | null;
   refetch: () => void;
   refreshLogoUrl: () => Promise<void>;
@@ -24,6 +28,10 @@ export const useUserCompany = (): UserCompanyData => {
     companyLogo: undefined,
     companyWebsite: '',
     userProfileImage: undefined,
+    subscriptionPlan: 'FREE',
+    subscriptionStatus: null,
+    subscriptionCurrentPeriodEnd: '',
+    isTrialExpired: false,
     isLoading: true,
     error: null,
     refetch: () => {},
@@ -56,9 +64,13 @@ export const useUserCompany = (): UserCompanyData => {
               companyName: 'RTYST',
               companyLogo: undefined,
               companyWebsite: '',
+              subscriptionPlan: 'FREE',
+              subscriptionStatus: null,
               isLoading: false,
               error: null,
               refetch: loadUserCompanyData,
+              subscriptionCurrentPeriodEnd: '',
+              isTrialExpired: false,
               refreshLogoUrl: async () => {}
             });
             return;
@@ -66,6 +78,16 @@ export const useUserCompany = (): UserCompanyData => {
 
           const actualUserData = userData.user || userData;
           const publicMetaData = actualUserData.publicMetaData || {};
+          const subscriptionPlan = (actualUserData as { subscriptionPlan?: string }).subscriptionPlan || 'FREE';
+          const currentPeriodEnd = (actualUserData as { subscriptionCurrentPeriodEnd?: string }).subscriptionCurrentPeriodEnd || '';
+
+          const isFree = subscriptionPlan === 'FREE';
+
+          const expired = Boolean(
+            isFree &&
+            currentPeriodEnd &&
+            new Date(currentPeriodEnd) <= new Date()
+          );
           const actualCompanyWebsite =
             typeof (actualUserData as Record<string, unknown>).companyWebsite === 'string'
               ? ((actualUserData as Record<string, unknown>).companyWebsite as string).trim()
@@ -77,7 +99,11 @@ export const useUserCompany = (): UserCompanyData => {
             companyLogo: actualUserData.companyLogo,
             companyWebsite: actualCompanyWebsite,
             userProfileImage: user.imageUrl,
+            subscriptionPlan: (actualUserData as { subscriptionPlan?: string }).subscriptionPlan || 'FREE',
+            subscriptionStatus: (actualUserData as { subscriptionStatus?: string | null }).subscriptionStatus ?? null,
             isLoading: false,
+            subscriptionCurrentPeriodEnd: (actualUserData as { subscriptionCurrentPeriodEnd?: string }).subscriptionCurrentPeriodEnd || '',
+            isTrialExpired: expired,
             error: null,
             refetch: loadUserCompanyData,
             refreshLogoUrl: async () => {}
@@ -90,6 +116,9 @@ export const useUserCompany = (): UserCompanyData => {
             companyLogo: undefined,
             companyWebsite: '',
             userProfileImage: user?.imageUrl,
+            subscriptionPlan: 'FREE',
+            subscriptionStatus: null,
+            isTrialExpired: false,
             isLoading: false,
             error: error instanceof Error ? error.message : 'Failed to load company data',
             refetch: loadUserCompanyData,
@@ -112,6 +141,7 @@ export const useUserCompany = (): UserCompanyData => {
             isLoading: false,
             error: null,
             refetch: loadUserCompanyData,
+            isTrialExpired: false,
             refreshLogoUrl: async () => {}
           });
         }, 0);

@@ -1,6 +1,8 @@
 import { CheckBadgeIcon } from '@heroicons/react/24/outline';
 import VerifiedBadgeIcon from './icons/verifiedBadgeIcon';
 import { cleanDisplayName } from '@utils/text';
+import SocialLinkMask from './SocialLinkMask';
+
 
 const SOCIAL_ORDER = ['twitter', 'linkedin', 'facebook'] as const;
 
@@ -99,17 +101,9 @@ export default function InvestorHeader({ name, verified, social_links }: Investo
             const href = social_links[platform];
             if (!href) return null;
             return (
-              <a
-                key={platform}
-                href={href}
-                target="_blank"
-                rel="noreferrer"
-                title={platform}
-                aria-label={platform}
-                className="transition-transform hover:scale-105 hover:opacity-80"
-              >
+              <SocialLinkMask key={platform} url={href} platform={platform}>
                 <SocialIcon type={platform} />
-              </a>
+              </SocialLinkMask>
             );
           })}
         </div>

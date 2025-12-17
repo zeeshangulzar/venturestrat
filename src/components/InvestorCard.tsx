@@ -8,6 +8,8 @@ import InvestorHeader from '@components/InvestorCardHeader';
 import MapPinIcon from './icons/mapPinIcon';
 import Image from "next/image";
 import InitialsAvatar from '@components/InitialsAvatar';
+import ContactInfoMask from './ContactInfoMask';
+import SubscriptionLimitModal from './SubscriptionLimitModal';
 
 import {
   PhoneIcon,
@@ -64,6 +66,8 @@ const InvestorCard: React.FC<{
   const { user } = useUser();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [showLimitModal, setShowLimitModal] = useState(false);
+  const [limitModalData, setLimitModalData] = useState<any>(null);
 
   // Shortlist status is now passed as a prop, no need to fetch individually
 
@@ -113,10 +117,24 @@ const InvestorCard: React.FC<{
           investorId: investor.id,
         }),
       });
+      
       if (res.ok) {
         onShortlistChange?.(investor.id, true);
       } else {
-        console.error('Shortlist error:', (await res.json()).message || 'Unknown error');
+        const errorData = await res.json();
+        
+        // Handle subscription limit reached
+        if (res.status === 403 && errorData.error === 'Subscription limit reached') {
+          setLimitModalData({
+            action: 'add_investor',
+            currentUsage: errorData.currentUsage,
+            limits: errorData.limits
+          });
+          setShowLimitModal(true);
+          return;
+        }
+        
+        console.error('Shortlist error:', errorData.message || 'Unknown error');
       }
     } catch (e) {
       console.error('Error shortlisting investor:', e);
@@ -272,7 +290,9 @@ const InvestorCard: React.FC<{
             <div className="flex items-center gap-2 w-full sm:w-1/2 xl:w-[200px] min-w-0">
               <PhoneIcon className="h-5 w-5 flex-shrink-0" />
               <span className="truncate text-[var(--Dark,#1E293B)] font-manrope text-[13px] sm:text-[14px] font-normal leading-normal tracking-[-0.26px] sm:tracking-[-0.28px]">
-                {investor.phone}
+                <ContactInfoMask>
+                  {investor.phone}
+                </ContactInfoMask>
               </span>
             </div>
           )}
@@ -298,17 +318,14 @@ const InvestorCard: React.FC<{
               </span>
             </a>
           )}
-
-          <a
-            href={`mailto:${getPrimaryEmail()}`}
-            className="flex items-center gap-2 hover:underline group-hover:text-[var(--Dark,#1E293B)] transition-colors w-full sm:w-1/2 xl:w-[200px] min-w-0"
-            onClick={(e) => e.stopPropagation()}
-          >
+          <div className="flex items-center gap-2 w-full sm:w-1/2 xl:w-[200px] min-w-0">
             <EmailIcon className="h-5 w-5 flex-shrink-0" />
             <span className="truncate text-[var(--Dark,#1E293B)] font-manrope text-[13px] sm:text-[14px] font-normal leading-normal tracking-[-0.26px] sm:tracking-[-0.28px]">
-              {getPrimaryEmail()}
+              <ContactInfoMask>
+                {getPrimaryEmail()}
+              </ContactInfoMask>
             </span>
-          </a>
+          </div>
         </div>
 
         {/* Divider: horizontal on mobile/tablet, vertical only on xl+ */}
@@ -357,6 +374,19 @@ const InvestorCard: React.FC<{
           </div>
         </div>
       </div>
+      
+      {showLimitModal && limitModalData && (
+        <SubscriptionLimitModal
+          isOpen={showLimitModal}
+          onClose={() => {
+            setShowLimitModal(false);
+            setLoading(false); // Reset loading state
+          }}
+          action={limitModalData.action}
+          currentUsage={limitModalData.currentUsage}
+          limits={limitModalData.limits}
+        />
+      )}
     </div>
   );
 };
