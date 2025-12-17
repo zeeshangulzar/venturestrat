@@ -47,7 +47,7 @@ export default function OnboardingPage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<OnboardingData>({
     companyName: '',
-    position: 'Founder',
+    position: '',
     companyWebsite: '',
     incorporationCountry: '',
     operationalRegions: [],
@@ -565,7 +565,7 @@ export default function OnboardingPage() {
                 name="position"
                 value={formData.position}
                 onChange={handleInputChange}
-                placeholder="Founder"
+                placeholder="e.g Founder"
                 className="w-full lg:w-[35%] bg-white/10 border border-white/10 rounded-[10px] h-[40px] font-normal text-sm leading-[22px] opacity-80 text-white px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
             </div>

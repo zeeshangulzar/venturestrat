@@ -2,7 +2,7 @@ import React from 'react';
 
 const SignInLogo: React.FC<{ className?: string }> = () => {
   return (
-    <svg width="177" height="20" viewBox="0 0 177 20" fill="none" xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink">
+    <svg width="177" height="20" viewBox="0 0 177 20" fill="black" xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink">
       <rect width="177" height="20" fill="url(#pattern0_1144_2988)"/>
       <defs>
       <pattern id="pattern0_1144_2988" patternContentUnits="objectBoundingBox" width="1" height="1">
