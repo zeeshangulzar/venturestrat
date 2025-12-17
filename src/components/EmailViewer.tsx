@@ -14,6 +14,8 @@ import ScheduleFollowUpModal from './ScheduleFollowUpModal';
 import ScheduleDateTimeModal from './ScheduleDateTimeModal';
 import type { MailSectionType } from './MailTabs';
 import type { EmailCountDelta } from '../types/emailCounts';
+import SubscriptionLimitModal from './SubscriptionLimitModal';
+import { useSubscription } from '@contexts/SubscriptionContext';
 
 interface EmailDraft {
   id: string;
@@ -112,6 +114,7 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
   const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [sendStatus, setSendStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const { subscriptionInfo } = useSubscription();
   const isAttachmentUploading = attachments.some(
     attachment => attachment.status === 'pending' || attachment.status === 'uploading'
   );
@@ -393,9 +396,7 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
       console.log('=== FRONTEND DEBUGGING ===');
       console.log('Attachments metadata being sent:', attachmentPayload);
 
-      const endpoint = mode === 'scheduled'
-        ? getApiUrl(`/api/message/${email.id}/send-reply`)
-        : getApiUrl(`/api/message/${email.id}/send`);
+      const endpoint = getApiUrl(`/api/message/${email.id}/send`);
       const response = await fetch(
         endpoint,
         {
@@ -415,6 +416,16 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
       }
 
       if (!response.ok) {
+        if (response.status === 403 && result?.error === 'Subscription limit reached') {
+          setLimitModalData({
+            action: 'send_email',
+            currentUsage: result?.currentUsage,
+            limits: result?.limits,
+          });
+          setShowLimitModal(true);
+          return;
+        }
+
         const errorMessage = result?.message || result?.error || `Failed to send email: ${response.statusText}`;
         
         // Check if it's an authentication error and redirect to settings
@@ -497,7 +508,24 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
           }
 
           console.log('Opening schedule modal immediately');
-          setShowScheduleModal(true);
+          const response = await fetch(getApiUrl('/api/subscription/validate'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              userId: user?.id,
+              action: 'follow_up_email',
+            }),
+          });
+          console.log('Follow up email response:', response);
+
+          const data = await response.json();
+
+          console.log('CSV permission data:', data);
+          if (subscriptionInfo?.plan !== 'FREE'){
+            if (data.allowed) {
+              setShowScheduleModal(true);
+            }
+          }
           if (onEmailSent) {
             void onEmailSent(investorId);
           }
@@ -514,6 +542,8 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
       setIsSending(false);
     }
   };
+  const [showLimitModal, setShowLimitModal] = useState(false);
+  const [limitModalData, setLimitModalData] = useState<any>(null);
   
   // Debounced auto-save functionality (same pattern as settings page)
   const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -890,7 +920,7 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
   };
 
   const handleSendEmail = async () => {
-    if (!email?.id) return;
+    if (!email?.id || isSending) return;
     
     // Check if user has authenticated with Google or Microsoft
     if (!hasAccount) {
@@ -898,7 +928,6 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
       return;
     }
     
-    // If user has account, proceed with sending
     await proceedWithEmailSending();
   };
 
@@ -1314,6 +1343,19 @@ export default function EmailViewer({ email, userId: userIdProp, mode, onEmailUp
         )}
         </div>
       </div>
+      
+      {showLimitModal && limitModalData && (
+        <SubscriptionLimitModal
+          isOpen={showLimitModal}
+          onClose={() => {
+            setShowLimitModal(false);
+            setIsSending(false); // Reset sending state
+          }}
+          action={limitModalData.action}
+          currentUsage={limitModalData.currentUsage}
+          limits={limitModalData.limits}
+        />
+      )}
     </div>
     {modalComponents}
   </React.Fragment>

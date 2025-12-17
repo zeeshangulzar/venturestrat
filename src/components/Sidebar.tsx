@@ -25,12 +25,13 @@ import { useRole } from '@hooks/useRole'
 import { useUserCompany } from '@hooks/useUserCompany';
 import FundraisingIcon from './icons/Fundraising';
 import InitialsAvatar from './InitialsAvatar';
+import SubscriptionIcon from './icons/SubscriptionIcon';
 
 // Sidebar component
 const Sidebar = () => {
   const pathname = usePathname(); // Get the current pathname
   const { isAdmin } = useRole(); // Get admin status from client-side hook
-  const { companyName, companyLogo, userProfileImage, isLoading } = useUserCompany(); // Get user company data
+  const { companyName, companyLogo, userProfileImage, subscriptionPlan, isLoading, isTrialExpired } = useUserCompany(); // Get user company data
   const [isFundraisingOpen, setIsFundraisingOpen] = useState(false);
   const fundraisingRef = useRef<HTMLDivElement>(null);
 
@@ -129,8 +130,14 @@ const Sidebar = () => {
               {isLoading ? 'Loading...' : companyName}
             </span>
             <div className="flex items-center gap-1">
-              <span className="h-2 w-2 rounded-full bg-green-500"></span>
-              <p className="text-white/70 text-xs">Free Trial</p>
+              <span
+                className={`h-2 w-2 rounded-full ${
+                  isTrialExpired ? 'bg-red-500' : 'bg-green-500'
+                }`}>
+              </span>
+              <p className="text-white/70 text-xs capitalize">
+                {isLoading ? 'Loading plan...' : `${(subscriptionPlan || 'FREE').toLowerCase()} plan`}
+              </p>
             </div>
           </div>
         </div>
@@ -301,6 +308,12 @@ const Sidebar = () => {
 
       {/* Settings and Log Out */}
       <div className="mt-6 px-0">
+        <Link href="/subscription" className={`ml-2.5 mr-2.5 block text-lg py-2 rounded-lg transition-colors ${getLinkClass('/subscription')}`} onClick={() => setIsFundraisingOpen(false)} >
+          <div className="flex items-center">
+            <SubscriptionIcon className="h-6 w-6 mr-2" />
+            <span className='font-medium text-[14px]'>Subscription</span>
+          </div>
+        </Link>
         <Link href="/settings" className={`ml-2.5 mr-2.5 block text-lg py-2 rounded-lg transition-colors ${getLinkClass('/settings')}`} onClick={() => setIsFundraisingOpen(false)} >
           <div className="flex items-center">
             <SettingsIcon className="h-6 w-6 mr-2" />

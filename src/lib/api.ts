@@ -139,3 +139,62 @@ export const updateInvestorStatus = async (shortlistId: string, status: string):
   
   return apiCall;
 };
+
+export const fetchSubscription = async (userId: string): Promise<unknown> => {
+  const response = await fetch(getApiUrl(`/api/user/${userId}/subscription`), {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch subscription: ${response.status}`);
+  }
+
+  return response.json();
+};
+
+export const updateSubscriptionPlan = async (
+  userId: string,
+  plan: string,
+  paymentMethodId?: string
+): Promise<unknown> => {
+  const response = await fetch(getApiUrl(`/api/user/${userId}/subscription`), {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      plan,
+      ...(paymentMethodId ? { paymentMethodId } : {}),
+    }),
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => ({}));
+    const errorMessage = (errorBody as { error?: string }).error || `Failed to update subscription: ${response.status}`;
+    throw new Error(errorMessage);
+  }
+
+  return response.json();
+};
+
+export const createSubscriptionSetupIntent = async (
+  userId: string
+): Promise<{ clientSecret: string; stripeCustomerId?: string | null }> => {
+  const response = await fetch(getApiUrl(`/api/user/${userId}/subscription/intent`), {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => ({}));
+    const errorMessage = (errorBody as { error?: string }).error || `Failed to create setup intent: ${response.status}`;
+    throw new Error(errorMessage);
+  }
+
+  return response.json() as Promise<{ clientSecret: string; stripeCustomerId?: string | null }>;
+};

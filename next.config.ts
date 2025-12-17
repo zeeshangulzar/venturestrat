@@ -23,6 +23,10 @@ const presetHosts = [
   "img.clerk.com",
 ];
 
+const STRIPE_JS = "https://js.stripe.com";
+const STRIPE_API = "https://api.stripe.com";
+const STRIPE_R = "https://r.stripe.com";
+
 // ---------------------------------------------------------------------------
 // Load CSP domains from ENV
 // ---------------------------------------------------------------------------
@@ -74,14 +78,22 @@ const nextConfig: NextConfig = {
 
       script-src 'self' 'unsafe-inline' 'unsafe-eval'
         ${FRONTEND_SRC}
-        ${CLERK_SRC};
+        ${CLERK_SRC}
+        ${STRIPE_JS};
 
       worker-src 'self' blob:;
       connect-src 'self'
         ${FRONTEND_SRC}
         ${CLERK_SRC}
         ${BACKEND_SRC}
-        ${IMG_CONNECT_SRC};
+        ${IMG_CONNECT_SRC}
+        ${STRIPE_JS}
+        ${STRIPE_API}
+        ${STRIPE_R};
+
+      frame-src 'self'
+        ${FRONTEND_SRC}
+        ${STRIPE_JS};
 
       img-src 'self' data: blob: ${IMG_SRC};
       
