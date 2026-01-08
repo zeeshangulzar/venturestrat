@@ -356,6 +356,17 @@ const [stickyReconnectMicrosoft, setStickyReconnectMicrosoft] = useState<boolean
       if (outcome === 'cancelled') {
         return;
       }
+      if (provider === 'google') {
+        try {
+          await fetch(getApiUrl(`/api/user/${user.id}/gmail-connected`), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+          });
+        } catch (connectErr) {
+          console.warn('Failed to notify backend for Gmail connection', connectErr);
+        }
+      }
     } catch (e: any) {
       const message = extractClerkErrorMessage(e);
       const alreadyConnected = typeof message === 'string' && message.toLowerCase().includes('already connected');
