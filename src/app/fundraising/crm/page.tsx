@@ -144,14 +144,26 @@ export default function FundraisingPage() {
         return; // stop CSV download
       }
 
-      // 2. If allowed → continue and download CSV
-      if (!shortlistState || shortlistState.length === 0) {
+      // 2. If allowed → fetch latest shortlisted investors capped by plan limit from backend
+      const latestRes = await fetch(getApiUrl(`/api/shortlists/${user.id}/latest`), {
+        method: 'GET',
+        headers: { 'ngrok-skip-browser-warning': 'true' },
+      });
+
+      if (!latestRes.ok) {
+        throw new Error(`Failed to fetch latest shortlisted investors (status ${latestRes.status})`);
+      }
+
+      const latestData = await latestRes.json();
+      const shortlistForExport = Array.isArray(latestData?.investors) ? latestData.investors : [];
+
+      if (!shortlistForExport || shortlistForExport.length === 0) {
         alert('No data to export');
         return;
       }
 
       const headers = ['Name', 'Company Name', 'Email', 'Location', 'Phone Number'];
-      const csvData = shortlistState.map(inv => [
+      const csvData = shortlistForExport.map((inv: any) => [
         inv.name || '',
         inv.companyName || 'N/A',
         inv.emails?.[0]?.email || 'N/A',
@@ -160,7 +172,7 @@ export default function FundraisingPage() {
       ]);
 
       const csvContent = [headers, ...csvData]
-        .map(row => row.map(field => `"${field}"`).join(','))
+        .map((row) => row.map((field: string | number | null | undefined) => `"${field ?? ''}"`).join(','))
         .join('\n');
 
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
