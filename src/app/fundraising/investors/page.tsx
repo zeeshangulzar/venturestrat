@@ -9,6 +9,8 @@ import InvestorFilter from '@components/InvestorFilter';
 import PaginationNumbers from '@components/PaginationNumbers';
 import { useInvestorScope } from '@hooks/useInvestorScope';
 import { useSubscription } from '@contexts/SubscriptionContext';
+import { useUserCompany } from '@hooks/useUserCompany';
+import SubscriptionLimitModal from '@components/SubscriptionLimitModal';
 
 type Filters = {
   country: string;
@@ -58,7 +60,8 @@ export default function FundraisingInvestorsPage() {
   const [currentPage, setCurrentPageState] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(20);
   const { subscriptionInfo } = useSubscription();
-  const disabledFilters = !subscriptionInfo?.features?.advancedFilters;
+  const { isTrialExpired } = useUserCompany();
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [pagination, setPagination] = useState({
     currentPage: 1,
     totalPages: 1,
@@ -67,6 +70,13 @@ export default function FundraisingInvestorsPage() {
   });
 
   const filtersRestoredRef = useRef(false);
+  const blockIfTrialExpired = () => {
+    if (isTrialExpired) {
+      setShowUpgradeModal(true);
+      return true;
+    }
+    return false;
+  };
 
   const getInitialFilters = (): Filters => ({
     city: '',
@@ -154,6 +164,7 @@ export default function FundraisingInvestorsPage() {
   }, []);
 
   const updateFilters = (newFilters: Partial<Filters>) => {
+    if (blockIfTrialExpired()) return;
     const updatedFilters = { ...filters, ...newFilters };
     if (JSON.stringify(updatedFilters) !== JSON.stringify(filters)) {
       setFilters(updatedFilters);
@@ -163,6 +174,7 @@ export default function FundraisingInvestorsPage() {
   };
 
   const updatePage = (page: number) => {
+    if (blockIfTrialExpired()) return;
     setCurrentPage(page);
   };
 
@@ -182,6 +194,7 @@ export default function FundraisingInvestorsPage() {
   }, []);
 
   const setCurrentPageWrapper = (value: React.SetStateAction<number>) => {
+    if (blockIfTrialExpired()) return;
     if (typeof value === 'function') {
       const newPage = value(currentPage);
       updatePage(newPage);
@@ -205,6 +218,7 @@ export default function FundraisingInvestorsPage() {
   }, [loading, currentPage]);
 
   const handleSearchChange = (query: string) => {
+    if (blockIfTrialExpired()) return;
     setSearchQuery(query);
     if (currentPage !== 1) {
       setCurrentPage(1);
@@ -308,12 +322,12 @@ export default function FundraisingInvestorsPage() {
             country: filters.country,
             state: filters.state,
             city: filters.city,
-            investmentStage: filters.investmentStage, // StageEnum values (strings)
-            investmentFocus: filters.investmentFocus, // Market titles
-            investmentType: filters.investmentType,   // InvestorType values (strings)
-          }}
-          setFilters={updateFilters}
-          disabled={false}
+          investmentStage: filters.investmentStage, // StageEnum values (strings)
+          investmentFocus: filters.investmentFocus, // Market titles
+          investmentType: filters.investmentType,   // InvestorType values (strings)
+        }}
+        setFilters={updateFilters}
+        disabled={false}
         />
       </div>
 
@@ -339,6 +353,7 @@ export default function FundraisingInvestorsPage() {
               basePath="/fundraising/investors"
               isShortlisted={shortlistedInvestorIds.has(investor.id)}
               onShortlistChange={(investorId, shortlisted) => {
+                if (blockIfTrialExpired()) return;
                 setShortlistedInvestorIds(prev => {
                   const newSet = new Set(prev);
                   if (shortlisted) {
@@ -372,6 +387,14 @@ export default function FundraisingInvestorsPage() {
           totalItems={pagination.totalItems}
         />
       </div>
+
+      <SubscriptionLimitModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        action="add_investor"
+        currentUsage={{}}
+        limits={{}}
+      />
     </div>
   );
 }
