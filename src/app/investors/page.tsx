@@ -62,10 +62,6 @@ export default function FundraisingInvestorsPage() {
   const { subscriptionInfo } = useSubscription();
   const { isTrialExpired } = useUserCompany();
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const disabledFilters = !!(
-    (!isTrialExpired && subscriptionInfo?.disableFilters) ||
-    (!subscriptionInfo?.features?.advancedFilters)
-  );
   const [pagination, setPagination] = useState({
     currentPage: 1,
     totalPages: 1,
